@@ -18,7 +18,7 @@ export function CourseOverview() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [archiveOpen, setArchiveOpen] = useState(false);
-    const [courseId, setCourseId] = useState(0);
+    const [course, setCourse] = useState({});
     
     useEffect(() => {
         fetchCourses();
@@ -36,13 +36,13 @@ export function CourseOverview() {
             <Container>
                 <div className='flex items-center mb-4 gap-4'>
                     <h1>My Courses</h1>
-                        <Button onClick={() => {setModalOpen(true); setCourseId(0);}} className='h-min' variant='outline-primary'>
+                        <Button onClick={() => {setModalOpen(true); setCourse({});}} className='h-min' variant='outline-primary'>
                         <div className='flex gap-1 -ml-1'><PlusIcon />Create Course</div>
                         </Button>
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
-                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} courseId={courseId} refresh={fetchCourses}/>
-                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} courseId={courseId} refresh={fetchCourses}/>
+                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} course={course} refresh={fetchCourses}/>
+                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} course={course} refresh={fetchCourses}/>
                 <Tabs className="mb-3">
                 <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
@@ -57,7 +57,7 @@ export function CourseOverview() {
                                     onClick={(e) =>{
                                         e.stopPropagation();
                                         setEditModalOpen(true);
-                                        setCourseId(course.id);
+                                        setCourse(course);
                                     }} />
                                 </Card.Header>
                                 <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
@@ -80,7 +80,7 @@ export function CourseOverview() {
                                     onClick={(e) =>{
                                         e.stopPropagation();
                                         setArchiveOpen(true);
-                                        setCourseId(course.id);
+                                        setCourse(course);
                                     }} />
                                 </Card.Header>
                                 <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
@@ -250,19 +250,26 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     )
 }
 
-function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
+function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     const [color, setColor] = useState('')
+    const [courseCode, setCourseCode] = useState(course.classId ?? '')
+    const [courseName, setCourseName] = useState(course.name ?? '')
 
     const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Submit</>)
 
     const [warning, setWarning] = useState('');
     const [showWheel, setShowWheel] = useState(false);
-
+    const [submitting, setSubmitting] = useState(false);
+    
+    const navigate = useNavigate()
+    
     function resetForm() {
         setIsOpen(false);
         setColor("");
         setWarning('');
         setShowWheel(false);
+        setCourseCode('');
+        setCourseName('');
     }
 
     function handleColorEdit(e){
@@ -273,15 +280,35 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Submitting...</>)
-        CMTJsonFetch('PUT', `course/${courseId}`, {color: color}).then(() => {
+        CMTJsonFetch('PUT', `course/${course.id}`, {color: color}).then(() => {
             setIsOpen(false);
             setSubmitButtonElement(<><PlusIcon />Submit</>);
             refresh();
         });
     }
+    
+
+    function handleCopy(){
+        setSubmitting(true);
+        setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
+        CMTJsonFetch('POST', `/course/${course.id}`, 
+            { 
+            code: courseCode, name: courseName, color: '#000000', workflowId: course?.workflowId, toBeTemplate: true,
+            }).then(async response => {
+            setSubmitButtonElement(<><Check />Created!</>)
+            const json = await response.json();
+            setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
+        }).catch(async error => {
+            const data = await error.response.json();
+            setWarning(data.details);
+            setSubmitButtonElement(<><PlusIcon />Submit</>)
+            setSubmitting(false);
+        });
+    }
 
     return (
-        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered>
+        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered 
+        onShow={() => {setCourseCode(course.classId ?? ''); setCourseName(course.name ?? '')}}>
             <Modal.Header closeButton>Course Settings</Modal.Header>
                 <Modal.Body>
                     <Tabs className='mb-3'>
@@ -294,14 +321,30 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
                             )}
                         </div>
                         {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
-                        <Button onClick={handleColorEdit}>
+                        <Button onClick={handleColorEdit} disabled={submitting}>
                             <div className='flex gap-1 -ml-1 mr-1'>
                                 {submitButtonElement}
                             </div>
                         </Button>
                     </Tab>
                     <Tab eventKey={"copy"} title="Copy as Template">
-
+                        <Form className='flex gap-5 items-center mb-3'>
+                            <div>
+                                <Form.Label>Course Code</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. SWEN-101' defaultValue={course.classId} value={courseCode} 
+                                onChange={e => setCourseCode(e.target.value)} required={true} />
+                            </div>
+                            <div className='pt-2'>
+                                <Form.Label>Course Name</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. Freshman Seminar' defaultValue={course.name} value={courseName} 
+                                onChange={e => setCourseName(e.target.value)} required={true} />
+                            </div>
+                        </Form>
+                        <Button onClick={handleCopy} disabled={submitting}>
+                            <div className='flex gap-1 -ml-1 mr-1'>
+                                {submitButtonElement}
+                            </div>
+                        </Button>
                     </Tab>
                     <Tab eventKey={"archive"} title="Archive Course">
                         <Alert variant="warning">
@@ -314,9 +357,9 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
                         </Alert>
                         <div className="flex justify-between">
                             <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
-                            <Button className="justify-end" variant="danger"
+                            <Button className="justify-end" variant="danger" disabled={submitting}
                             onClick={() => {
-                                CMTJsonFetch("DELETE", `/course/${courseId}`).then(refresh);
+                                CMTJsonFetch("DELETE", `/course/${course.id}`).then(refresh);
                                 setIsOpen(false);
                             }}>Archive Course</Button>
                         </div>
@@ -327,7 +370,7 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
     )
 }
 
-function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
+function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
     return (<>
     <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
         <Modal.Header closeButton>Unarchive Course</Modal.Header>
@@ -342,7 +385,7 @@ function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
                 <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button className="justify-end" variant="danger"
                 onClick={() => {
-                    CMTJsonFetch("PUT", `/course/${courseId}`, {active: true}).then(refresh);
+                    CMTJsonFetch("PUT", `/course/${course.id}`, {active: true}).then(refresh);
                     setIsOpen(false);
                 }}>Unarchive Course</Button>
             </div>

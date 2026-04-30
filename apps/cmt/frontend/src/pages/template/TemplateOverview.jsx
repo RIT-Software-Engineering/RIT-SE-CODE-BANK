@@ -10,7 +10,7 @@ export function TemplateOverview() {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [courseId, setCourseId] = useState(1);
+    const [course, setCourse] = useState({});
     const [archiveOpen, setArchiveOpen] = useState(false);
     
     useEffect(() => {
@@ -34,8 +34,8 @@ export function TemplateOverview() {
                         </Button>
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
-                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} courseId={courseId} refresh={fetchCourses}/>
-                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} courseId={courseId} refresh={fetchCourses}/>
+                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} course={course} refresh={fetchCourses}/>
+                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} course={course} refresh={fetchCourses}/>
                 <Tabs defaultActiveKey={"active"}  className='mb-3'>
                 <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
@@ -47,7 +47,7 @@ export function TemplateOverview() {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setEditModalOpen(true);
-                                    setCourseId(course.id);
+                                    setCourse(course);
                                 }} />
                                 </Card.Header>
                                 <Card.Body className='text-2xl group-hover:underline group-hover:text-blue-500'>
@@ -70,7 +70,7 @@ export function TemplateOverview() {
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setArchiveOpen(true);
-                                    setCourseId(course.id);
+                                    setCourse(course);
                                 }} />
                                 </Card.Header>
                                 <Card.Body className='text-2xl group-hover:underline group-hover:text-blue-500'>
@@ -167,22 +167,64 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     )
 }
 
-function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
+function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     const [warning, setWarning] = useState('');
+    const [courseCode, setCourseCode] = useState(course.classId ?? '')
+    const [courseName, setCourseName] = useState(course.name ?? '')
+
+    const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Submit</>)
+    const [submitting, setSubmitting] = useState(false);
+        
+    const navigate = useNavigate()
 
     function resetForm() {
         setIsOpen(false);
         setWarning('');
     }
 
+    function handleCopy(){
+            setSubmitting(true);
+            setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
+            CMTJsonFetch('POST', `/course/${course.id}`, 
+                { 
+                code: courseCode, name: courseName, color: '#000000', workflowId: course?.workflowId, toBeTemplate: true,
+                }).then(async response => {
+                setSubmitButtonElement(<><Check />Created!</>)
+                const json = await response.json();
+                setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
+            }).catch(async error => {
+                const data = await error.response.json();
+                setWarning(data.details);
+                setSubmitButtonElement(<><PlusIcon />Submit</>)
+                setSubmitting(false);
+            });
+        }
+
     return (
-        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered>
+        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered
+        onShow={() => {setCourseCode(course.classId ?? ''); setCourseName(course.name ?? '')}}>
             <Modal.Header closeButton>Template Settings</Modal.Header>
                 <Modal.Body>
                     <Alert variant='danger' className={`${warning ? 'block' : 'hidden'}`}>{warning}</Alert>
                     <Tabs className='mb-3'>
                     <Tab eventKey={"copy"} title="Copy Template">
-
+                        <Form className='flex gap-5 items-center mb-3'>
+                            <div>
+                                <Form.Label>Course Code</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. SWEN-101' defaultValue={course.classId} value={courseCode} 
+                                onChange={e => setCourseCode(e.target.value)} required={true} />
+                            </div>
+                            <div className='pt-2'>
+                                <Form.Label>Course Name</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. Freshman Seminar' defaultValue={course.name} value={courseName} 
+                                onChange={e => setCourseName(e.target.value)} required={true} />
+                            </div>
+                        </Form>
+                        <Button onClick={handleCopy} disabled={submitting}>
+                            <div className='flex gap-1 -ml-1 mr-1'>
+                                {submitButtonElement}
+                            </div>
+                        </Button>
                     </Tab>
                     <Tab eventKey={"delete"} title="Delete Template">
                         <Alert variant="warning">
@@ -195,9 +237,9 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
                         </Alert>
                         <div className="flex justify-between">
                             <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
-                            <Button className="justify-end" variant="danger"
+                            <Button className="justify-end" variant="danger" disabled={submitting}
                             onClick={() => {
-                                CMTJsonFetch("DELETE", `/course/${courseId}`).then(refresh);
+                                CMTJsonFetch("DELETE", `/course/${course.id}`).then(refresh);
                                 setIsOpen(false);
                             }}>Archive Template</Button>
                         </div>
@@ -208,7 +250,7 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
     )
 }
 
-function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
+function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
     return (<>
     <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
         <Modal.Header closeButton>Unarchive Course</Modal.Header>
@@ -223,7 +265,7 @@ function UnarchiveModal({isOpen, setIsOpen, courseId, refresh}) {
                 <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
                 <Button className="justify-end" variant="danger"
                 onClick={() => {
-                    CMTJsonFetch("PUT", `/course/${courseId}`, {active: true}).then(refresh);
+                    CMTJsonFetch("PUT", `/course/${course.id}`, {active: true}).then(refresh);
                     setIsOpen(false);
                 }}>Unarchive Course</Button>
             </div>
