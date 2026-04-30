@@ -96,6 +96,22 @@ export function CourseOverview() {
     )
 }
 
+/**
+ * Modal to create a new course
+ * The user can either pick a pre-existing template or create a new one from scratch
+ * The user's personal templats are first displayed along with the ability to search public templates
+ * The public template search is in {@link TemplateSearchModal}
+ * Each template is displayed as {@link SelectableTemplateCard}
+ * 
+ * If the user does not select a template, they can create a course from scratch starting with a code and name
+ * 
+ * Regardless of what the user chooses to do, they have to select a color to proceed. Once that's done, they can create the course!
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @returns {React.ReactElement} 
+ */
 function CourseCreationModal({isOpen, setIsOpen}) {
 
     const [courseCode, setCourseCode] = useState('');
@@ -134,6 +150,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         }
         setSubmitting(true);
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
+        // The endpoint differs depending on if we're creating from scratch or not
         CMTJsonFetch('POST', `/course${selectedTemplate ? `/${selectedTemplate.id}` : ''}`, 
             { 
             courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
@@ -250,6 +267,18 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     )
 }
 
+/**
+ * A modal for the settings of a course
+ * Here you can edit the color, copy it as a template, or archive a course
+ * Each thing is separated into a different tab for easy readability
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
 function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     const [color, setColor] = useState('')
     const [courseCode, setCourseCode] = useState(course.classId ?? '')
@@ -370,6 +399,18 @@ function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     )
 }
 
+/**
+ * Modal only for unarchiving a course
+ * Separate from course edit modal so we don't have it as a single tab
+ * Upon confirmation sets the course to be active again and removes it from the archived list
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
 function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
     return (<>
     <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
@@ -394,12 +435,19 @@ function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
     </>)
 }
 
+/**
+ * A color wheel that users can drag to select a custom color
+ *
+ * @export
+ * @param {Object} props 
+ * @param {React.Dispatch<SetStateAction<string>>} props.setColor 
+ * @returns {React.ReactElement} 
+ */
 export function ColorWheel({setColor}) {
     const [hsva, setHsva] = useState({ h: 122, s: 0, v: 90, a: 1 });
     return (
         <>
         <div className='flex items-center justify-between'>
-            {/* @ts-ignore TODO: fix maybe the issue solves itself after all this typescript 6.0 stuff*/}
             <div className='inline'>
             <Wheel color={hsva} onChange={(color) => {
                 setHsva(color.hsva)
@@ -407,7 +455,6 @@ export function ColorWheel({setColor}) {
             }} />
             </div>
             <div className='w-2/3 h-16 mt-5 ml-8 visible inline' style={{ background: hsvaToHex(hsva)}}>
-            {/* <span className='min-w-1/2 h-1/3 invisible'>Test duysbaniuasndsian oaidnisandnasi asdno iausdbsia idbaisub diusab ibdsuiabiubsaui</span> */}
             </div>
         </div>
         </>
@@ -579,6 +626,14 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
     )
 }
 
+/**
+ * Partially AI-generated function
+ * Takes the hex code of the course color and determines if it's likely a dark color or not
+ * We do this to alter the display of the settings icon
+ * 
+ * @param {*} hex - color as hex code that we're looking at
+ * @returns {boolean} 
+ */
 function isDarkColor(hex) {
   const c = hex.replace('#', '');
   const r = parseInt(c.substr(0, 2), 16);

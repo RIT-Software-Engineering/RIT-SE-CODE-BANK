@@ -1,9 +1,15 @@
+// TODO this file is basically a copy of CourseOverview.jsx
+// In the future it would be nice to get rid of this or remove a lot of the functionality so it's not total copy + paste
+
 import {  Check, Loader2, PlusIcon, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Alert, Button, Card, Col, Container, Form, Modal, Row, Tab, Tabs } from 'react-bootstrap'
 import { CMTJsonFetch } from '../../utils/api.js'
 import { useNavigate } from 'react-router-dom'
 
+/**
+ * @import { SetStateAction } from "react"
+ */
 
 export function TemplateOverview() {
     const [templates, setTemplates] = useState([]);
@@ -89,6 +95,20 @@ export function TemplateOverview() {
     )
 }
 
+/**
+ * Modal to create a template (despite the name)!
+ * This is a reduced version of the course creation modal from CourseOverview.jsx
+ * 
+ * Here, the user only needs to input a code, a name, and the intended season.
+ * The user doesn't select a color, and since they're creating a template, they cannot select a template for obvious reasons
+ * 
+ * We have them select a season to differentiate for profs. that use their template
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @returns {React.ReactElement}  
+ */
 function CourseCreationModal({isOpen, setIsOpen}) {
 
     const [courseCode, setCourseCode] = useState('')
@@ -167,6 +187,18 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     )
 }
 
+/**
+ * A modal for the settings of a template
+ * Here you can copy the template or archive the template
+ * Each thing is separated into a different tab for easy readability
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
 function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     const [warning, setWarning] = useState('');
     const [courseCode, setCourseCode] = useState(course.classId ?? '')
@@ -250,6 +282,18 @@ function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     )
 }
 
+/**
+ * Modal only for unarchiving a course
+ * Separate from course edit modal so we don't have it as a single tab
+ * Upon confirmation sets the course to be active again and removes it from the archived list
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
 function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
     return (<>
     <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>

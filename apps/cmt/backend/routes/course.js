@@ -288,7 +288,7 @@ router.post('/:templateId', async (req, res) => {
                     classId: code ?? course.classId,
                     name: name ?? course.name,
                     color: color,
-                    season: course.season,
+                    season: course.season ?? 'Fall',
                     year: toBeTemplate ? null : course.year,
                     students: toBeTemplate ? null : course.students,
                     section: toBeTemplate ? null : course.section,

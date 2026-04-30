@@ -1,3 +1,6 @@
+// TODO this file is basically a copy of CourseDashboard.jsx
+// In the future it would be nice to get rid of this or remove a lot of the functionality so it's not total copy + paste
+
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
