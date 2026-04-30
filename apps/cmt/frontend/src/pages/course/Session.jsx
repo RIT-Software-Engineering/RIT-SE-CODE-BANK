@@ -1,7 +1,6 @@
 import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
-import { useParams } from "react-router-dom";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
@@ -40,7 +39,6 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [sessionData, setSessionData] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
-    const { id } = useParams();
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
@@ -52,15 +50,15 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
      * Also gets material if there is any and puts it in each session
      */
     const update = useCallback(() => {
-        return CMTJsonFetch('GET', `session/${id}`).then(async response => {
+        return CMTJsonFetch('GET', `session/${courseId}`).then(async response => {
             const data = await response.json()
             setSessionCount(data.sessions.length)
             setSessions(data.sessions);
             const materialsArray = data.sessionMaterials.filter(m => m.material).map(m => m.material);
             setSessionData(materialsArray.flat());
         })
-    }, [id, setSessions, setSessionCount])
-    useEffect(() => void update(), [id, update])
+    }, [courseId, setSessions, setSessionCount])
+    useEffect(() => void update(), [courseId, update])
 
     return (
         <Accordion>
@@ -71,7 +69,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
-        materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={id} sessionNum={sessionNum}/>
+        materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
@@ -125,7 +123,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                         </Accordion.Header>
                         <Accordion.Body>
                             { sessionData.find(data => data.sessionNum === i) ?
-                            <SessionTable sessionData={sessionData} sessionNum={i} setIsCreateOpen={setIsOpen} 
+                            <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
                             setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType}/> :
                             <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                             }
@@ -155,6 +153,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 </Card.Body>
                             </Card> : <></>
                             }
+                            <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
                             <div className='flex justify-between pt-3'>
                                 <div className={`justify-start ${sessionData.find(data => data.sessionNum === i) ? 'visible' : 'invisible'}`}>
                                     <Button variant='outline-danger' onClick={()=>setIsDeleteOpen(true)}>Delete All Material</Button>
@@ -595,13 +594,14 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {Object} props 
  * @param {Array} props.sessionData - the data that contains the materials
  * @param {Number} props.sessionNum - the identifying session number to only get data from that specific session
+ * @param {String} props.sessionDate - the date of the session - used in preview mode
  * @param {(isCreateOpen: Boolean) => void} props.setIsCreateOpen - opens/closes the creation modal. We only open here.
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
  * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - sets the default material type depending on where the user clicked. Used for the creation modal.
  * @returns {React.ReactElement} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
+function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -684,7 +684,7 @@ function SessionTable( {sessionData, sessionNum, setIsCreateOpen, setIsEditOpen,
             <tbody>
                 {Array.from({ length: determineRows() }, (_, i) => (
                 <tr> 
-                    {isPreviewMode && <td className="font-bold text-center">{sessionNum+1}</td>}
+                    {isPreviewMode && <td className="text-center p-3"><p className="font-bold">{sessionNum+1}</p><p>{sessionDate}</p></td>}
                     {(cols[0] || !isPreviewMode) ? ( // Topic/Lecture
                         <td 
                             className={`${!isPreviewMode ? 'cursor-pointer hover:bg-gray-100' : ''}`}

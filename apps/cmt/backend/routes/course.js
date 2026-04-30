@@ -227,6 +227,32 @@ router.put('/:id', async (req, res) => {
 
         console.log('Course updated successfully:', updatedCourse)
 
+        if (updatedCourse.startDate && updatedCourse.days){
+            const emptyDaySessions = await prisma.session.findMany({
+                where: {date: null, courseId: Number(id)}
+            });
+            if (emptyDaySessions.length > 0){
+                const courseDays = updatedCourse.days.split(", ");
+                const courseStartDate = new Date(updatedCourse.startDate);
+                const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+                // AI - generated code
+                let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + (allDays.findIndex(day => day === courseDays[0]) + 7 - courseStartDate.getDay() % 7)-1));
+
+                emptyDaySessions.forEach(async session => {
+                    sessionDate.setDate(sessionDate.getDate() + 1);
+
+                    while (!courseDays.includes(allDays[sessionDate.getDay()]))
+                        sessionDate.setDate(sessionDate.getDate() + 1)
+
+                    await prisma.session.update({
+                        where: {id: session.id},
+                        data: {date: sessionDate.toISOString().split('T')[0]}
+                    })
+                })
+            }
+        }
+
         const { uid: _userId, asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
