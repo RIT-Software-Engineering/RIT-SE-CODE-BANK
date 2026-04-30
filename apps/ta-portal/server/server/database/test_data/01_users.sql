@@ -1,15 +1,15 @@
 INSERT INTO `User` (`username`, `fname`, `lname`, `uid`, `password`, `email`, `pronouns`, `role`) VALUES
-('aa1234', 'Alice', 'Admin', 100, 'password', 'admin@example.com', 'they/them', 'ADMIN'),
-('jd2345', 'Dr. John', 'Doe', 200, 'password', 'faculty1@example.com', 'he/him', 'EMPLOYER'),
-('jd3456', 'Dr. Jane', 'Doe', 250, 'password', 'faculty2@example.com', 'she/her', 'EMPLOYER'),
-('bd4567', 'Dr. Bob', 'Doe', 300, 'password', 'faculty3@example.com', 'he/him', 'EMPLOYER'),
-('cc5678', 'Charlie', 'Coder', 301, 'password', 'student1@example.com', 'he/him', 'EMPLOYEE'),
-('bgg6007', 'Ben', 'Griffin', 307, 'password', 'bgg6007@rit.edu', 'he/him', 'EMPLOYEE'),
+('aaa1000', 'Alice', 'Admin', 100100100, 'password', 'aaa1000@rit.edu', 'they/them', 'ADMIN'),
+('jjd1000', 'Dr. John', 'Doe', 200200200, 'password', 'jjd1000@rit.edu', 'he/him', 'EMPLOYER'),
+('jdd1000', 'Dr. Jane', 'Doe', 250250250, 'password', 'jdd1000@rit.edu', 'she/her', 'EMPLOYER'),
+('bdd1000', 'Dr. Bob', 'Doe', 300300300, 'password', 'bdd1000@rit.edu', 'he/him', 'EMPLOYER'),
+('ccc0000', 'Charlie', 'Coder', 301301301, 'password', 'ccc0000@rit.edu', 'he/him', 'EMPLOYEE'),
+('bgg0000', 'Ben', 'Griffin', 307307307, 'password', 'bgg0000@rit.edu', 'he/him', 'EMPLOYEE'),
 
-('dd6789', 'Denise', 'Designer', 302, 'password', 'student2@example.com', 'she/her', 'EMPLOYEE'),
-('ee8901', 'Evan', 'Engineer', 303, 'password', 'student3@example.com', 'they/them', 'CANDIDATE'),
-('tt7890', 'Tyler', 'Tester', 304, 'password', 'student4@example.com', 'he/him', 'EMPLOYEE'),
-('ss9012', 'Sally', 'Student', 305, 'password', 'student5@example.com', 'they/them', 'CANDIDATE'),
-('kjk9042', 'Kinkade', 'Knox-Silvia', 1200, 'password', 'kjk9042@rit.edu', 'he/him', 'ADMIN'),
-('mml6127', 'Mason', 'Student', 3025, 'password', 'mml6127@rit.edu', 'they/them', 'CANDIDATE'),
-('gg5672', 'Gary', 'Greenfield', 306, 'password', 'student6@example.com', 'he/him', 'CANDIDATE');
+('ddd0000', 'Denise', 'Designer', 302302302, 'password', 'ddd0000@rit.edu', 'she/her', 'EMPLOYEE'),
+('eee0000', 'Evan', 'Engineer', 303303303, 'password', 'eee0000@rit.edu', 'they/them', 'CANDIDATE'),
+('ttt0000', 'Tyler', 'Tester', 304304304, 'password', 'ttt0000@rit.edu', 'he/him', 'EMPLOYEE'),
+('sss0000', 'Sally', 'Student', 305305305, 'password', 'sss0000@rit.edu', 'they/them', 'CANDIDATE'),
+('ggg0000', 'Gary', 'Greenfield', 306306306, 'password', 'ggg0000@rit.edu', 'he/him', 'CANDIDATE'),
+
+('kbmvse', 'Kenn', 'Martinez', 306, 'password', 'kbmvse@rit.edu', 'he/him', 'EMPLOYER');

@@ -38,43 +38,29 @@ export default function ShibbLogin({
                 // Check SAML auth session
                 const authRes = await fetch(`${process.env.NEXT_PUBLIC_AUTH_URL}/me`, { credentials: "include", });
 
+                // if user isn't logged in then send them to shibboleth to log in
                 if (!authRes.ok) {
                     window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/login?returnTo=https://apps.se.rit.edu/ta-portal")}`;
                 }
+
+                // get user data
                 const authData = await authRes.json();
                 const authId = authData.user?.id;
 
+                // no user id = not working
                 if (!authId) {
                     setError("No user ID received from authentication service");
                     return;
                 }
+
                 // Check if user exists in DB by ID
                 const dbRes = await getUser(authId)
                 const dbUser = await dbRes
-                console.log(dbRes)
+                
+                //if user isn't in our db
                 if (dbRes.status === 404) {
                     showNotification('User not found in our database. Signing you up now', warning);
-
                     // create a profile
-                    if (!authData.includes('student')) {
-                        createEmployerProfile({
-                            fname: authData.user?.fname,
-                            lname: authData.user?.lname,
-                            username: authData.user?.id,
-                            email: authData.user?.email,
-                            role: 'EMPLOYER',
-                        })
-                    } else {
-                        createCandidateProfile({
-                            fname: authData.user?.fname,
-                            lname: authData.user?.lname,
-                            username: authData.user?.id,
-                            email: authData.user?.email,
-                            role: 'CANDIDATE',
-                        })
-
-                        return;
-                    }
                 }
                 // Set user + redirect
                 setUser(dbUser);
