@@ -48,6 +48,7 @@ model Session {
   courseId    Int
   completed   Boolean    @default(false)  // TODO Needs to be added for workflow actions too
   asid        String?                     // TODO add workflow actions here
+  date        String?
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
 }

@@ -52,6 +52,25 @@ export const TextOutput = ({ value, onChange, onBlur, required, placeholder, isI
 }
 
 /**
+ * @param {TextOutputProps} props
+ */
+export const DateOutput = ({ value, onChange, onBlur, required, isInvalid, error }) => {
+    return (
+        <div className='shrink'>
+            <Form.Control
+                type='date'
+                required={required ?? false}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                isInvalid={isInvalid}
+            />
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
  * @param {NumberOutputProps} props
  */
 export const NumberOutput = ({ value, onChange, onBlur, required, placeholder, isInvalid, error }) => {

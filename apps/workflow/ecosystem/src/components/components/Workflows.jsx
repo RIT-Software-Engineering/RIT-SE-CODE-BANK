@@ -1,5 +1,5 @@
 /**
- * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, CheckmarkOutputProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, NumberOutputProps, OnNavigateFactory, OutputContainerProps, OutputViewProps, PreviousValues, Renderer, SelectOutputProps, TextOutputProps, WorkflowContainerProps, FileOutputProps } from '../../types/components.js'
+ * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, CheckmarkActionProps, CheckmarkOutputProps, EditableActionViewProps, FetchToCallback, IsCheckmark, NavigateButtonProps, NumberOutputProps, OnNavigateFactory, OutputContainerProps, OutputViewProps, PreviousValues, Renderer, SelectOutputProps, TextOutputProps, WorkflowContainerProps, FileOutputProps, DateOutputProps } from '../../types/components.js'
  * @import { WorkflowsWorkflow } from '../../types/workflows.js'
  * @import { ActionWithContexts } from '../../types/contexts.js'
  * @import { CardActionRenderers } from './Actions.jsx'
@@ -58,7 +58,8 @@ export function Workflow(props) {
  *      SelectOutput: Renderer<SelectOutputProps>,
  *      CheckmarkOutput: Renderer<CheckmarkOutputProps>,
  *      SelectMultiOutput: Renderer<CheckmarkOutputProps>,
- *      FileOutput: Renderer<FileOutputProps>
+ *      FileOutput: Renderer<FileOutputProps>,
+ *      DateOutput: Renderer<DateOutputProps>,
  * }} WorkflowRendererMap
  */
 /**
@@ -83,7 +84,8 @@ export function createWorkflowRenderers(renderers) {
         SelectOutput,
         CheckmarkOutput,
         SelectMultiOutput,
-        FileOutput
+        FileOutput,
+        DateOutput,
     } = renderers
 
     const outputRenderers = {
@@ -105,6 +107,9 @@ export function createWorkflowRenderers(renderers) {
         },
         FileOutputRenderers: {
             FileOutput,
+        },
+        DateOutputRenderers: {
+            DateOutput,
         }
     }
 

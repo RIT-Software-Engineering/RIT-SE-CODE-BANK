@@ -1,5 +1,5 @@
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputDefinitionProps, OutputValidatorRegistry, Renderer, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps } from '../../types/components.js'
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputDefinitionProps, OutputValidatorRegistry, Renderer, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps, DateOutputProps } from '../../types/components.js'
  */
 
 import { useState, useCallback, useEffect } from 'react'
@@ -22,7 +22,8 @@ import { useState, useCallback, useEffect } from 'react'
  *      SelectOutputRenderers: SelectOutputRenderers['renderers'],
  *      SelectMultiOutputRenderers: SelectMultiOutputRenderers['renderers'],
  *      CheckmarkOutputRenderers: CheckmarkOutputRenderers['renderers'],
- *      FileOutputRenderers: FileOutputRenderers['renderers']
+ *      FileOutputRenderers: FileOutputRenderers['renderers'],
+ *      DateOutputRenderers: DateOutputRenderers['renderers'],
  * } }} OutputRenderers
  */
 /**
@@ -50,6 +51,9 @@ export function Output(props) {
             break
         case 'file':
             inputElement = <FileOutputController {...props}/>
+            break
+        case 'date':
+            inputElement = <DateOutputController {...props}/>
             break
         default:
             inputElement = <TextOutputController {...props}/>
@@ -152,6 +156,48 @@ function TextOutputController({ output, value, setValue, submitted, validatorReg
             required={output.isRequired ?? false}
             value={value}
             placeholder={output.placeholder}
+            onChange={e => setValue(e.target.value)}
+            onBlur={() => setTouched(true)}
+            isInvalid={showInvalid}
+            error={error}
+        />
+    )
+}
+
+/**
+ * @typedef {{
+ *      renderers: {
+ *          DateOutput: Renderer<DateOutputProps>
+ *      }
+ * }} DateOutputRenderers
+ */
+/**
+ * @param {OutputStateProps & OutputRenderers} props
+ */
+function DateOutputController({ output, value, setValue, submitted, validatorRegistry, renderers, disabled }) {
+    const [touched, setTouched] = useState(false)
+
+    const getError = useCallback(nextValue => {
+        if (output.isRequired && !nextValue && nextValue !== 0) return 'This field is required'
+        return null
+    }, [output.isRequired])
+
+    useEffect(() => {
+        const validators = validatorRegistry.current
+        validators[output.key] = getError
+        return () => void delete validators[output.key]
+    }, [getError, output, validatorRegistry])
+
+    const error = getError(value)
+    const showInvalid = error && (touched || submitted)
+
+    return (
+        <renderers.DateOutputRenderers.DateOutput
+            disabled={disabled}
+            output={output}
+            submitted={submitted}
+            required={output.isRequired ?? false}
+            value={value}
             onChange={e => setValue(e.target.value)}
             onBlur={() => setTouched(true)}
             isInvalid={showInvalid}

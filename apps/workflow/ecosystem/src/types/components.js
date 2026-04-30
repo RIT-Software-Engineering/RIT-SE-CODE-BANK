@@ -36,6 +36,7 @@ export {}
  */
 
 /** @typedef {OutputFieldProps} TextOutputProps */
+/** @typedef {OutputFieldProps} DateOutputProps */
 /** @typedef {OutputFieldProps} NumberOutputProps */
 /** @typedef {OutputFieldProps} SelectOutputProps */
 /** @typedef {OutputFieldProps} SelectMultiOutputProps */
