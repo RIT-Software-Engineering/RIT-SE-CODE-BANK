@@ -86,12 +86,12 @@ const workflows = [
     ],
   },
   {
-    title: "Email",
+    title: "Email/Slack",
     steps: [
       {
         title:"Send Email",
         roles:["scoopdinator"],
-        description: "Send email to users",
+        description: "Send email/slack dm to users, also must have it enabled from profile",
         link: null,
         emailModal: true
       }

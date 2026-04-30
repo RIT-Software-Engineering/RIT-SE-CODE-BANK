@@ -14,6 +14,8 @@ services:
       - SMTP_FROM=se_svc_apps@rit.edu
       - PORT=4000
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+      - PRISMA_QUERY_ENGINE_LIBRARY=/app/node_modules/.prisma/client/libquery_engine-linux-musl-arm64-openssl-3.0.x.so.node
+      - DATABASE_URL=mysql://root:password@host.docker.internal:3309/notification_service
     ports:
       - "4000:4000"
     depends_on:
