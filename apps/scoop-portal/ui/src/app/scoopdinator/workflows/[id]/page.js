@@ -48,6 +48,11 @@ export default function WorkflowPage() {
   const [allUsers, setAllUsers] = useState([]);
   const [assignedUsers, setAssignedUsers] = useState([]);
   
+  //teams stuff
+  const [allTeams, setAllTeams] = useState([]);
+  const [assignTeamModalOpen, setAssignTeamModalOpen] = useState(false);
+  const [assignedTeams, setAssignedTeams] = useState([]);
+  
   //this is for the selected workflow data
   const [workflowData, setWorkflowData] = useState(null);
 
@@ -79,12 +84,27 @@ export default function WorkflowPage() {
             const data = await res.json();
             //each state has a user id, we gotta catch'em all!
             setAssignedUsers(Array.isArray(data) ? data.map(e => e.userId):[]);
+            //samething but for teams
+            setAssignedTeams(Array.isArray(data) ? data.filter(e => e.teamId).map(e => e.teamId) : []);
         }catch(e){
             console.log("faield to fetch workflow states in scoopdinator/workflow/[id]/page.js");
         }
     };
     fetchAssigned();
   },[workflowId, baseUrl]);
+
+  useEffect(() => {
+    const fetchTeams = async () => {
+        try {
+            const res = await fetch(`${publicApiUrl}/api/teams`);
+            const data = await res.json();
+            setAllTeams(data);
+        } catch (e) {
+            console.error('Failed to fetch teams');
+        }
+    };
+    fetchTeams();
+}, []);
 
 
   const fetchWorkflowAndActions = async () => {
@@ -303,6 +323,39 @@ const handleRemoveAssignee = async (userId) => {
         alert(e.message);
     }
 }
+//Handles the adding of actions to teams
+const handleAddTeam = async (team) => {
+    try {
+        const res = await fetch(`${baseUrl}/states/workflow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                teamId: String(team.id),
+                workflowId,
+            }),
+        });
+        if (!res.ok) throw new Error('Failed to assign team');
+        setAssignedTeams(prev => [...prev, String(team.id)]);
+    } catch (e) {
+        alert(e.message);
+    }
+};
+
+//handles the removal of the team
+const handleRemoveTeam = async (teamId) => {
+    try {
+        const res = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
+        const data = await res.json();
+        const stateToDelete = data.find(s => String(s.teamId) === String(teamId));
+        if (!stateToDelete) throw new Error('No workflow state found for team');
+
+        const deleteRes = await fetch(`${baseUrl}/states/workflow/${stateToDelete.id}`, { method: 'DELETE' });
+        if (!deleteRes.ok) throw new Error('Failed to remove team');
+        setAssignedTeams(prev => prev.filter(id => String(id) !== String(teamId)));
+    } catch (e) {
+        alert(e.message);
+    }
+};
 
 //Modal fucntionality
   const handleOpenModal = () => setIsModalOpen(true);
@@ -523,6 +576,14 @@ const handleRemoveAssignee = async (userId) => {
                 >
                   Manage Users
                 </Button>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                    onClick={() => setAssignTeamModalOpen(true)}
+                >
+                    Manage Teams
+                </Button>
               </Box>
                 <Button
                   variant="outlined"
@@ -735,9 +796,43 @@ const handleRemoveAssignee = async (userId) => {
                 }}
                 renderInput={(params) => <TextField {...params} label="Select a SCOOPloyee" size='small'/>}
             />
-            
         </DialogContent>
         <Button onClick={() => {setAssignModalOpen(false);}}>Close</Button>
+      </Dialog>
+      <Dialog open={assignTeamModalOpen} onClose={() => setAssignTeamModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Manage Teams</DialogTitle>
+        <DialogContent>
+            <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>Currently Assigned Teams</Typography>
+            {assignedTeams.length === 0 && (
+                <Typography variant='body2' color="secondary" sx={{ mb: 2 }}>No teams assigned yet</Typography>
+            )}
+            {assignedTeams.map(tid => {
+                const team = allTeams.find(t => String(t.id) === String(tid));
+                if (!team) return null;
+                return (
+                    <Box key={tid} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography>{team.name || `Team ${tid}`}</Typography>
+                        <Button size="small" color='error' variant='contained' onClick={() => handleRemoveTeam(tid)}>
+                            Remove
+                        </Button>
+                    </Box>
+                );
+            })}
+            <Typography variant='subtitle2' sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Add Team</Typography>
+            <Autocomplete
+                options={allTeams.filter(t => !assignedTeams.map(String).includes(String(t.id)))}
+                getOptionLabel={(t) => t.name || `Team ${t.id}`}
+                onChange={(e, selected) => { if (selected) handleAddTeam(selected); }}
+                componentsProps={{
+                    popper: {
+                        placement: 'bottom-start',
+                        modifiers: [{ name: 'flip', enabled: false }],
+                    }
+                }}
+                renderInput={(params) => <TextField {...params} label="Select a Team" size='small' />}
+            />
+        </DialogContent>
+        <Button onClick={() => setAssignTeamModalOpen(false)}>Close</Button>
       </Dialog>
     </Box>
   );
