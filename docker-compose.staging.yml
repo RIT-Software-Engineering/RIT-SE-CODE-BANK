@@ -1,0 +1,110 @@
+version: "3.8"
+services:
+  mariadb_main:
+    image: mariadb:11
+    container_name: mariadb_scoop_portal
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: scoop_portal_demo
+      MARIADB_USER: scoop_portal_user
+      MARIADB_PASSWORD: scoop_portal_password
+    ports:
+      - "3308:3306"
+    volumes:
+      - mariadb_scoop_portal_data:/var/lib/mysql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mariadb_workflows:
+    image: mariadb:11
+    container_name: mariadb_workflows
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: scoop_portal_demo
+      MARIADB_USER: scoop_portal_user
+      MARIADB_PASSWORD: scoop_portal_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_workflows_data:/var/lib/mysql
+  
+  mariadb_notifications:
+    image: mariadb:11
+    container_name: mariadb_notifications
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: notification_service
+    ports:
+      - "3309:3306"
+    volumes:
+      - mariadb_notifications_data:/var/lib/mysql
+
+  workflow_api_sp:
+    build: 
+      context: ./apps/workflow/server
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    environment:
+      NODE_ENV: production
+      PORT: 3003
+      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_workflows:3306/scoop_portal_demo
+    depends_on: 
+      - mariadb_workflows
+    restart: unless-stopped
+  
+  notifications_api:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    ports: 
+      - "4000:4000"
+    environment:
+      SMTP_HOST: smtp4dev
+      SMTP_PORT: 25
+      SMTP_FROM: se_svc_apps@rit.edu
+      PORT: 4000
+      NODE_ENV: production
+      SLACK_BOT_TOKEN:
+      DATABASE_URL: mysql://root:password@mariadb_notifications:3306/notification_service
+    depends_on: 
+      - mariadb_notifications
+    restart: unless-stopped
+
+  scoop-portal-backend:
+    build:
+      context: ./apps/scoop-portal/server
+      dockerfile: Dockerfile
+    ports:
+      - "5020:5020"
+    environment:
+      NODE_ENV: production
+      PORT: 5020
+      DATABASE_URL: mysql://scoop_portal_user:scoop_portal_password@mariadb_main:3306/scoop_portal_demo
+    depends_on:
+      mariadb_main:
+        condition: service_healthy
+    restart: unless-stopped
+
+  scoop-portal-frontend:
+    build:
+      context: ./apps/scoop-portal/ui
+      dockerfile: Dockerfile
+    ports:
+      - "3020:3020"
+    environment:
+      NODE_ENV: production
+      PORT: 3020
+      REACT_APP_BACKEND_URL: http://localhost:5020
+    depends_on:
+      - scoop-portal-backend
+    restart: unless-stopped
+
+volumes:
+  mariadb_scoop_portal_data:
+  mariadb_workflows_data:
+  mariadb_notifications_data:

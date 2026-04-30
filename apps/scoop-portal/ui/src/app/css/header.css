@@ -1,0 +1,25 @@
+:root {
+    --background-header: #000000;
+    --foreground-header: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-header: #ffffff;
+        --foreground-header: #000000;
+    }
+}
+
+header {
+    padding: 1em;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--background-header);
+    color: var(--foreground-header);
+}
+
+.header > h1 {
+    font-weight: bold;
+}
