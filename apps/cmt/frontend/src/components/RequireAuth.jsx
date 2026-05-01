@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Navigate, useLocation } from "react-router-dom";
 import { getUserFromCookie } from "../utils/auth.js";
+import LoginWrapper from "../utils/LoginWrapper.jsx";
 
 /**
  * @param {Object} props
@@ -11,7 +11,6 @@ import { getUserFromCookie } from "../utils/auth.js";
 export default function RequireAuth({ children, roles }) {
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState(null);
-  const location = useLocation();
 
   useEffect(() => {
     const u = getUserFromCookie();
@@ -26,7 +25,7 @@ export default function RequireAuth({ children, roles }) {
 
   // If no user, bounce to /login (basename="/cmt" will make this /cmt/login)
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <LoginWrapper loginMode="shibb" />;
   }
 
   // User exists → render protected content

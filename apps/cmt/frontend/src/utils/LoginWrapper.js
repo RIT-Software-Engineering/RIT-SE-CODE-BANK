@@ -1,8 +1,7 @@
-// src/components/auth/Login/LoginWrapper.js
 "use client";
 
-import DevLoginPage from "./DevLoginPage";
-import ShibbLoginPage from './ShibbLoginPage';
+import DevLoginPage from "../pages/DevLoginPage";
+import ShibbLoginPage from '../pages/ShibbLoginPage';
 
 /**
  * A wrapper component that conditionally renders the correct login system
