@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getUserFromCookie } from "../utils/auth.js";
-import LoginWrapper from "../utils/LoginWrapper.jsx";
+import LoginWrapper from "../utils/LoginWrapper.js";
 
 /**
  * @param {Object} props
