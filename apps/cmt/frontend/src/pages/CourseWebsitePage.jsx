@@ -65,14 +65,23 @@ export default function CourseWebsitePage() {
     fetchSessions();
   }, [selectedCourse, courses]);
 
-  const  generateCourseHTML = async (course, sessions) => {
-    const rows = await Promise.all(
-      sessions
-        .sort((a, b) => a.sessionNum - b.sessionNum)
-        .map(session =>
-          generateSessionRowHTML(session, visibleColumns)
-        )
-    );
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks) => {
+    let rows;
+    if (isWeeks && weeks)
+      rows = await Promise.all(
+        weeks
+          .map((week, index) =>
+            generateWeekRowHTML(week, visibleColumns, index)
+          )
+      );
+    else
+      rows = await Promise.all(
+        sessions
+          .sort((a, b) => a.sessionNum - b.sessionNum)
+          .map(session =>
+            generateSessionRowHTML(session, visibleColumns)
+          )
+      );
 
     return `
     <!DOCTYPE html>
@@ -106,7 +115,6 @@ export default function CourseWebsitePage() {
         td:first-child {
           text-align: center;
           vertical-align: middle;
-          font-weight: bold;
         }
 
         td {
@@ -127,7 +135,7 @@ export default function CourseWebsitePage() {
       <table>
         <thead>
           <tr>
-            <th>Session</th>
+            <th>${isWeeks ? 'Week' : 'Session'}</th>
             ${visibleColumns.map(col => `<th>${col}</th>`).join("")}
           </tr>
         </thead>
@@ -200,7 +208,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.
@@ -257,7 +265,7 @@ export default function CourseWebsitePage() {
         <div className="text-center">
           <button
             onClick={downloadCourseZIP}
-            className="group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer"
+            className={`${(isWeeks && weeks) || !isWeeks ? 'block' : 'hidden'} group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer`}
           >
             <svg
               className="w-4 h-4 transition-transform duration-150 group-hover:translate-y-0.5"
@@ -325,13 +333,16 @@ export default function CourseWebsitePage() {
 
               (weeks? weeks.map((week, index) => {
                 const materials = week.flatMap(session => session?.materials);
-                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active) ?? []);
+                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
 
                 return (<>
                 <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
                   <td className="border border-blue-300 p-3 text-center">
                     <p className="font-semibold">{index+1}</p>
-                    <p>{week[0]?.date ?? "TBD"} - {week[week.length-1]?.date ?? "TBD"}</p>
+                    <small>
+                      <span>{week[0]?.date ?? "TBD"} -</span>
+                      <p>{week[week.length-1]?.date ?? "TBD"}</p>
+                    </small>
                   </td>
 
                     {grouped.map(colItems => (
@@ -411,12 +422,63 @@ async function generateSessionRowHTML(session, visibleColumns) {
 
   return `
     <tr>
-      <td>${session.sessionNum}</td>
+      <td>
+      <p><strong>${session.sessionNum}</strong></p>
+      <p>${session?.date ?? "TBD"}</p>
+      </td>
       ${columnsHTML.join("")}
     </tr>
   `;
 }
 
+async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
+  const materials = week.flatMap(session => session?.materials);
+  const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+
+  const columnsHTML = await Promise.all(
+    grouped.map(async colItems => {
+      const itemsHTML = await Promise.all(
+        colItems.map(async item => {
+          // If an item has a body rewrite any resource links in the body and encoded it.
+          // Then whenever the title is clicked open a new page with the body content
+          if (item.body) {
+            const rewrittenBody = await rewriteResourceLinks(item.body);
+            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+
+            return `<a href="#" onclick="openItem('${encoded}'); return false;">
+              ${item.label}
+            </a>`;
+          }
+
+          // Rewrite resource links in title
+          const rewrittenLabel = await rewriteResourceLinks(item.label);
+
+          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+            return `<span>${item.label}</span>`;
+          }
+
+          return `<span>${rewrittenLabel}</span>`;
+        })
+      );
+
+      return `<td>${itemsHTML.join("")}</td>`;
+    })
+  );
+
+  return `
+    <tr>
+      <td>
+      <p><strong>${weekIndex+1}</strong></p>
+      <small>
+      <span>${week[0]?.date ?? "TBD"} - </span>
+      <p>${week[week.length-1]?.date ?? "TBD"}</p>
+      </small>
+      </td>
+      ${columnsHTML.join("")}
+    </tr>
+  `;
+}
 
 // Helper function to rewrite the resource links from api calls to relatives paths
 async function rewriteResourceLinks(html) {
