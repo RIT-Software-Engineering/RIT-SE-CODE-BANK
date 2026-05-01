@@ -3,6 +3,7 @@
   "workspaces": [
     "apps/workflow/ecosystem",
     "apps/workflow/server",
+    "apps/cmt",
     "apps/cmt/frontend",
     "apps/cmt/backend",
     "apps/cmt/shared-utilities",

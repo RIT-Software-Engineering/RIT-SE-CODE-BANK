@@ -35,6 +35,11 @@
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
     "dotenv-cli": "^11.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
@@ -46,17 +51,14 @@
     "react-scripts": "5.0.1",
     "typescript": "4.9.5",
     "web-vitals": "^2.1.4",
-    "yaml": "2.8.3",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.37.5"
+    "yaml": "2.8.3"
   },
   "scripts": {
     "start": "npx dotenv -e ./../.env -- craco start",
     "build": "craco build",
     "test": "craco test",
     "eject": "react-scripts eject",
-    "lint": "eslint \"src/**/*.{js,jsx}\""
+    "lint": "eslint"
   },
   "eslintConfig": {
     "extends": [

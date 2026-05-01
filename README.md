@@ -17,4 +17,8 @@ It is reccomended that you read this [overview of how npm](https://docs.google.c
 
 These links go to the README files for shared components and other projects. Even if it is not listed here, a README may still exist in the project folder.
 
+[CMT](./apps/cmt/README.md)
+
+[SCOOPPortal](./apps/scoop-portal/README.md)
+
 [Workflows Ecosystem Documentation](./apps/workflow/ecosystem/README.md)
