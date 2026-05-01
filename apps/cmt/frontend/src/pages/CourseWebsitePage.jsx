@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import JSZip from "jszip";
+import { Alert, Form } from "react-bootstrap";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isWeeks, setIsWeeks] = useState(false);
 
   // Fetch courses
   useEffect(() => {
@@ -21,6 +24,13 @@ export default function CourseWebsitePage() {
     })();
   }, []);
 
+  // the full course object to get course name & course id
+  const selectedCourseObj = useMemo(() => {
+    console.log("selectedCourse:", selectedCourse);
+    console.log("courses:", courses);
+    return courses.find(c => c.id === selectedCourse) || null;
+  }, [selectedCourse, courses]);
+
   // Fetch sessions and materials for selected course
   useEffect(() => {
     if (!selectedCourse) return;
@@ -32,8 +42,20 @@ export default function CourseWebsitePage() {
         const combined = result.sessions.map((session, index) => ({
           ...session,
           materials: result.sessionMaterials[index]?.material || [],
-        }));
+        })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
+
+        // AI-generated code
+        if (courses.find(c => c.id === selectedCourse)?.days)
+          setWeeks(combined.reduce((acc, item, index) => {
+            const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(item);
+            return acc;
+          }, []));
+        else
+          setWeeks(null);
+
       }).catch(async error => {
         console.error("Error fetching sessions:", error);
         setSessions([]);
@@ -41,13 +63,6 @@ export default function CourseWebsitePage() {
     };
 
     fetchSessions();
-  }, [selectedCourse]);
-
-  // the full course object to get course name & course id
-  const selectedCourseObj = useMemo(() => {
-    console.log("selectedCourse:", selectedCourse);
-    console.log("courses:", courses);
-    return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
   const  generateCourseHTML = async (course, sessions) => {
@@ -220,8 +235,8 @@ export default function CourseWebsitePage() {
     <div>
       {/* Course Selector */}
       <div>
-        <select
-          className="border rounded-lg p-2 text-lg"
+        <Form.Select
+          className="border rounded-lg p-2 text-lg max-w-[30%]"
           value={selectedCourse || ""}
           onChange={(e) => setSelectedCourse(Number(e.target.value))}>
           <option value="" disabled>Select a course</option>
@@ -230,7 +245,11 @@ export default function CourseWebsitePage() {
               {course.classId}-{course.section} | {course.name} ({course.season} {course.year})
             </option>
           ))}
-        </select>
+        </Form.Select>
+      </div>
+      <div className="flex text-lg gap-2 mt-3">
+        <Form.Label className={`${selectedCourse ? '' : 'text-gray-300'}`}>Display as weeks?</Form.Label>
+        <Form.Check disabled={!selectedCourse} onChange={() => setIsWeeks(prev => !prev)}/>
       </div>
 
       {selectedCourse && (
@@ -263,14 +282,14 @@ export default function CourseWebsitePage() {
 
       {/* Events Table */}
       {loading ? (
-        <div className="text-center p-6">Loading events...</div>
+        <div className="text-center p-6">Loading material...</div>
       ) : sessions.length === 0 ? (
-        <p className="text-gray-500 text-center">No events found for this course.</p>
+        <p className="text-gray-500 text-center">No material found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
           <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-blue-300 p-3 text-center">Session</th>
+              <th className="border border-blue-300 p-3 text-center">{isWeeks ? 'Week' : 'Session'}</th>
                 {visibleColumns.map(col => (
                   <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
@@ -279,8 +298,7 @@ export default function CourseWebsitePage() {
             </tr>
           </thead>
           <tbody>
-            {sessions
-              .sort((a, b) => a.sessionNum - b.sessionNum)
+            {!isWeeks ? sessions
               .map((session, index) => {
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
@@ -303,7 +321,39 @@ export default function CourseWebsitePage() {
                     ))}
                 </tr>
                 );
-              })}
+              }) : 
+
+              (weeks? weeks.map((week, index) => {
+                const materials = week.flatMap(session => session?.materials);
+                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active) ?? []);
+
+                return (<>
+                <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                  <td className="border border-blue-300 p-3 text-center">
+                    <p className="font-semibold">{index+1}</p>
+                    <p>{week[0]?.date ?? "TBD"} - {week[week.length-1]?.date ?? "TBD"}</p>
+                  </td>
+
+                    {grouped.map(colItems => (
+                        <td className="border border-blue-300 p-3 align-top">
+                          {colItems.map(item => (
+                          <div key={item.id} className="mb-1">
+                            <ReadOnlyEditor value={item.label} />
+                          </div>
+                        ))}
+                        </td>
+                    ))}
+
+                </tr>
+                </>)
+              }) :
+              <Alert variant="danger">
+                <p>You have not selected days in your course, so we cannot display the site in weeks.</p>
+                <p>If you would like to see your course in weeks, please finish the first multi-step to continue.</p>
+              </Alert>
+            )
+
+            }
           </tbody>
         </table>
       )}
