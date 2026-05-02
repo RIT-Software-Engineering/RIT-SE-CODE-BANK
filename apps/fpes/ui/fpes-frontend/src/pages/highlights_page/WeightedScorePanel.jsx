@@ -11,10 +11,12 @@ function qualitativeFeedback(teachingScore, scholarshipScore, perClass) {
   const lines = [];
 
   if (teachingScore?.level) {
+    const classWellAbove = perClass?.filter(c => c.alignment === 'Well Above Average').length ?? 0;
     const classAbove = perClass?.filter(c => c.alignment === 'Above Average').length ?? 0;
     const classTotal = perClass?.length ?? 0;
+    const aboveCount = classWellAbove + classAbove;
     lines.push(`Teaching: ${teachingScore.level} overall (${teachingScore.percentile?.toFixed(1)}th percentile).` +
-      (classTotal > 0 ? ` ${classAbove} of ${classTotal} course(s) above department average.` : '') +
+      (classTotal > 0 ? ` ${aboveCount} of ${classTotal} course(s) above department average${classWellAbove > 0 ? ` (${classWellAbove} well above)` : ''}.` : '') +
       (teachingScore.bumped ? ' Course improvement efforts bumped score.' : ''));
   }
 
@@ -23,9 +25,14 @@ function qualitativeFeedback(teachingScore, scholarshipScore, perClass) {
       (scholarshipScore.hasNewGrant ? ' New/funded grant activity detected — score bumped.' : ''));
   }
 
+  if (perClass?.some(c => c.alignment === 'Well Above Average')) {
+    const count = perClass.filter(c => c.alignment === 'Well Above Average').length;
+    lines.push(`Outstanding performance: ${count} course(s) scored well above department average (1+ std dev above mean).`);
+  }
+
   if (perClass?.some(c => c.alignment === 'Below Average')) {
-    const weak = perClass.filter(c => c.alignment === 'Below Average').map(c => c.course_name).join(', ');
-    lines.push(`Areas for improvement: ${weak} scored below department average — consider reviewing course delivery or materials.`);
+    const count = perClass.filter(c => c.alignment === 'Below Average').length;
+    lines.push(`Areas for improvement: ${count} course(s) scored below department average.`);
   }
 
   return lines;
@@ -95,7 +102,7 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
           <Typography variant="caption" color="text.secondary">Teaching (from eval data)</Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
             Teaching score is based on the faculty member's percentile rank among all faculty with teaching evaluations.
-            A percentile ≥ 70% earns a base score of 4 (Above Average), 30–70% earns 3 (Average), and below 30% earns 2 (Below Average).
+            A percentile ≥ 90% earns a score of 5 (Well Above Average), ≥ 70% earns 4 (Above Average), 30–70% earns 3 (Average), and below 30% earns 2 (Below Average).
             {teachingScore.bumped ? ' An additional +1 was applied because 2 or more course improvement activities were found in the highlights.' : ''}
           </Typography>
           <Box sx={{ display: 'flex', gap: 3, mt: 0.5, flexWrap: 'wrap' }}>
@@ -107,7 +114,55 @@ export default function WeightedScorePanel({ summary, facultyId, teachingText, f
         </Box>
       )}
 
-
+      {/* Per-class teaching breakdown */}
+      {perClass.length > 0 && (() => {
+        const diffs = perClass.map(c => c.diff);
+        const mean = diffs.reduce((s, d) => s + d, 0) / diffs.length;
+        const stdDev = diffs.length > 1 ? Math.sqrt(diffs.reduce((s, d) => s + (d - mean) ** 2, 0) / diffs.length) : 0;
+        const wellAboveThreshold = Math.round((mean + stdDev) * 100) / 100;
+        return (
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
+            <Typography variant="caption" color="text.secondary">Per-Class Teaching Breakdown</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, mb: 1 }}>
+              Well Above Average requires diff ≥ {wellAboveThreshold.toFixed(2)} (mean + 1 std dev) and diff ≥ 0.1, or class avg ≥ 4.3.
+              Above Average: diff ≥ 0.1 or class avg ≥ 4.1. Average: |diff| &lt; 0.1. Below Average: diff ≤ −0.1.
+            </Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell align="center">Semester</TableCell>
+                  <TableCell align="center">Class Avg</TableCell>
+                  <TableCell align="center">Dept Avg</TableCell>
+                  <TableCell align="center">Diff</TableCell>
+                  <TableCell align="center">Alignment</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {perClass.map((c, i) => (
+                  <TableRow key={i}>
+                    <TableCell align="center">{c.semester} {c.year}</TableCell>
+                    <TableCell align="center">{c.class_avg?.toFixed(2)}</TableCell>
+                    <TableCell align="center">{c.dept_avg?.toFixed(2)}</TableCell>
+                    <TableCell align="center">{c.diff >= 0 ? '+' : ''}{c.diff?.toFixed(2)}</TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={c.alignment}
+                        size="small"
+                        color={
+                          c.alignment === 'Well Above Average' ? 'success'
+                          : c.alignment === 'Above Average' ? 'primary'
+                          : c.alignment === 'Below Average' ? 'error'
+                          : 'default'
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        );
+      })()}
 
       {/* Scholarship score breakdown */}
       {scholarshipScore && (

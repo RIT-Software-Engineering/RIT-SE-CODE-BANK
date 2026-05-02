@@ -117,7 +117,7 @@ async function calculateScholarshipScore(facultyId, formId) {
  * Returns per-class teaching eval averages for a faculty member,
  * each compared against the department average.
  * @param {number} facultyId - Faculty member's ID
- * @returns {Array<{ course_name: string, semester: string, year: string, class_avg: number, dept_avg: number, diff: number, alignment: string }>}
+ * @returns {Array<{ semester: string, year: string, class_avg: number, dept_avg: number, diff: number, alignment: string }>}
  */
 async function getPerClassTeachingBreakdown(facultyId) {
   const conn = await pool.getConnection();
@@ -134,13 +134,26 @@ async function getPerClassTeachingBreakdown(facultyId) {
       ORDER BY te.year DESC, te.semester DESC
     `, [facultyId]);
 
-    return rows.map(r => {
-      const classAvg = parseFloat(r.class_avg);
-      const deptAvg = parseFloat(r.dept_avg);
-      const diff = Math.round((classAvg - deptAvg) * 100) / 100;
-      const alignment = diff >= 0.2 ? 'Above Average' : diff <= -0.2 ? 'Below Average' : 'Average';
-      return { course_name: r.course_name, semester: r.semester, year: r.year, class_avg: classAvg, dept_avg: deptAvg, diff, alignment };
-    });
+    const mapped = rows.map(r => ({
+      semester: r.semester, year: r.year,
+      class_avg: parseFloat(r.class_avg), dept_avg: parseFloat(r.dept_avg),
+      diff: Math.round((parseFloat(r.class_avg) - parseFloat(r.dept_avg)) * 100) / 100,
+    }));
+
+    const diffs = mapped.map(r => r.diff);
+    const mean = diffs.length ? diffs.reduce((s, d) => s + d, 0) / diffs.length : 0;
+    const stdDev = diffs.length > 1
+      ? Math.sqrt(diffs.reduce((s, d) => s + (d - mean) ** 2, 0) / diffs.length)
+      : 0;
+    const wellAboveThreshold = mean + stdDev;
+
+    return mapped.map(r => ({
+      ...r,
+      alignment: (r.diff >= wellAboveThreshold && r.diff >= 0.1) || r.class_avg >= 4.3 ? 'Well Above Average'
+        : r.diff >= 0.1 || r.class_avg >= 4.1 ? 'Above Average'
+        : r.diff <= -0.1 ? 'Below Average'
+        : 'Average',
+    }));
   } finally {
     conn.release();
   }

@@ -213,14 +213,17 @@ const IMPROVEMENT_KEYWORDS = [
 ];
 
 /**
- * Calculates a teaching score (2–4) based on percentile rank and course improvement keywords.
+ * Calculates a teaching score (2–5) based on percentile rank among all faculty
+ * with teaching evaluations, with an optional bump for course improvement activity.
  *
  * Base score from percentile:
+ *   >= 90th → 5 (Well Above Average)
  *   >= 70th → 4 (Above Average)
- *   30–70th → 3 (Average)
- *   < 30th  → 2 (Below Average)
+ *   >= 30th → 3 (Average)
+ *   <  30th → 2 (Below Average)
  *
- * Bump rule: base score of 3 → 4 if 2+ improvement keywords found in teachingText.
+ * Bump rule: base score of 3 → 4 (Above Average) if 2+ improvement keywords
+ * found in teachingText.
  *
  * @param {number} facultyId - Faculty member's ID
  * @param {string} [teachingText] - Teaching section text from the highlights form
@@ -235,7 +238,9 @@ async function calculateTeachingScore(facultyId, teachingText = '') {
 
     if (percentileData) {
         percentile = percentileData.percentile;
-        if (percentile >= 70) { baseScore = 4; level = 'Above Average'; }
+
+        if (percentile >= 90) { baseScore = 5; level = 'Well Above Average'; }
+        else if (percentile >= 70) { baseScore = 4; level = 'Above Average'; }
         else if (percentile >= 30) { baseScore = 3; level = 'Average'; }
         else { baseScore = 2; level = 'Below Average'; }
     }
@@ -244,6 +249,7 @@ async function calculateTeachingScore(facultyId, teachingText = '') {
     const matchedKeywords = IMPROVEMENT_KEYWORDS.filter(k => text.includes(k));
     const bumped = baseScore === 3 && matchedKeywords.length >= 2;
     const finalScore = bumped ? 4 : baseScore;
+    if (bumped) level = 'Above Average';
 
     return {
         score: finalScore,
