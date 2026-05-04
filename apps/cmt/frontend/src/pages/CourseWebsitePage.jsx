@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
-import { CMTJsonFetch } from "../utils/api.js";
+import { CMTJsonFetch, CMTJsonFetchRaw } from "../utils/api.js";
 import { createErrorHandler } from "../utils/error.jsx";
 import JSZip from "jszip";
 import { Alert, Form } from "react-bootstrap";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -21,19 +22,37 @@ export default function CourseWebsitePage() {
     []
   )
 
-  // Fetch sessions and materials for selected course
+  // the full course object to get course name & course id
+  const selectedCourseObj = useMemo(() => {
+    console.log("selectedCourse:", selectedCourse);
+    console.log("courses:", courses);
+    return courses.find(c => c.id === selectedCourse) || null;
+  }, [selectedCourse, courses]);
+
+    // Fetch sessions and materials for selected course
   useEffect(() => {
     if (!selectedCourse) return;
 
     const fetchSessions = async () => {
       setLoading(true);
-      await CMTJsonFetch("GET", `session/${selectedCourse}`)
-      .then(async json => {
+      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async json => {
         const combined = json.sessions.map((session, index) => ({
           ...session,
-          materials: result.sessionMaterials[index]?.material || [],
-        }));
+          materials: json.sessionMaterials[index]?.material || [],
+        })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
+
+        // AI-generated code
+        if (courses.find(c => c.id === selectedCourse)?.days)
+          setWeeks(combined.reduce((acc, item, index) => {
+            const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(item);
+            return acc;
+          }, []));
+        else
+          setWeeks(null);
+
       }).catch(async error => {
         console.error("Error fetching sessions:", error);
         setSessions([]);
@@ -41,13 +60,6 @@ export default function CourseWebsitePage() {
     };
 
     fetchSessions();
-  }, [selectedCourse]);
-
-  // the full course object to get course name & course id
-  const selectedCourseObj = useMemo(() => {
-    console.log("selectedCourse:", selectedCourse);
-    console.log("courses:", courses);
-    return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
   const generateCourseHTML = async (course, sessions, weeks, isWeeks) => {
@@ -168,11 +180,7 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
-    const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
-
-    if (!response.ok) throw new Error("Failed to fetch resources");
-
-    const resources = await response.json();
+    const resources = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting resources"));
 
     console.log("Resources for course:", resources);
 
@@ -180,15 +188,14 @@ export default function CourseWebsitePage() {
 
     await Promise.all(resources.map(async (resource) => {
       try {
-        const resp = await CMTJsonFetch("GET", `/resources/download/${resource.id}`);
-        if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
+        const resp = await CMTJsonFetchRaw("GET", `/resources/download/${resource.id}`).catch(createErrorHandler("`Failed to fetch resource ${resource.id}"));
 
         const blob = await resp.blob();
         const fileName = sanitize(resource.filename);
         resourcesFolder.file(fileName, blob);
 
       } catch (err) {
-        console.error("Failed resource:", resource, err);
+        throw new CMTError({ userFacingMessage: `Failed resource ${resource} ${err}`, cause: err })
       }
     }));
 

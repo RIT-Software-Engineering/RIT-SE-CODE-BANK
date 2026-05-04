@@ -44,15 +44,17 @@ class CMTFetchError extends CMTError {
  *          .catch(createErrorHandler("Unable to update course.", setError))
  *  }
  * ```
- *
+ * @template T
+ * 
  * @param {string} method 
  * @param {string} url 
  * @param {Object} body
  * @param {Object} headers 
  * @param {string} baseUrl 
+ * @param {(response: Response) => Promise<T>} transformResponse
  * @returns Response of fetch in the form of a promise. If the promise is rejected, an error will be returned in the format { message: string, response: Response }. The response contains the full response of the fetch.
  */
-export async function CMTFetch(method, url, body, headers, baseUrl) {
+export async function CMTFetch(method, url, body, headers, baseUrl, transformResponse) {
     
     const fullURL = `${baseUrl}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
 
@@ -76,13 +78,18 @@ export async function CMTFetch(method, url, body, headers, baseUrl) {
         
     if (response.ok) {
         try {
-            return await response.json()
+            return await transformResponse(response)
         } catch(error) {
             const message = [
                 `Error while trying to fetch: ${method} ${fullURL}`,
-                `Error parsing JSON. This can happen when an endpoint does not call res.json or otherwise, and isn't neccesarily a problem. You should still probably fix it though.`
+                `Error parsing JSON. This can happen when an endpoint does not call res.json or otherwise, and isn't neccesarily a problem. You should still probably fix it though.`,
+                `response: ${JSON.stringify(response, null, Infinity)}`
             ].join("\n")
-            throw new CMTError({ message, userFacingMessage: "Something went wrong while fetching to an external API. Please try again.", cause: error })
+            // Some endpoints return code 200 and no body. If you decide that this should throw an error, make sure to find/change those endpoints.
+            console.log(message)
+            return
+            // throw new CMTError({ message, userFacingMessage: "Something went wrong while fetching to an external API. Please try again.", cause: error })
+
         }
     }
 
@@ -120,6 +127,7 @@ export async function workflowsFetch(method, url, body, headers) {
         url,
         body ? JSON.stringify(body) : undefined,
         { ...headers, "Content-Type": "application/json" },
-        WORKFLOWS_API
+        WORKFLOWS_API,
+        response => response.json()
     )
 }

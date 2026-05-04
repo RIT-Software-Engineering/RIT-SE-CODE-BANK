@@ -6,6 +6,8 @@ import { CMTDangerAlert, createErrorHandler } from "../../utils/error"
 import { getResourceDownloadUrl, useResources } from "../resources/ResourceManager.jsx"
 import { SelectableResourceCard } from "../resources/resourceRenderers.jsx"
 
+const INSERT_RESOURCE_TOOLTIP = <Tooltip id="rte-insert-resource-tooltip">Insert Resource</Tooltip>
+
 export function ResourceLinkModal({ editor, courseId }) {
     const [show, setShow] = useState(false)
 
@@ -73,6 +75,7 @@ export function ResourceLinkModal({ editor, courseId }) {
 
         CMTFormFetch('POST', `resources/${courseId}`, formData)
             .then(_ => {
+                console.log(_)
                 loadResources()
                 setFile(null)
                 setResourceName('')
@@ -83,7 +86,7 @@ export function ResourceLinkModal({ editor, courseId }) {
 
     return (
         <>
-        <OverlayTrigger delay={200} overlay={<Tooltip>Insert Resource</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={INSERT_RESOURCE_TOOLTIP}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
@@ -110,8 +113,8 @@ export function ResourceLinkModal({ editor, courseId }) {
                                 ? <CMTDangerAlert error={loadingError} />
                             : resources.length > 0 
                             ? <div className="max-h-60 overflow-y-scroll">
-                                {resources.map(resource => (
-                                    <div className="mb-3">
+                                {resources.map((resource, i) => (
+                                    <div className="mb-3" key={i}>
                                         <SelectableResourceCard resource={resource} refresh={loadResources} selected={selectedResource} setSelected={setSelectedResource}/>
                                     </div>
                                 ))}

@@ -6,6 +6,7 @@ import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -333,7 +334,9 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     }, [setDefaultMaterialType])
 
     const uploadSessionMaterial = useCallback(() => {
-        const id = sessions.find(session => session.sessionNum === sessionNum + 1).id
+        const session = sessions.find(session => session.sessionNum === sessionNum + 1)
+        if (!session) throw new CMTError({ message: "Unable to find session "})
+        const id = session.id
         return CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
             .then(async json => {
                 setSessionData(sessionData => [...sessionData, json.material])

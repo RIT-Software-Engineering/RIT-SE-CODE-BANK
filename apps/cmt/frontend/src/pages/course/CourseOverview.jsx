@@ -320,16 +320,14 @@ function CourseEditModal({isOpen, setIsOpen, course, refresh}){
         CMTJsonFetch('POST', `/course/${course.id}`, 
             { 
             code: courseCode, name: courseName, color: '#000000', workflowId: course?.workflowId, toBeTemplate: true,
-            }).then(async response => {
+            }).then(async json => {
             setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
             setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
-        }).catch(async error => {
-            const data = await error.response.json();
-            setWarning(data.details);
+        }).catch(createErrorHandler("Failed to copy", (userFacingMessage) => {
+            setWarning(userFacingMessage);
             setSubmitButtonElement(<><PlusIcon />Submit</>)
             setSubmitting(false);
-        });
+        }))
     }
 
     return (
