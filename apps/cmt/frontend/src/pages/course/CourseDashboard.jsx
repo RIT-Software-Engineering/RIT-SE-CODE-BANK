@@ -25,6 +25,7 @@ export function CourseDashboard() {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
+            setSessions(data.course.sessions)
             setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
         }).catch(async error => {
@@ -39,7 +40,6 @@ export function CourseDashboard() {
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
         (callback, outputValues) => {
-            console.log(callback, outputValues)
             if (outputValues.syllabusName)
                 return CMTFormFetch('POST', callback, outputValues.syllabusName)
             else

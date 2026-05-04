@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename)
 
 // TODO: this should integrate with SE hosting, for both homogeneity and not needing to download a new file every time you view it
 // i.e. these files should go on nitron or whatever, and not the CMT container (probably)
-// /cmt-project/uploads/resources
+// /cmt/uploads/resources
 const uploadsDir = path.join(__dirname, '..', '..', 'uploads', 'resources')
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true })
@@ -141,6 +141,7 @@ router.put('/:id', async (req, res) => {
     }
 })
 
+// We don't want professors uploading things like images for syllabi so we heavily limit options
 const syllabusUpload = multer({
     storage: storage,
     fileFilter: function (_, file, cb) {
@@ -160,23 +161,28 @@ const syllabusUpload = multer({
     },
 })
 
+/**
+ * POST /api/cmt/resources/syllabus/:courseId
+ * Creates a syllabus if one doesn't exist or updates the file if one does
+ */
 router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, res) => {
     try {
         const { courseId } = req.params
 
+        
         if (!req.file)
             return res.status(400).json({ error: 'No file uploaded' })
-
+        
         const course = await req.prisma.course.findUnique({
             where: {id: parseInt(courseId), professorId: req.user.uid}
         })
-
+        
         let resource;
-
+        
         const existingSyllabus = await req.prisma.resource.findMany({
-            where: {isSyllabus: true}
+            where: {isSyllabus: true, courseId: parseInt(courseId)}
         })
-
+        
         if (existingSyllabus.length > 0) {
             resource = await req.prisma.resource.updateMany({
                 where: {isSyllabus: true},

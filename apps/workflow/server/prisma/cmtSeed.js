@@ -52,13 +52,13 @@ async function main() {
     actions: [
         {
             name: 'Course Details',
-            description: 'Add relevant details to your course!',
+            description: 'Add relevant details to the course!',
             actionType: 'workflow',
             userId: users[0].id,
             actions: [
                 {
                     name: 'Upload syllabus',
-                    description: 'Upload your syllabus file!',
+                    description: 'Upload a syllabus file!',
                     actionType: 'simple',
                     metadata: {
                         code: 'COURSE_SYLLABUS',
@@ -68,6 +68,9 @@ async function main() {
                                 key: 'syllabusName',
                                 type: 'file',
                                 isRequired: true,
+                                validation: {
+                                    allowedTypes: ["html", "pdf", "docx"] 
+                                }
                             },
                         ],
                     },
@@ -141,7 +144,7 @@ async function main() {
                 },
                 {
                     name: 'Start Date',
-                    description: 'Select the date for when your course starts! Session dates will be autopopulated using this and course days!',
+                    description: 'Select the date for when the course starts! Session dates will be autopopulated using this and course days!',
                     actionType: 'simple',
                     metadata: {
                         code: 'COURSE_START_DATE',

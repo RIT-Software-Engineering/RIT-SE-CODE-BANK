@@ -1,7 +1,7 @@
 import express from "express";
 import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
-import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
+import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction, workflowsFetch } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 
 const prisma = new PrismaClient();
@@ -37,6 +37,50 @@ router.put("/editCheckmarkAction", async (req, res) => {
         return res.status(500).json({ error: e })
     }
 });
+
+router.put("/editDownloadCourseAction", async (req, res) => {
+    try {
+    const {workflowId} = req.body;
+    console.log(req.body)
+    const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
+    let possibleDownloadSiteActions = actions.map(action => 
+        findActionsByCode(action.childActions, "CHECKMARK_PUBLISH_SITE", null)
+    )
+    const downloadSiteAction = possibleDownloadSiteActions.filter(action => action.length > 0)
+
+    if (downloadSiteAction.length > 0){
+        const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: downloadSiteAction[0][0].actionStates[0].id, stateType: "completed"})
+        return res.status(200).json({workflowsResponse});
+    } else 
+        return res.status(404).json({error: "Download action not found."})
+
+
+    } catch (error) {
+        return res.status(500).json({error})
+    }
+});
+
+/**
+ * GET /workflow/publishedTemplates
+ * Gets all the publishd templates that contain part of the search value from the query
+ */
+router.get("/publishedTemplates", async (req, res) => {
+    try {
+        const {searchValue} = req.query;
+        const tags = await workflowsFetch('GET', `/tags/partial?value=${searchValue}`);
+        const publishedTemplates = await Promise.all(tags.flatMap(async tag => 
+            Promise.all(tag.workflowAttributes.flatMap(async workflowAttribute => {
+                return await prisma.course.findFirst({
+                    where: {workflowId: workflowAttribute.id},
+                    include: {professors: true},
+                })
+            }))
+        ))
+        return res.status(200).json(await publishedTemplates);
+    } catch (error) {
+        return res.status(500).json({error: error.message})
+    }
+})
 
 // workflow/publishCourseTemplate
 // Not to be confused with meta-templates, these are course-specific templates
@@ -236,7 +280,8 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
             CMTActionToActionWithContexts(action, null, null, req.user?.uid)
         );
 
-        const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", "SYLLABUS", "START_DATE"].filter(
+        const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
+            "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE"].filter(
             code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
         );
 
