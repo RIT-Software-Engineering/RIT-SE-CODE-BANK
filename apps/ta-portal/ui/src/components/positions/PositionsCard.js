@@ -207,7 +207,6 @@ export default function PositionsCard({
           <MenuItem onClick={() => { setIsViewingDetails(true); handleMenuClose(); }}>View Details</MenuItem>
           <MenuItem onClick={() => { setIsViewingNotes(true); handleMenuClose(); }}>View Position History</MenuItem>
           {(onReactivate || onOnHold || onInactive) && <Divider />}
-          {(onReactivate || onOnHold||onInactive)&& <Divider />}
           {(onOnHold && status !== 'ONHOLD') && (<MenuItem onClick={() => { onOnHold(position.id); handleMenuClose(); }}>Put Position on Hold </MenuItem>)}
           {(onInactive && status !== 'INACTIVE') && (<MenuItem onClick={() => { onInactive(position.id); handleMenuClose(); }}> Mark Position Inactive</MenuItem>)}
           {onReactivate && (status === 'ONHOLD' || status === 'INACTIVE') && <MenuItem onClick={() => { onReactivate(position.id); handleMenuClose(); }}>Reactivate Position</MenuItem>}
