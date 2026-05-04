@@ -574,7 +574,7 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
     };
     
     // AI-modified code
-    const onInput = useCallback(() =>
+    const onInput = useCallback(
         debounce((searchValue) => {
             searchTags(searchValue);
         }, 500),
