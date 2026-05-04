@@ -72,6 +72,8 @@ export {}
  *  required?: boolean,
  *  error?: string,
  *  disabled?: boolean,
+ *  isInvalid?: boolean,
+ *  onBlur?: () => void;
  * } & OutputDefinitionProps
  * } OutputFileProps
  */

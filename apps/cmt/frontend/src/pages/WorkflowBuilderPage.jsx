@@ -573,7 +573,10 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 name: "Syllabus",
                 key: "syllabusName",
                 type: "file",
-                isRequired: isRequired
+                isRequired: isRequired,
+                validation: {
+                    allowedTypes: ["html", "pdf", "docx"] // We hardcode validation since they're hardcoded in the resources endpoint
+                }
             }];
             break;
 
