@@ -4,7 +4,7 @@ import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { UploadResourceModal } from './modals'
 import { ResourceCard } from './resourceRenderers'
-import { AUTH_BASE, CMTJsonFetch } from '../../utils/api'
+import { BASE_URL, CMTJsonFetch } from '../../utils/api'
 
 /**
  * Generate the correct download URL for a resource based on the environment
@@ -12,7 +12,7 @@ import { AUTH_BASE, CMTJsonFetch } from '../../utils/api'
  * @returns {string}
  */
 export function getResourceDownloadUrl(resourceId) {
-    return `${AUTH_BASE}/cmt/resources/download/${resourceId}`
+    return `${BASE_URL}/api/cmt/resources/download/${resourceId}`
 }
 
 /**
