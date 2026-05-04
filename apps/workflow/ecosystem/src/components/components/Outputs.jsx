@@ -323,10 +323,12 @@ function SelectMultiOutputController({ output, value, setValue, submitted, valid
 /**
  * @param {OutputStateProps & OutputRenderers} props
  */
-function FileOutputController({ output, value, setValue, validatorRegistry, renderers, disabled }) {
+function FileOutputController({ output, value, setValue, validatorRegistry, renderers, disabled, submitted }) {
+    const [touched, setTouched] = useState(false)
 
     const getError = useCallback(nextValue => {
         if (output.isRequired && !nextValue) return 'A file upload is required'
+        if (typeof(nextValue) !== 'string' && !output.validation.allowedTypes.includes(nextValue?.get('file')?.name?.split(".").pop())) return 'File type not permitted. Please upload a sylalbus that is a PDF, HTML file, or Microsoft Docs file.'
         return null
     }, [output.isRequired])
 
@@ -337,17 +339,19 @@ function FileOutputController({ output, value, setValue, validatorRegistry, rend
     }, [getError, output, validatorRegistry])
 
     const error = getError(value)
+    const showInvalid = error && (touched || submitted)
 
     return (
         <renderers.FileOutputRenderers.FileOutput
             disabled={disabled}
             output={output}
             required={output.isRequired ?? false}
+            isInvalid={showInvalid}
+            onBlur={() => setTouched(true)}
 
             onChange={(e) => {
                     const target = e.target;
                     if ('files' in target) {
-                        console.log(target.files?.[0])
                         const formData = new FormData()
                         formData.append('file', target.files?.[0] || null)
                         setValue(formData);

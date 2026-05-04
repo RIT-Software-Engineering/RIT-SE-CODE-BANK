@@ -68,6 +68,9 @@ async function main() {
                                 key: 'syllabusName',
                                 type: 'file',
                                 isRequired: true,
+                                validation: {
+                                    allowedTypes: ["html", "pdf", "docx"] 
+                                }
                             },
                         ],
                     },
