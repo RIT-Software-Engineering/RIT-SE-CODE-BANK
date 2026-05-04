@@ -5,6 +5,8 @@ services:
     build:
       context: ../..
       dockerfile: apps/cmt/frontend/Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
     image: frontend:${TAG:-latest}
 
   backend:
