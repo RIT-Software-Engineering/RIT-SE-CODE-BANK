@@ -292,13 +292,12 @@ router.get("/workflow", async (req, res) => {
   const { userId, workflowId } = req.query;
 
   const filters = [];
-  if (workflowId) filters.push({ workflowId });
-  if (userId) {
-    // Fetch teams this user belongs to from portal API
+  if(workflowId) filters.push({ workflowId });
+  if(userId){
     let teamIds = [];
     try {
       const teamsRes = await fetch(`${process.env.PORTAL_API_URL}/api/teams/${userId}`);
-      if (teamsRes.ok) {
+      if(teamsRes.ok){
         const teams = await teamsRes.json();
         teamIds = teams.map(t => String(t.id));
       }
