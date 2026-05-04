@@ -712,7 +712,7 @@ export class CPU {
      * @param {object} oper The decoded branch instruction containing the signed offset.
      */
     bge(oper) {
-        if(this.Z === this.V) {
+        if(this.N === this.V) {
             this.br(oper);
         }
         //NZVC all remain unaffected
