@@ -16,7 +16,7 @@ export default function CourseWebsitePage() {
 
   // Fetch courses
   useEffect(() => 
-    void CMTJsonFetch("GET", `course`)
+    void CMTJsonFetch("GET", `course?isActive=true`)
       .then(setCourses)
       .catch(createErrorHandler("Failed to fetch courses.")),
     []

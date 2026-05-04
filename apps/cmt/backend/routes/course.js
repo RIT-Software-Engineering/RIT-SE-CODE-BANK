@@ -21,13 +21,16 @@ const prisma = new PrismaClient();
  */
 router.get('/', async (req, res) => {
     const profId = req.user.uid;
-    const {isTemplate} = req.query;
+    const {isTemplate, isActive} = req.query;
+    const where = {
+         professorId: profId, 
+         isTemplate: Boolean(isTemplate),
+    };
+    if (isActive)
+        where.active = Boolean(isActive)
     const courses = await prisma.course.findMany({
         include: { professors: true },
-        where: {
-            professorId: profId, 
-            isTemplate: Boolean(isTemplate)
-        },
+        where: where,
         orderBy: {id: "desc"}
     })
     res.json(courses)
