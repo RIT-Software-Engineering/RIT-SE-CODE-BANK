@@ -80,7 +80,7 @@ export function useResources(courseId) {
         setLoading(true)
 
         return CMTJsonFetch('GET', `resources/${courseId}`)
-            .then(async json => {console.log(json); setResources(json || [])})
+            .then(async json => setResources(json || []))
             .catch(createErrorHandler("Failed to load resources.", setError))
             .finally(() => setLoading(false))
     }, [courseId])
