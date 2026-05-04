@@ -449,7 +449,34 @@ export default function Bubbled(){
     setOpen(true);
 };
 //This needs to be fixed, so when a user clicks the bubble and clicks out it automaticly doesn.t complete it.
-  const handleClose = async => {
+  const handleClose = async () => {
+    if (
+    openActionState &&
+    openActionState.stateType === "notStarted"
+  ) {
+    try {
+      await fetch(`${workflowsApiUrl}/states/action/${openActionState.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stateType: "inProgress" }),
+      });
+
+      // optimistic UI update
+      setWorkflowStates((prev) =>
+        prev.map((wf) => ({
+          ...wf,
+          actionStates: wf.actionStates?.map((as) =>
+            as.id === openActionState.id
+              ? { ...as, stateType: "inProgress" }
+              : as
+          ),
+        }))
+      );
+    } catch (e) {
+      console.error("Failed to mark inProgress:", e);
+    }
+  }
+  
     setOpenAction(null);
     setOpenActionState(null);
     setActiveWorkflowState(null);

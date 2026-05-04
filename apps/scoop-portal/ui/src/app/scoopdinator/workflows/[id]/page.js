@@ -85,7 +85,7 @@ export default function WorkflowPage() {
             //each state has a user id, we gotta catch'em all!
             setAssignedUsers(Array.isArray(data) ? data.map(e => e.userId):[]);
             //samething but for teams
-            setAssignedTeams(Array.isArray(data) ? data.filter(e => e.teamId).map(e => e.teamId) : []);
+            setAssignedTeams(Array.isArray(data) ? [...new Set(data.filter(e => e.teamId).map(e => e.teamId))] : []);
         }catch(e){
             console.log("faield to fetch workflow states in scoopdinator/workflow/[id]/page.js");
         }
@@ -332,10 +332,13 @@ const handleAddTeam = async (team) => {
             body: JSON.stringify({
                 teamId: String(team.id),
                 workflowId,
+                participantUserIds: team.members.map(m => m.id)
             }),
         });
         if (!res.ok) throw new Error('Failed to assign team');
-        setAssignedTeams(prev => [...prev, String(team.id)]);
+        setAssignedTeams(prev => 
+            prev.includes(String(team.id)) ? prev : [...prev, String(team.id)]
+        );
     } catch (e) {
         alert(e.message);
     }
