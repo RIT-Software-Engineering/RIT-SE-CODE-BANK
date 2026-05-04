@@ -37,3 +37,10 @@ To run tests, run the following command in the backend
   cd apps/byte-biters/backend
   npm test
 ```
+
+## Authors
+
+- [@Sam Collier](https://www.github.com/SamCollier75) 
+Linkedin: https://www.linkedin.com/in/sam-collier-44311032b/
+- [@Alana Wu](https://www.github.com/awu8124)
+Linkedin: https://www.linkedin.com/in/alanawu8124/
