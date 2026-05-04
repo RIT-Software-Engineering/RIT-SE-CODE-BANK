@@ -42,7 +42,8 @@ export default function StateUpdateForm({
     onClose,
     onConfirm, 
     title, 
-    isProcessing, 
+    isProcessing,
+    textPrompt = "Include a custom message for the candidate (optional):",
     applicationId = null 
   }) {
   const [message, setMessage] = useState('');
@@ -153,7 +154,7 @@ export default function StateUpdateForm({
           </AccordionActions>
         </Accordion>}
         <DialogContentText sx={{ mb: 2 }}>
-          Include a custom message for the candidate (optional):
+          {textPrompt}
         </DialogContentText>
         <TextField
           autoFocus
@@ -166,7 +167,7 @@ export default function StateUpdateForm({
           rows={4}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Enter custom message..."
+          placeholder="Enter custom note..."
           disabled={isProcessing || isLoading}
           sx={(theme) => ({
             "& .MuiOutlinedInput-root": {

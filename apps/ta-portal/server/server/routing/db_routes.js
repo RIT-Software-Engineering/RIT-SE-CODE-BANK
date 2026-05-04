@@ -780,7 +780,12 @@ router.post("/hire", async (req, res) => {
 // =============================================================================
 // USER & PROFILE ROUTES
 // =============================================================================
-
+/**
+ * @route   POST /ta-portal-api/db/user-availability
+ * @desc    Checks to see if a new user is able to be created with the given information. Used mainly for sign up to avoid collision without sending the users all user data.
+ * @body    {Object} fields - a dictionary containing any number of entries of user information such as username, email, and uid
+ * @returns {Object} a dictionary with an available entry that is true when none of the fields are taken and false otherwise. A takenFields entry with a list of which entries were already taken.
+ */
 router.post('/user-availability', async (req, res) => {
   try{
     const fields = req.body;
@@ -796,6 +801,11 @@ router.post('/user-availability', async (req, res) => {
   }
 })
 
+/**
+ * @route   POST /ta-portal-api/db/dev-users
+ * @desc    Returns all users only if the login mode is set to dev. This allows the frontend to get sensitive information but only when the backend login mode is also set to dev mode.
+ * @returns {Promise<Array>} A promise that resolves to an array of all user objects.
+ */
 router.get('/dev-users', async (req, res) => {
   try{
     if (process.env.LOGIN_MODE.toLowerCase() === 'dev'){

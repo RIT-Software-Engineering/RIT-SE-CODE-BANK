@@ -541,6 +541,7 @@ function EmployerPositionsContent() {
         onConfirm={handleConfirmNote}
         title={noteModalState.title}
         isProcessing={isProcessing}
+        textPrompt="Include a public note regarding changes (optional):"
       />
     </Container >
   );

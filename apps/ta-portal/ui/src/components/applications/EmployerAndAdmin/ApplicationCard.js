@@ -434,6 +434,7 @@ export default function ApplicationCard({
         title={modalState.title}
         isProcessing={isProcessingUpdate}
         applicationId={application.id}
+        textPrompt="Include a custom message for the candidate (optional):"
       />
 
       <ApplicationNoteForm
