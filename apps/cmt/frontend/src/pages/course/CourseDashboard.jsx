@@ -27,7 +27,7 @@ export function CourseDashboard() {
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
             setCourse(json.course)
-            setSessions(json.course.sessions)
+            setSessions(json.course.sessions ?? [])
             startTransition(() => {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
