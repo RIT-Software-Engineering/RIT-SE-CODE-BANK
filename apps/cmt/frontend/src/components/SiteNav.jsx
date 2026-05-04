@@ -62,7 +62,7 @@ export default function SiteNav() {
         <Navbar.Collapse className="justify-center" aria-label="Primary">
           <Nav className="gap-2">
             {menuGroups.map((group) => (
-              <div
+              <div key={group.label}
                 className="gap-1 px-2 py-1 flex items-center border-1 border-solid rounded-lg bg-white bg-opacity-10 text-white"
                 style={{ border: "1px solid rgba(255, 255, 255, 0.2)" }}
               >
@@ -82,6 +82,7 @@ export default function SiteNav() {
                   {/* Dropdown Menu */}
                   {group.items.map((item) => (
                     <NavDropdown.Item
+                      key={item.to}
                       title={group.label}
                       eventKey={item.label}
                       as={NavLink}
