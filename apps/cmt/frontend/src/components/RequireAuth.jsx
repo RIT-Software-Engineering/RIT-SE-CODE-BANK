@@ -24,9 +24,13 @@ export default function RequireAuth({ children, roles }) {
   }
   
   // If no user, bounce to /login (basename="/cmt" will make this /cmt/login)
+  // if (!user) {
+  //   console.log("NODE_ENV = " , process.env.NODE_ENV)
+  //   return <LoginWrapper loginMode={process.env.NODE_ENV === "production" ? "shibb" : undefined} />;
+  // }
+
   if (!user) {
-    console.log("NODE_ENV = " , process.env.NODE_ENV)
-    return <LoginWrapper loginMode={process.env.NODE_ENV === "production" ? "shibb" : undefined} />;
+    return <LoginWrapper loginMode="shibb" />;
   }
 
   // User exists → render protected content
