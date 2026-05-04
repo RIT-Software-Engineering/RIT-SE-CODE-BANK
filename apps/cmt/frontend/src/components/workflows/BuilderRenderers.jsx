@@ -114,7 +114,7 @@ export function DeleteModalRenderer(props){
         <Modal.Body>
             <div className="alert alert-danger">
                 <p>You are about to permanently delete a{props.action?.attributeId ? ' workflow' : 'n action'}!</p> 
-                <p>Are you sure you'd like to delete "{props.action?.name}"? This cannot be undone!</p>
+                <p>Are you sure you&apos;d like to delete &quot;{props.action?.name}&quot;? This cannot be undone!</p>
             </div>
             <CMTDangerAlert error={props.error} />
             <div className="flex justify-between pt-4">

@@ -18,6 +18,7 @@ export function TemplateOverview() {
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [course, setCourse] = useState({});
+    const [error, setError] = useState(null)
     const [archiveOpen, setArchiveOpen] = useState(false);
     
     useEffect(() => {
@@ -25,7 +26,9 @@ export function TemplateOverview() {
     }, []);
 
     const fetchCourses = async () => {
-        CMTJsonFetch("GET", `/course?isTemplate=true`).then(setTemplates);
+        CMTJsonFetch("GET", `/course?isTemplate=true`)
+        .then(setTemplates)
+        .catch(createErrorHandler("Failed to fetch courses", setError));
       };
 
     return (
@@ -40,11 +43,11 @@ export function TemplateOverview() {
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
                 <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} course={course} refresh={fetchCourses}/>
                 <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} course={course} refresh={fetchCourses}/>
-                <Tabs defaultActiveKey={"active"}  className='mb-3'>
+                <Tabs className='mb-3'>
                 <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
                     {templates.filter(template => template.active).map(course => (
-                        <Col md={4}>
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/templates/${course.id}`)}>
                                 <Card.Header style={{background: "#0484c9"}} className='h-16 flex justify-end'>
                                 <Settings className={`hidden group-hover:block size-8 hover:size-10 text-gray-300 hover:text-white`} 
@@ -67,7 +70,7 @@ export function TemplateOverview() {
                 <Tab eventKey={"archived"} title="Archived">
                     <Row className='gy-4'>
                     {templates.filter(template => !template.active).map(course => (
-                        <Col md={4}>
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/templates/${course.id}`)}>
                                 <Card.Header style={{background: "#0484c9"}} className='h-16 flex justify-end'>
                                 <Settings className={`hidden group-hover:block size-8 hover:size-10 text-gray-300 hover:text-white`} 
@@ -164,7 +167,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                                 <Form.Label>Season for when this course happens?</Form.Label>
                                 <Form.Select onChange={e => setSeason(e.target.value)}>
                                     {["Fall", "Spring", "Summer 1", "Summer 2", "Summer 3"].map(season => {
-                                        return <option>{season}</option>
+                                        return <option key={season}>{season}</option>
                                     })}
                                 </Form.Select>
                             </div>

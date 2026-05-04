@@ -125,8 +125,8 @@ function CourseInfo({ course }) {
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
                     <p className="mb-0">Days: {course.days && course.days !== '' ? course.days : "TBD"}</p>
                     <p className="mb-0">Start Date: {course.startDate ?? "TBD"} </p>
-                    {/* TODO maybe remove? Students are kinda silly to have and a pain to update
-                    <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p> */}
+                    {/* TODO maybe remove? Students are kinda silly to have and a pain to update */}
+                    <p className={`mb-0 ${course.students ?? "hidden"}`}>Number of Students: {course.students ?? "TBD"}</p>
                 </div>
             </div>
         </>
