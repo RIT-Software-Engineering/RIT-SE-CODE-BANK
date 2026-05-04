@@ -189,7 +189,6 @@ app.get("/", (_req, res) => {
 // API Routes
 app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
-app.use("/api/cmt/course-website", courseWebsiteRoutes);
 app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
