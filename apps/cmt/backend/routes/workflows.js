@@ -1,7 +1,7 @@
 import express from "express";
 import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
-import { createAction, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
+import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
 
@@ -32,6 +32,22 @@ router.put("/editCheckmarkAction", async (req, res) => {
     const { checked } = req.body
     const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: checked ? "completed" : "notStarted" })
     return res.status(200).json(workflowsResponse)
+});
+
+router.put("/editDownloadCourseAction", async (req, res) => {
+    const {workflowId} = req.body;
+    console.log(req.body)
+    const actions = await workflowsFetch("GET", `/actions?workflowId=${workflowId}`);
+    let possibleDownloadSiteActions = actions.map(action => 
+        findActionsByCode(action.childActions, "CHECKMARK_PUBLISH_SITE", null)
+    )
+    const downloadSiteAction = possibleDownloadSiteActions.filter(action => action.length > 0)
+
+    if (downloadSiteAction.length > 0){
+        const workflowsResponse = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: downloadSiteAction[0][0].actionStates[0].id, stateType: "completed"})
+        return res.status(200).json({workflowsResponse});
+    } else 
+        return res.status(404).json({error: "Download action not found."})
 });
 
 /**

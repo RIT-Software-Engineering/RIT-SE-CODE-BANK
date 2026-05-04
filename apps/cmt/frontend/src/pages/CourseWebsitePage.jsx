@@ -200,6 +200,8 @@ export default function CourseWebsitePage() {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId})
   };
 
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>
@@ -226,6 +228,7 @@ export default function CourseWebsitePage() {
       </div>
 
       {selectedCourse && (
+        // AI-generated
         <div className="text-center">
           <button
             onClick={downloadCourseZIP}
