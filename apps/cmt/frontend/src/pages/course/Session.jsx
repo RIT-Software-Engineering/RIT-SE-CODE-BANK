@@ -83,7 +83,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
 
                 return (
-                    <Accordion.Item eventKey={`${i}`} onClick={()=>setSessionNum(i)}>
+                    <Accordion.Item eventKey={`${i}`} key={sessionAction} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
@@ -279,7 +279,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
             <Alert variant="danger">
                 <h2>Warning!</h2>
                 <p>
-                    Confirming will delete {!materialId ? 'ALL of' : ''} the session material you've created! 
+                    Confirming will delete {!materialId ? 'ALL of' : ''} the session material you&apos;ve created! 
                     Are you sure you want to continue?
                     This cannot be undone!
                 </p>
@@ -350,13 +350,13 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
 
     const titleTip = (
         <Tooltip>
-            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it&apos;ll act as an external link that leads to a new page.
         </Tooltip>
     );
 
     const contentTip = (
         <Tooltip>
-            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+            On your course site, a non-linked title will display as a link and when clicked, it&apos;ll open a page that contains the content as HTML.
         </Tooltip>
     );
 
@@ -507,13 +507,13 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 
     const titleTip = (
         <Tooltip>
-            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it'll act as an external link that leads to a new page.
+            On your course site, the title will be a link and lead to your content. If you add a resource or a link, it&apos;ll act as an external link that leads to a new page.
         </Tooltip>
     );
 
     const contentTip = (
         <Tooltip>
-            On your course site, a non-linked title will display as a link and when clicked, it'll open a page that contains the content as HTML.
+            On your course site, a non-linked title will display as a link and when clicked, it&apos;ll open a page that contains the content as HTML.
         </Tooltip>
     );
 
@@ -558,7 +558,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                         <Form.Label>Session</Form.Label>
                                         <Form.Select onChange={e => setSessionNum(e.target.value)} value={sessionNum}>
                                             {Array.from({ length: sessionCount }, (_, i) => {
-                                                return <option>Session {i+1}</option>
+                                                return <option key={i}>Session {i+1}</option>
                                             })}
                                         </Form.Select>
                                     </div>
@@ -718,7 +718,7 @@ function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, s
             </thead>
             <tbody>
                 {Array.from({ length: determineRows() }, (_, i) => (
-                <tr> 
+                <tr key={i}> 
                     {isPreviewMode && <td className="text-center p-3"><p className="font-bold">{sessionNum+1}</p><p>{sessionDate}</p></td>}
                     {(cols[0] || !isPreviewMode) ? ( // Topic/Lecture
                         <td 

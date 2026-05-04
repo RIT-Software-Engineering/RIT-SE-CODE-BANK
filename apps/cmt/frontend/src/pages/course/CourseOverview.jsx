@@ -43,7 +43,7 @@ export function CourseOverview() {
                     {error
                     ? <CMTDangerAlert error={error} />
                     : courseOverview.map(course => (
-                        <Col md={4}>
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
                                     <Palette className={`hidden group-hover:block size-10 hover:size-12
@@ -168,7 +168,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                         : templates.length > 0 
                         ? <div className="max-h-64 overflow-y-scroll mb-2">
                             {templates.map(template => (
-                                <div className="mb-3">
+                                <div className="mb-3" key={template}>
                                     <SelectableTemplateCard template={template} selected={selectedTemplate} setSelected={setSelectedTemplate}/>
                                 </div>
                             ))}
@@ -204,7 +204,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                     <div className="flex gap-2 mb-4 min-w-full min-h-full">
                         {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                         {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                            <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                            <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                         )}
                     </div>
                     {showWheel && <div>{<ColorWheel setColor={setColor}/>}</div>}
