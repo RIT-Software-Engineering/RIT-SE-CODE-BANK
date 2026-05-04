@@ -61,7 +61,7 @@ To automatically install dependencies, check/apply database migrations, and star
 Tips for usage:
 - If a service crashes and fails to start again, hover over the terminal name and press the restart button.
 - To exit a task, press the trash can button, or `ctrl`+`c`
-- If a task is getting stuck for no reason, exit and restart it. You can restart tasks by name by selecting them instead of `Start CMT`
+- If a task is getting stuck for no reason, exit and restart it (or just restart with ctrl-shift-r while selecting the erminal). You can restart tasks by name by selecting them instead of `Start CMT`
 
 > If you don't use VSCode, this may not work. I suggest looking into if your IDE has a similar feature, otherwise, you can either vibe code a script to do it generically, or do the manual option.
 
