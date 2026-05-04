@@ -13,4 +13,6 @@ services:
     build:
       context: ../..
       dockerfile: apps/cmt/backend/Dockerfile
+      args:
+        NODE_ENV: ${NODE_ENV}
     image: backend:${TAG:-latest}
