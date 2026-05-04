@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import JSZip from "jszip";
+import { Alert, Form } from "react-bootstrap";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isWeeks, setIsWeeks] = useState(false);
 
   // Fetch courses
   useEffect(() => {
@@ -21,6 +24,13 @@ export default function CourseWebsitePage() {
     })();
   }, []);
 
+  // the full course object to get course name & course id
+  const selectedCourseObj = useMemo(() => {
+    console.log("selectedCourse:", selectedCourse);
+    console.log("courses:", courses);
+    return courses.find(c => c.id === selectedCourse) || null;
+  }, [selectedCourse, courses]);
+
   // Fetch sessions and materials for selected course
   useEffect(() => {
     if (!selectedCourse) return;
@@ -32,8 +42,20 @@ export default function CourseWebsitePage() {
         const combined = result.sessions.map((session, index) => ({
           ...session,
           materials: result.sessionMaterials[index]?.material || [],
-        }));
+        })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
+
+        // AI-generated code
+        if (courses.find(c => c.id === selectedCourse)?.days)
+          setWeeks(combined.reduce((acc, item, index) => {
+            const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(item);
+            return acc;
+          }, []));
+        else
+          setWeeks(null);
+
       }).catch(async error => {
         console.error("Error fetching sessions:", error);
         setSessions([]);
@@ -41,23 +63,25 @@ export default function CourseWebsitePage() {
     };
 
     fetchSessions();
-  }, [selectedCourse]);
-
-  // the full course object to get course name & course id
-  const selectedCourseObj = useMemo(() => {
-    console.log("selectedCourse:", selectedCourse);
-    console.log("courses:", courses);
-    return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  const  generateCourseHTML = async (course, sessions) => {
-    const rows = await Promise.all(
-      sessions
-        .sort((a, b) => a.sessionNum - b.sessionNum)
-        .map(session =>
-          generateSessionRowHTML(session, visibleColumns)
-        )
-    );
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks) => {
+    let rows;
+    if (isWeeks && weeks)
+      rows = await Promise.all(
+        weeks
+          .map((week, index) =>
+            generateWeekRowHTML(week, visibleColumns, index)
+          )
+      );
+    else
+      rows = await Promise.all(
+        sessions
+          .sort((a, b) => a.sessionNum - b.sessionNum)
+          .map(session =>
+            generateSessionRowHTML(session, visibleColumns)
+          )
+      );
 
     return `
     <!DOCTYPE html>
@@ -91,7 +115,6 @@ export default function CourseWebsitePage() {
         td:first-child {
           text-align: center;
           vertical-align: middle;
-          font-weight: bold;
         }
 
         td {
@@ -112,7 +135,7 @@ export default function CourseWebsitePage() {
       <table>
         <thead>
           <tr>
-            <th>Session</th>
+            <th>${isWeeks ? 'Week' : 'Session'}</th>
             ${visibleColumns.map(col => `<th>${col}</th>`).join("")}
           </tr>
         </thead>
@@ -185,7 +208,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.
@@ -220,8 +243,8 @@ export default function CourseWebsitePage() {
     <div>
       {/* Course Selector */}
       <div>
-        <select
-          className="border rounded-lg p-2 text-lg"
+        <Form.Select
+          className="border rounded-lg p-2 text-lg max-w-[30%]"
           value={selectedCourse || ""}
           onChange={(e) => setSelectedCourse(Number(e.target.value))}>
           <option value="" disabled>Select a course</option>
@@ -230,7 +253,11 @@ export default function CourseWebsitePage() {
               {course.classId}-{course.section} | {course.name} ({course.season} {course.year})
             </option>
           ))}
-        </select>
+        </Form.Select>
+      </div>
+      <div className="flex text-lg gap-2 mt-3">
+        <Form.Label className={`${selectedCourse ? '' : 'text-gray-300'}`}>Display as weeks?</Form.Label>
+        <Form.Check disabled={!selectedCourse} onChange={() => setIsWeeks(prev => !prev)}/>
       </div>
 
       {selectedCourse && (
@@ -238,7 +265,7 @@ export default function CourseWebsitePage() {
         <div className="text-center">
           <button
             onClick={downloadCourseZIP}
-            className="group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer"
+            className={`${(isWeeks && weeks) || !isWeeks ? 'block' : 'hidden'} group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer`}
           >
             <svg
               className="w-4 h-4 transition-transform duration-150 group-hover:translate-y-0.5"
@@ -263,14 +290,14 @@ export default function CourseWebsitePage() {
 
       {/* Events Table */}
       {loading ? (
-        <div className="text-center p-6">Loading events...</div>
+        <div className="text-center p-6">Loading material...</div>
       ) : sessions.length === 0 ? (
-        <p className="text-gray-500 text-center">No events found for this course.</p>
+        <p className="text-gray-500 text-center">No material found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
           <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-blue-300 p-3 text-center">Session</th>
+              <th className="border border-blue-300 p-3 text-center">{isWeeks ? 'Week' : 'Session'}</th>
                 {visibleColumns.map(col => (
                   <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
@@ -279,8 +306,7 @@ export default function CourseWebsitePage() {
             </tr>
           </thead>
           <tbody>
-            {sessions
-              .sort((a, b) => a.sessionNum - b.sessionNum)
+            {!isWeeks ? sessions
               .map((session, index) => {
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
@@ -303,7 +329,42 @@ export default function CourseWebsitePage() {
                     ))}
                 </tr>
                 );
-              })}
+              }) : 
+
+              (weeks? weeks.map((week, index) => {
+                const materials = week.flatMap(session => session?.materials);
+                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+
+                return (<>
+                <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                  <td className="border border-blue-300 p-3 text-center">
+                    <p className="font-semibold">{index+1}</p>
+                    <small>
+                      <span>{week[0]?.date ?? "TBD"} -</span>
+                      <p>{week[week.length-1]?.date ?? "TBD"}</p>
+                    </small>
+                  </td>
+
+                    {grouped.map(colItems => (
+                        <td className="border border-blue-300 p-3 align-top">
+                          {colItems.map(item => (
+                          <div key={item.id} className="mb-1">
+                            <ReadOnlyEditor value={item.label} />
+                          </div>
+                        ))}
+                        </td>
+                    ))}
+
+                </tr>
+                </>)
+              }) :
+              <Alert variant="danger">
+                <p>You have not selected days in your course, so we cannot display the site in weeks.</p>
+                <p>If you would like to see your course in weeks, please finish the first multi-step to continue.</p>
+              </Alert>
+            )
+
+            }
           </tbody>
         </table>
       )}
@@ -361,12 +422,63 @@ async function generateSessionRowHTML(session, visibleColumns) {
 
   return `
     <tr>
-      <td>${session.sessionNum}</td>
+      <td>
+      <p><strong>${session.sessionNum}</strong></p>
+      <p>${session?.date ?? "TBD"}</p>
+      </td>
       ${columnsHTML.join("")}
     </tr>
   `;
 }
 
+async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
+  const materials = week.flatMap(session => session?.materials);
+  const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+
+  const columnsHTML = await Promise.all(
+    grouped.map(async colItems => {
+      const itemsHTML = await Promise.all(
+        colItems.map(async item => {
+          // If an item has a body rewrite any resource links in the body and encoded it.
+          // Then whenever the title is clicked open a new page with the body content
+          if (item.body) {
+            const rewrittenBody = await rewriteResourceLinks(item.body);
+            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+
+            return `<a href="#" onclick="openItem('${encoded}'); return false;">
+              ${item.label}
+            </a>`;
+          }
+
+          // Rewrite resource links in title
+          const rewrittenLabel = await rewriteResourceLinks(item.label);
+
+          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+            return `<span>${item.label}</span>`;
+          }
+
+          return `<span>${rewrittenLabel}</span>`;
+        })
+      );
+
+      return `<td>${itemsHTML.join("")}</td>`;
+    })
+  );
+
+  return `
+    <tr>
+      <td>
+      <p><strong>${weekIndex+1}</strong></p>
+      <small>
+      <span>${week[0]?.date ?? "TBD"} - </span>
+      <p>${week[week.length-1]?.date ?? "TBD"}</p>
+      </small>
+      </td>
+      ${columnsHTML.join("")}
+    </tr>
+  `;
+}
 
 // Helper function to rewrite the resource links from api calls to relatives paths
 async function rewriteResourceLinks(html) {
