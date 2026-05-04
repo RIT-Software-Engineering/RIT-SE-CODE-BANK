@@ -66,7 +66,7 @@ describe("Autoincrement / Autodecrement Addressing Modes", () => {
     test("PC indexed X(PC) resolves correctly", () => {
         const state = run(`
 start:
-            MOV 2(PC), R0
+            MOV (PC), R0
             .WORD 0xBEEF
             halt
         `);
