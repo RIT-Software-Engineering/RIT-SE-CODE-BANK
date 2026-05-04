@@ -108,7 +108,7 @@ There is a reset-all-data command in the cmt package.json. Running this can be h
 
 > You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
 
-> **Important warning about data**: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes.
+> **Important warning about data**: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes. Look at other projects, if you'd like examples
 
 ---
 
