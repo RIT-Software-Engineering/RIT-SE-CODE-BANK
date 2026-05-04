@@ -96,7 +96,7 @@ export default function ShibbLoginPage() {
       <Card sx={{ maxWidth: 400, width: "100%" }}>
         <CardContent sx={{ textAlign: "center", padding: 4 }}>
           <Typography variant="h5" gutterBottom>
-            Scoop Portal Login
+            CMT Login
           </Typography>
           <Typography variant="body2" color="text.secondary" gutterBottom>
             Please sign in using your institutional credentials.
