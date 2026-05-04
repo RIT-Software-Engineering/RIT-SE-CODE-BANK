@@ -42,7 +42,7 @@ router.get('/templates', async (_, res) => {
     const templateWorkflows = await workflowsFetch("GET", "/workflows?tags=TangledUpInLiesImAWorkflony");
     const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
-            where: {workflowId: workflow.id},
+            where: {workflowId: workflow.id, active: true},
             include: {professors: true},
         })
     )));
@@ -364,7 +364,7 @@ router.post('/:templateId', async (req, res) => {
     try {
         const professorId = req.user.uid;
         const {templateId} = req.params;
-        const {color, workflowId} = req.body;
+        const {color, workflowId, name, code, toBeTemplate} = req.body;
 
         let sessionActions;
         let workflow;
@@ -380,7 +380,18 @@ router.post('/:templateId', async (req, res) => {
                     if (action.childActions) for (action of action.childActions) parseMetadata(action)
                 }
                 actionResponse.forEach(action => parseMetadata(action))
-                actionResponse = actionResponse?.filter(action => (action?.metadata?.code !== 'PUBLISH_TEMPLATE')); // Remove the publish template action
+                if (!toBeTemplate)
+                    actionResponse = actionResponse?.filter(action => (action?.metadata?.code !== 'PUBLISH_TEMPLATE')); // Remove the publish template action
+                else if (!actionResponse?.find(action => (action?.metadata?.code === 'PUBLISH_TEMPLATE')))
+                    actionResponse.push({
+                        name: 'Publish Your Template',
+                        description: "Once you're done, press the button to publish your template for public use.\
+                        In the Workflow Builder, you can add some keywords to the tags so searches are more relevant.",
+                        actionType: 'simple',
+                        metadata: {
+                            code: 'PUBLISH_TEMPLATE',
+                        },
+                    })
                 actions = actionResponse 
             }
             else
@@ -416,24 +427,27 @@ router.post('/:templateId', async (req, res) => {
             const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
             console.log(`Created workflow action state with id ${createdState.id}`)
             
-            // the created workflow doesn't return all the child actions so we have to get them here
-            const fullCreatedWorkflow = await workflowsFetch("GET", `/actions/?workflowId=${createdWorkflow.id}`);
-            await cloneWorkflowState(actionResponse, fullCreatedWorkflow);
-            
+            // We only want to clone the workflow state if we're not creating a template
+            if (!toBeTemplate) {
+                // the created workflow doesn't return all the child actions so we have to get them here
+                const fullCreatedWorkflow = await workflowsFetch("GET", `/actions/?workflowId=${createdWorkflow.id}`);
+                await cloneWorkflowState(actionResponse, fullCreatedWorkflow);
+            }
+
             // create the course using the same data as the template
             const newCourse = await prisma.course.create({
                 data: {
-                    classId: course.classId,
-                    name: course.name,
+                    classId: code ?? course.classId,
+                    name: name ?? course.name,
                     color: color,
-                    season: course.season,
-                    year: course.year,
-                    students: course.students,
-                    section: course.section,
+                    season: course.season ?? 'Fall',
+                    year: toBeTemplate ? null : course.year,
+                    students: toBeTemplate ? null : course.students,
+                    section: toBeTemplate ? null : course.section,
                     professors: { connect: { id: professorId } },
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
-                    isTemplate: false,
+                    isTemplate: toBeTemplate ?? false,
                     syllabusName: course.syllabusName,
                     startDate: course.startDate,
                     days: course.days,
@@ -448,17 +462,19 @@ router.post('/:templateId', async (req, res) => {
 
             // copy the resourcs to the course and add them to an object as pairs for later
             const resourcePromise = course.Resource.map(async resource => {
-                const newResource = await req.prisma.resource.create({
-                    data: {
-                        name: resource.name.replace(/\..+$/, ""),
-                        filename: resource.filename,
-                        mimeType: resource.mimeType,
-                        filePath: resource.filePath,
-                        courseId: Number(newCourse.id),
-                        isSyllabus: resource.isSyllabus,
-                    },
-                });
-                return {old: resource.id, new: newResource.id}
+                if (!(toBeTemplate && resource.isSyllabus)) {
+                    const newResource = await req.prisma.resource.create({
+                        data: {
+                            name: resource.name.replace(/\..+$/, ""),
+                            filename: resource.filename,
+                            mimeType: resource.mimeType,
+                            filePath: resource.filePath,
+                            courseId: Number(newCourse.id),
+                            isSyllabus: resource.isSyllabus,
+                        },
+                    });
+                    return {old: resource.id, new: newResource.id}
+                }
             });
 
             const resourcePairs = await Promise.all(resourcePromise);
@@ -529,6 +545,9 @@ router.post('/:templateId', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params
     const updateData = req.body
+
+    console.log('PUT /api/cmt/course/:id called with:', id, updateData)
+
     const mappedData = {
         ...(updateData.courseCode !== undefined 
             && { classId: updateData.courseCode }
@@ -552,6 +571,17 @@ router.put('/:id', async (req, res) => {
         ...(updateData.section !== undefined 
             && { section: updateData.section }
         ),
+        ...(updateData.days !== undefined
+            && {days: typeof(updateData.days) !== 'string' ? 
+                updateData.days.filter(day => day !== false).join(', ') :
+                updateData.days}
+        ),
+        ...(updateData.startDate !== undefined 
+            && {startDate: updateData.startDate}
+        ),
+        ...(updateData.active !== undefined
+            && {active: updateData.active}
+        )
     }
 
     const updatedCourse = await prisma.course.update({
@@ -559,10 +589,43 @@ router.put('/:id', async (req, res) => {
         data: mappedData
     })
 
+    console.log('Course updated successfully:', updatedCourse)
+
+    if (updatedCourse.startDate && updatedCourse.days){
+        const emptyDaySessions = await prisma.session.findMany({
+            where: {date: null, courseId: Number(id)}
+        });
+        if (emptyDaySessions.length > 0){
+            const courseDays = updatedCourse.days.split(", ");
+            const courseStartDate = new Date(updatedCourse.startDate);
+            const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+            // AI - generated code
+            let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
+
+            console.log(sessionDate)
+
+            emptyDaySessions.forEach(async session => {
+                sessionDate.setDate(sessionDate.getDate() + 1);
+
+                while (!courseDays.includes(allDays[sessionDate.getDay()]))
+                    sessionDate.setDate(sessionDate.getDate() + 1)
+
+                await prisma.session.update({
+                    where: {id: session.id},
+                    data: {date: sessionDate.toISOString().split('T')[0]}
+                })
+            })
+        }
+    }
+
     const { uid: _userId, asid: actionStateId } = req.query
     if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
-    res.json({ course: updatedCourse })
+    res.json({
+        success: true,
+        data: updatedCourse,
+    })
 })
 
 /**
@@ -570,9 +633,34 @@ router.put('/:id', async (req, res) => {
  * Delete a course and all related data (events, enrollments, etc.)
  */
 router.delete('/:id', async (req, res) => {
-    const { id } = req.params
-    await prisma.course.delete({
-        where: { id: Number(id) },
-    })
-    res.sendStatus(200)
+    try {
+        const { id } = req.params
+
+        console.log('DELETE /api/cmt/course/:id called with:', Number(id))
+
+        // Then delete the course
+        await prisma.course.update({
+            where: { id: parseInt(id) },
+            data: {active: false}
+        })
+
+        res.json({
+            success: true,
+            message: 'Course archived.',
+        })
+    } catch (error) {
+        console.error('Error deleting course:', error)
+
+        if (error.code === 'P2025') {
+            return res.status(404).json({
+                success: false,
+                error: 'Course not found',
+            })
+        }
+
+        res.status(500).json({
+            success: false,
+            error: error.message,
+        })
+    }
 })
