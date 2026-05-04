@@ -12,7 +12,7 @@
     "services/notification-service"
   ],
   "scripts": {
-    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"Tasks: Run Task\", press enter, then type/select \"Start CMT\", then hit enter twice. For more info, check the CMT README'",
+    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"Tasks: Run Task\", press enter, then type/select \"Start CMT\", then hit enter twice (the scanning task output thing is irrelevant). For more info, check the CMT README'",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",
     "stopportal": "node ./scripts/stopportal.js"
