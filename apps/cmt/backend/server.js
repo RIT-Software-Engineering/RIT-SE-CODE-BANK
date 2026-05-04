@@ -14,7 +14,6 @@ import resourceRoutes from './routes/resources.js';
 
 import path from "path";
 import { fileURLToPath } from "url";
-import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
 import { readFileSync } from "fs";
 import dotenv from "dotenv";
 import { CMTErrorToString, serializeError } from "@se-code-bank/cmt-shared-utilities";
