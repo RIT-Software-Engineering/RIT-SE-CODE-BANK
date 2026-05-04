@@ -501,6 +501,10 @@ export default function Header() {
 
             {/* Logout Button */}
             <Button
+              // Replace href with onClick to ensure proper redirection and session clearing once env for prod and dev are setup
+              // onClick={() => {
+              //   window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/logout?returnTo=${encodeURIComponent(window.location.origin + process.env.NEXT_PUBLIC_URL_BASE_PATH)}`;
+              // }}              
               href={process.env.NEXT_PUBLIC_URL_BASE_PATH}
               variant="outlined"
               color="inherit"
