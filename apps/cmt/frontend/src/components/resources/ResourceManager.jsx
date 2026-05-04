@@ -74,21 +74,19 @@ export function useResources(courseId) {
     const [error, setError] = useState(null)
 
     const loadResources = useCallback(() => {
-        console.log('loading resources')
         if (!courseId) return
-        console.log('still loading resources')
 
         setError(null)
         setLoading(true)
 
-        CMTJsonFetch('GET', `resources/${courseId}`)
+        return CMTJsonFetch('GET', `resources/${courseId}`)
             .then(async json => {console.log(json); setResources(json || [])})
             .catch(createErrorHandler("Failed to load resources.", setError))
             .finally(() => setLoading(false))
     }, [courseId])
 
     useEffect(() => {
-        if (courseId) loadResources(courseId)
+        if (courseId) loadResources()
     }, [courseId, loadResources])
 
     return [resources, loading, loadResources, error]

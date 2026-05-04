@@ -75,7 +75,6 @@ export function ResourceLinkModal({ editor, courseId }) {
 
         CMTFormFetch('POST', `resources/${courseId}`, formData)
             .then(_ => {
-                console.log(_)
                 loadResources()
                 setFile(null)
                 setResourceName('')
