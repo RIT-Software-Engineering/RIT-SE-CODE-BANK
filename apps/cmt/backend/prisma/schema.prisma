@@ -30,6 +30,7 @@ model Course {
   section         String?
   days            String?
   startDate       String?
+  active          Boolean        @default(true)
   professorId     String
   professors      Professor      @relation(fields: [professorId], references: [id])
   sessions        Session[]
