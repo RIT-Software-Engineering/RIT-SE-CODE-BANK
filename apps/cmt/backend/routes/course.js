@@ -76,6 +76,7 @@ router.get('/:id', async (req, res) => {
         // TODO: check perms/if prof owns course
         const course = await prisma.course.findUnique({
             where: { id: parseInt(req.params.id), professorId: req.user.uid },
+            include: {sessions: true}
         })
 
         if (!course) 
@@ -227,7 +228,7 @@ router.post('/:templateId', async (req, res) => {
                     if (action.childActions) for (action of action.childActions) parseMetadata(action)
                 }
                 actionResponse.forEach(action => parseMetadata(action))
-                actionResponse = actionResponse?.slice(0, -1); // Remove the publish template action
+                actionResponse = actionResponse?.filter(action => (action?.metadata?.code !== 'PUBLISH_TEMPLATE')); // Remove the publish template action
                 actions = actionResponse 
             }
             else
@@ -281,6 +282,9 @@ router.post('/:templateId', async (req, res) => {
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: false,
+                    syllabusName: course.syllabusName,
+                    startDate: course.startDate,
+                    days: course.days,
                 },
             });
 
@@ -299,6 +303,7 @@ router.post('/:templateId', async (req, res) => {
                         mimeType: resource.mimeType,
                         filePath: resource.filePath,
                         courseId: Number(newCourse.id),
+                        isSyllabus: resource.isSyllabus,
                     },
                 });
                 return {old: resource.id, new: newResource.id}
@@ -399,6 +404,14 @@ router.put('/:id', async (req, res) => {
             ...(updateData.section !== undefined 
                 && { section: updateData.section }
             ),
+            ...(updateData.days !== undefined
+                && {days: typeof(updateData.days) !== 'string' ? 
+                    updateData.days.filter(day => day !== false).join(', ') :
+                    updateData.days}
+            ),
+            ...(updateData.startDate !== undefined 
+                && {startDate: updateData.startDate}
+            )
         }
 
         const updatedCourse = await prisma.course.update({
@@ -407,6 +420,34 @@ router.put('/:id', async (req, res) => {
         })
 
         console.log('Course updated successfully:', updatedCourse)
+
+        if (updatedCourse.startDate && updatedCourse.days){
+            const emptyDaySessions = await prisma.session.findMany({
+                where: {date: null, courseId: Number(id)}
+            });
+            if (emptyDaySessions.length > 0){
+                const courseDays = updatedCourse.days.split(", ");
+                const courseStartDate = new Date(updatedCourse.startDate);
+                const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+                // AI - generated code
+                let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
+
+                console.log(sessionDate)
+
+                emptyDaySessions.forEach(async session => {
+                    sessionDate.setDate(sessionDate.getDate() + 1);
+
+                    while (!courseDays.includes(allDays[sessionDate.getDay()]))
+                        sessionDate.setDate(sessionDate.getDate() + 1)
+
+                    await prisma.session.update({
+                        where: {id: session.id},
+                        data: {date: sessionDate.toISOString().split('T')[0]}
+                    })
+                })
+            }
+        }
 
         const { uid: _userId, asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })

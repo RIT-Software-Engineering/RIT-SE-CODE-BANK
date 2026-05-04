@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { CMTJsonFetch } from '../../utils/api.js'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { Session } from '../course/Session.jsx'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { ArrowLeft } from 'lucide-react'
@@ -39,6 +39,7 @@ export function TemplateDashboard() {
             // Manually override it in the display since we never actually set a color.
             data.course.color = '#0484c9';
             setCourse(data.course)
+            setSessions(data.course.sessions)
             setActionsWithContexts(data.actionsWithContexts)
             setWorkflow(data.workflow)
         })
@@ -47,7 +48,12 @@ export function TemplateDashboard() {
 
     /** @type FetchToCallback */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
+        (callback, outputValues) => {
+            if (outputValues.syllabusName)
+                return CMTFormFetch('POST', callback, outputValues.syllabusName)
+            else
+                return CMTJsonFetch('PUT', callback, outputValues)
+        },
         []
     )
 
@@ -123,7 +129,8 @@ function CourseInfo({ course}) {
                     </div>
                 </div>
                 <div className="flex gap-10">
-                    <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
+                    <p className="mb-0">Semester: {course.season ?? "TBD"}</p>
+                    <p className="mb-0">Start Date: {course.startDate ?? "TBD"} </p>
                 </div>
             </div>
         </>

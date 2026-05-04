@@ -206,6 +206,8 @@ export default function CourseWebsitePage() {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId})
   };
 
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>
@@ -232,6 +234,7 @@ export default function CourseWebsitePage() {
       </div>
 
       {selectedCourse && (
+        // AI-generated
         <div className="text-center">
           <button
             onClick={downloadCourseZIP}
@@ -284,8 +287,9 @@ export default function CourseWebsitePage() {
                 return (
                   <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
 
-                    <td className="border border-blue-300 p-3 font-semibold text-center">
-                      {session.sessionNum}
+                    <td className="border border-blue-300 p-3 text-center">
+                      <p className="font-semibold">{session.sessionNum}</p>
+                      <p>{session?.date ?? "TBD"}</p>
                     </td>
 
                     {grouped.map((colItems, colIndex) => (

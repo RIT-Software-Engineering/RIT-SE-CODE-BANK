@@ -250,18 +250,22 @@ export function ActionContent({ actionWithContexts, outputValues, setOutputValue
         <renderers.NavigateButton actionWithContexts={actionWithContexts} onClick={onNavigate}></renderers.NavigateButton>
     ) : (
         <>
-            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => (
-                <Output
+            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => {
+                let defaultValue = outputValues[output.key]
+                if (output.type === 'multiselect' && !defaultValue){
+                    defaultValue = new Array(output.validation.options.length).fill(false);
+                }
+                return <Output
                     key={output.key}
                     output={output}
-                    value={outputValues[output.key]}
+                    value={defaultValue}
                     setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
                     submitted={submitted}
                     validatorRegistry={validatorRegistry}
                     renderers={renderers.OutputRenderers}
                     disabled={actionWithContexts.processedAction.isFrozen}
                 />
-            ))}
+            })}
         </>
     )
 }

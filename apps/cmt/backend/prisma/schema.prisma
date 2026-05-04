@@ -28,6 +28,8 @@ model Course {
   color           String
   students        Int?
   section         String?
+  days            String?
+  startDate       String?
   professorId     String
   professors      Professor      @relation(fields: [professorId], references: [id])
   sessions        Session[]
@@ -35,6 +37,7 @@ model Course {
   tbteamset       TBTeamSet[]
   workflowId      String
   workflowStateId String
+  syllabusName        String?       // The actual syllabus is found in resources
   Resource        Resource[]
   isTemplate      Boolean       @default(false)
 }
@@ -45,6 +48,7 @@ model Session {
   courseId    Int
   completed   Boolean    @default(false)  // TODO Needs to be added for workflow actions too
   asid        String?                     // TODO add workflow actions here
+  date        String?
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
 }
@@ -129,6 +133,7 @@ model Resource {
   courseId  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  isSyllabus Boolean @default(false)
   course    Course   @relation(fields: [courseId], references: [id])
 
   @@index([courseId])

@@ -4,7 +4,7 @@ import { Button } from 'react-bootstrap'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ResourceManager } from '../../components/resources/ResourceManager.jsx'
 import { CMTWorkflow } from '../../components/workflows/workflow.jsx'
-import { CMTJsonFetch } from '../../utils/api.js'
+import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 
@@ -25,6 +25,7 @@ export function CourseDashboard() {
         return CMTJsonFetch('GET', `course/${id}`).then(async response => {
             const data = await response.json()
             setCourse(data.course)
+            setSessions(data.course.sessions)
             setActionsWithContexts(data.actionsWithContexts ?? [])
             setWorkflow(data.workflow)
         }).catch(async error => {
@@ -38,7 +39,12 @@ export function CourseDashboard() {
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
     const fetchToCallback = useCallback(
-        (callback, outputValues) => CMTJsonFetch('PUT', callback, outputValues),
+        (callback, outputValues) => {
+            if (outputValues.syllabusName)
+                return CMTFormFetch('POST', callback, outputValues.syllabusName)
+            else
+                return CMTJsonFetch('PUT', callback, outputValues)
+        },
         []
     )
 
@@ -111,6 +117,8 @@ function CourseInfo({ course }) {
                 <div className="flex gap-10">
                     <p className="mb-0">Section: {course.section ?? "TBD"} </p>
                     <p className="mb-0">Semester: {course.season ?? "TBD"} {course.year}</p>
+                    <p className="mb-0">Days: {course.days && course.days !== '' ? course.days : "TBD"}</p>
+                    <p className="mb-0">Start Date: {course.startDate ?? "TBD"} </p>
                     {/* TODO maybe remove? Students are kinda silly to have and a pain to update
                     <p className="mb-0">Number of Students: {course.students ?? "TBD"}</p> */}
                 </div>
