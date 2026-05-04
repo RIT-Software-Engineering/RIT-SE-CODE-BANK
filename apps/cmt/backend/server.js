@@ -47,7 +47,6 @@ const allowedOrigins = [
 ];
 if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 
-const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
 app.use(
