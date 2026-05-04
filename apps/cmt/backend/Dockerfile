@@ -6,8 +6,6 @@ COPY . .
 
 RUN npm ci --workspace=apps/workflow/ecosystem --workspace=apps/cmt/backend
 
-RUN npm run --workspace=apps/workflow/ecosystem build
-
 WORKDIR /app/apps/cmt/backend
 
 
