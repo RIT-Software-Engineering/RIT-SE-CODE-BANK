@@ -28,7 +28,7 @@ export function ComplexCardContainer(props) {
 			<Accordion.Body>
 				{possibleSessionAction ?
 				<div className="min-w-2/3 w-4/5 flex mb-3">
-					<div>{possibleSessionAction?.description}</div>
+					<div>{possibleSessionAction.processedAction.description}</div>
 					
 					<div><Button 
 					onClick={() => 
