@@ -10,7 +10,7 @@ import { OPCODES } from "./opcodes.js";
  *         address‑annotated AST.
  */
 export function firstPass(parsedData) {
-    let lc = 0;
+    let lc = 0o200;
     const symbols = {};
 
     for(const data of parsedData) {
