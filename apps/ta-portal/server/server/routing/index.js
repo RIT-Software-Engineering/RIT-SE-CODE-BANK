@@ -74,6 +74,12 @@ router.get("/health", async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /ta-portal-api/login-mode
+ * @desc    Get which login mode is supported by the backend. Informs the frontend to what login menu it should use.
+ * @access  Public
+ * @returns {string} The current login mode (dev, prod, shibb)
+ */
 router.get("/login-mode", async (req, res) => {
   try{
     res.status(200).json({ loginMode: process.env.LOGIN_MODE });

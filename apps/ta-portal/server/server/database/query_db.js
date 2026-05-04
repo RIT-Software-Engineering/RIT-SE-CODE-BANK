@@ -1800,6 +1800,11 @@ async function getAllUsers() {
   }
 }
 
+/**
+ * Checks to see if any provided fields are taken by an existing user.
+ * @param {Object} fields - a dictionary containing any number of entries of user information such as username, email, and uid
+ * @returns a dictionary with an available entry that is true when none of the fields are taken and false otherwise. A takenFields entry with a list of which entries were already taken.
+ */
 async function checkUserAvailability(fields){
   try{
     const {username, email, uid} = fields;
