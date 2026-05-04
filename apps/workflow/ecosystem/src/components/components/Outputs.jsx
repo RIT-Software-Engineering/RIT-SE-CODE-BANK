@@ -328,7 +328,7 @@ function FileOutputController({ output, value, setValue, validatorRegistry, rend
 
     const getError = useCallback(nextValue => {
         if (output.isRequired && !nextValue) return 'A file upload is required'
-        if (typeof(nextValue) !== 'string' && !output.validation.allowedTypes.includes(nextValue?.get('file')?.name?.split(".").pop())) return 'File type not permitted. Please upload a sylalbus that is a PDF, HTML file, or Microsoft Docs file.'
+        if (typeof(nextValue) !== 'string' && !output.validation.allowedTypes.includes(nextValue?.get('file')?.name?.split(".").pop())) return `File type not permitted. Please upload a file of one of the following types: ${output.validation.allowedTypes.join(", ")}.`
         return null
     }, [output.isRequired])
 
