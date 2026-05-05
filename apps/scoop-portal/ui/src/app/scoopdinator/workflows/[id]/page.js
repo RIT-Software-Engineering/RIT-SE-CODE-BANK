@@ -42,6 +42,7 @@ export default function WorkflowPage() {
   const [editingActionId, setEditingActionId] = useState(null);
   const [editingActionName, setEditingActionName] = useState('');
   const [editingActionDescription, setEditingActionDescription] = useState('');
+  const [editingActionFileSubmission, setEditingActionFileSubmission] = useState(false);
 
   //this is so i can edit and the users I assign to my workflow
   const [assignModalOpen, setAssignModalOpen] = useState(false);
@@ -373,6 +374,7 @@ const handleRemoveTeam = async (teamId) => {
     setEditingActionId(action.id);
     setEditingActionName(action.name || '');
     setEditingActionDescription(action.description || '');
+    setEditingActionFileSubmission(action.requiresSubmission || false);
     setIsEditModalOpen(true);
   };
 
@@ -381,6 +383,7 @@ const handleRemoveTeam = async (teamId) => {
     setEditingActionId(null);
     setEditingActionName('');
     setEditingActionDescription('');
+    setEditingActionFileSubmission(false);
   };
   
   //This function used actionMaps which fetches asyncronasly, but now instead we will fetch directly from the db, so the 
@@ -495,6 +498,7 @@ const handleRemoveTeam = async (teamId) => {
         body: JSON.stringify({
           name: editingActionName.trim(),
           description: editingActionDescription.trim(),
+          requiresSubmission: editingActionFileSubmission,
           metadata: { title: JSON.stringify(editingActionName.trim()) }
         })
       });
@@ -601,17 +605,17 @@ const handleRemoveTeam = async (teamId) => {
                 >
                     Manage Teams
                 </Button>
-              </Box>
                 <Button
                   variant="outlined"
                   size="small"
                   color="error"
-                  sx={{ textTransform: 'none' }}
+                  sx={{ textTransform: 'none', ml:"auto"}}
                   onClick={() => handleDeleteWorkflow(workflowId)}
                 >
                   Delete
                 </Button>
-
+              </Box>
+                <hr color=""/>
               {/* rendering with actionsWithContexts */}
               <Box>
                 {actionsWithContexts.map((awc, index) => {
@@ -629,17 +633,17 @@ const handleRemoveTeam = async (teamId) => {
                         display: 'flex', flexDirection: 'row', alignItems: 'center',
                         mb: index !== actionsWithContexts.length - 1 ? 3 : 0,
                         flexWrap: 'nowrap',
-                        opacity: isLocked ? 0.5 : 1,
-                        pointerEvents: isLocked ? 'none' : 'auto',
+                        // opacity: isLocked ? 0.5 : 1,
+                        // pointerEvents: isLocked ? 'none' : 'auto',
                     }}
                     >
-                    <Checkbox
+                    {/* <Checkbox
                         checked={completed}
                         onChange={() => toggleComplete(action.id)}
                         disabled={isLocked}
                         sx={{ color: '#F76902', mr: 1 }}
                         inputProps={{ 'aria-label': 'Mark step complete' }}
-                    />
+                    /> */}
                     <Box
                         sx={{
                         minWidth: 32, minHeight: 32, borderRadius: '50%',
@@ -674,7 +678,7 @@ const handleRemoveTeam = async (teamId) => {
                         {action.description || 'No description available'}
                         </Typography>
                     </Box>
-                    <Button
+                    {/* <Button
                         variant="contained"
                         disabled={isLocked}
                         sx={{
@@ -689,7 +693,7 @@ const handleRemoveTeam = async (teamId) => {
                         }}
                     >
                         Open
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outlined" size="small"
                         sx={{ textTransform: 'none', ml: 1 }}
@@ -765,6 +769,14 @@ const handleRemoveTeam = async (teamId) => {
             value={editingActionDescription}
             onChange={(e) => setEditingActionDescription(e.target.value)}
           />
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <Checkbox
+                checked={editingActionFileSubmission}
+                onChange={(e) => setEditingActionFileSubmission(e.target.checked)}
+                sx={{ color: '#F76902' }}
+            />
+            <Typography variant="body2">Requires file submission</Typography>
+        </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditModal}>Cancel</Button>
