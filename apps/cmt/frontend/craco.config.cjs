@@ -47,4 +47,12 @@ module.exports = {
             return webpackConfig
         },
     },
+
+    devServer: (devServerConfig) => {
+        return {
+            ...devServerConfig,
+            allowedHosts: "all",
+            host: "0.0.0.0",
+        }
+    },
 }
