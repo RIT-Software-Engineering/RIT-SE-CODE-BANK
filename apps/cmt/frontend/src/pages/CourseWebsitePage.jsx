@@ -208,6 +208,21 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
+    const syllabusId = await CMTJsonFetch("GET", `/resources/syllabus/${selectedCourseObj.id}`)
+
+    if (!syllabusId.ok) throw new Error("Failed to fetch resources");
+
+    const syllabusArray = await syllabusId.json();
+    const syllabus = syllabusArray[0];
+
+    const syll = await CMTJsonFetch("GET", `/resources/download/${syllabus.id}`)
+
+    const blob1 = await syll.blob();
+
+    const syllabusFolder = zip.folder("public_html")
+
+    syllabusFolder.file(sanitize(syllabus.filename), blob1)
+
     const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
 
     if (!response.ok) throw new Error("Failed to fetch resources");
