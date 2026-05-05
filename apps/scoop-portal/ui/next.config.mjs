@@ -16,7 +16,7 @@ const nextConfig = {
         // Matches any path starting with /api/notifications
         source: '/api/notifications/:path*',
         // Proxies it to backend server
-        destination: 'http://localhost:4000/api/notifications/:path*',
+        destination: 'http://localhost:4001/notifications/:path*',
         basePath: false
       }
     ];

@@ -1,0 +1,15 @@
+{
+    "name":"notification-service",
+    "projectType":"application",
+    "targets": {
+        "deploy": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands":[
+                    "chmod +x ./scripts/deploy/deploy-notification-service.sh",
+                    "./scripts/deploy/deploy-notification-service.sh"
+                ]
+            }
+        }
+    }
+}

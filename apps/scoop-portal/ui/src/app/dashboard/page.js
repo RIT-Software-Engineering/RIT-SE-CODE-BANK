@@ -5,6 +5,7 @@ import {
   DialogTitle, TextField, CircularProgress, Alert, Snackbar, Divider
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import { useUser } from "../utils/user-context/page";
 import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
@@ -85,12 +86,12 @@ const workflows = [
     ],
   },
   {
-    title: "Email",
+    title: "Email/Slack",
     steps: [
       {
         title:"Send Email",
         roles:["scoopdinator"],
-        description: "Send email to users",
+        description: "Send email/slack dm to users, also must have it enabled from profile",
         link: null,
         emailModal: true
       }
@@ -104,6 +105,12 @@ const workflows = [
         roles: ["scoopdinator"],
         description: "Approve or reject scooployee applications.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopdinator/applications",
+      },
+      {
+        title: "Review Interest Forms",
+        roles: ["scoopdinator", "advisor"],
+        description: "View interest form submissions.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/interest-forms",
       },
       {
         title: "View All Scooployees",
@@ -122,10 +129,6 @@ const workflows = [
   {
     title: "Teams",
     steps: [
-      /** 
-       * SCOOPdinators should only have the ability to view and modify existing scoop teams in the future.
-       * But for now, they will have the ability to fully manage them because they act as SCOOPversior too.
-       */
       {
         title: "Manage Teams",
         roles: ["scoopdinator"],
@@ -210,7 +213,7 @@ const workflows = [
       },
       {
         title: "Open Communications Journal",
-        roles: ["scoopdinator","scoopervisor","scooployee","advisor"],
+        roles: ["scoopdinator","scoopervisor", "advisor"],
         description:
           "View your past communications with others and leave notes.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/journal",
@@ -219,15 +222,11 @@ const workflows = [
   },
 ];
 
-/**
- * Renders the content for the Scoopdinator's Dashboard
- * @returns {JSX.Element}
- */
 export default function WorkflowDashboard() {
     const [filteredWorkflows, setfilteredWorkflows] = useState([]);
+    const [hasPendingOffer, setHasPendingOffer] = useState(false);
     const { user } = useUser();
 
-    //For the Email sending
     const [modalOpen, setModalOpen] = useState(false);
     const [recipient, setRecipient] = useState("");
     const [subject, setSubject] = useState("");
@@ -236,7 +235,6 @@ export default function WorkflowDashboard() {
     const [result, setResult] = useState(null);
     const [snackbar, setSnackbar] = useState({open: false, message: "", success: false});
 
-    //email modal
     const handleOpen = () => {
         setResult(null); 
         setModalOpen(true);
@@ -249,7 +247,6 @@ export default function WorkflowDashboard() {
         setResult(null);
     };
 
-    //email message to close automatically
     useEffect(() => {
         if (result) {
             const timer = setTimeout(() => setResult(null), 3000);
@@ -257,7 +254,6 @@ export default function WorkflowDashboard() {
         }
     }, [result]);
 
-    //handles sending the message
     const handleSend = async () => {
         setLoading(true);
         setResult(null);
@@ -265,38 +261,55 @@ export default function WorkflowDashboard() {
         setLoading(false);
 
         if(res.success){
-            handleClose(); //auto closes the modal
+            handleClose();
             setSnackbar({open: true, message: res.message, success: true});
         }else{
-            setResult(res); //keeps the error inside the modal
+            setResult(res);
         }
     };
 
   useEffect(() => {
-    async function fetchTeammates() {
-      if (user == null || user.fname == null){
+    async function fetchData() {
+      if (user == null || user.fname == null) {
         return;
       }
-      const filteredWorkflows = workflows.map((workflow) => {
-      const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
-      if (filteredSteps.length > 0) {
-      return {
-        ...workflow,
-        steps: filteredSteps
-      };
-    }
-    return null;
-  }).filter(Boolean);
+
+      const filteredWorkflows = workflows
+        .map((workflow) => {
+          const filteredSteps = workflow.steps.filter((step) => step.roles.includes(user.type));
+          if (filteredSteps.length > 0) {
+            return {
+              ...workflow,
+              steps: filteredSteps,
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
       setfilteredWorkflows(filteredWorkflows);
 
+      if (user.type === "applicant") {
+        try {
+          const res = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/api/offer/user/${user.id}/pending`
+          );
+          if (res.ok) {
+            setHasPendingOffer(true);
+          }
+        } catch (err) {
+          console.error("Error checking for pending offer:", err);
+        }
+      }
     }
-    fetchTeammates();
+    fetchData();
   }, [user]);
 
   return (
     <Box
       sx={{
         fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
+        backgroundColor: (theme) => theme.palette.grey[100],
+        minHeight: '100vh',
       }}
     >
       <Header /> 
@@ -304,22 +317,44 @@ export default function WorkflowDashboard() {
         <Typography
           variant="h1"
           sx={{
-            mb: 5,
+            mb: 3,
+            color: (theme) => theme.palette.text.primary,
           }}
         >
           Dashboard
         </Typography>
 
+        {hasPendingOffer && (
+          <Alert
+            severity="success"
+            icon={<NotificationsActiveIcon />}
+            sx={{ mb: 3 }}
+            action={
+              <Button
+                color="inherit"
+                size="small"
+                href={process.env.NEXT_PUBLIC_URL_BASE_PATH + "/applicant/offer"}
+              >
+                View Offer
+              </Button>
+            }
+          >
+            <Typography variant="body1" fontWeight="bold">
+              Congratulations! You have a pending SCOOP offer awaiting your response.
+            </Typography>
+          </Alert>
+        )}
+
         <Grid container spacing={4} direction="column">
           {filteredWorkflows.map((workflow) => (
             <Grid item xs={12} key={workflow.title}>
-              <Paper elevation={1} sx={{ p: 3 }}>
+              <Paper elevation={1} sx={{ p: 3, borderRadius: 0, border: (theme) => `1px solid ${theme.palette.divider}`, backgroundColor: (theme) => theme.palette.background.paper }}>
                 <Typography
                   variant="h2"
                   sx={{
                     fontWeight: 700,
                     mb: 3,
-                    borderBottom: "2px solid #F76902",
+                    borderBottom: (theme) => `2px solid ${theme.palette.primary.main}`,
                     pb: 1,
                     maxWidth: "max-content",
                   }}
@@ -344,8 +379,8 @@ export default function WorkflowDashboard() {
                           minWidth: 32,
                           minHeight: 32,
                           borderRadius: "50%",
-                          bgcolor: "#F76902",
-                          color: "#fff",
+                          bgcolor: (theme) => theme.palette.primary.main,
+                          color: (theme) => theme.palette.common.white,
                           fontWeight: 700,
                           display: "flex",
                           alignItems: "center",
@@ -369,6 +404,7 @@ export default function WorkflowDashboard() {
                           variant="h3"
                           sx={{
                             mb: 0.5,
+                            fontWeight: 700,
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -380,7 +416,7 @@ export default function WorkflowDashboard() {
                         <Typography
                           variant="body1"
                           sx={{
-                            color: "#555",
+                            color: (theme) => theme.palette.text.secondary,
                             whiteSpace: "normal",
                           }}
                         >
@@ -391,7 +427,8 @@ export default function WorkflowDashboard() {
                       <Button
                         href={step.emailModal ? undefined : step.link}
                         onClick={step.emailModal ? handleOpen : undefined}
-                        variant="solid-orange"
+                        variant="contained"
+                        color="primary"
                         sx={{
                             textTransform: "none",
                             ml: 2,
@@ -409,24 +446,6 @@ export default function WorkflowDashboard() {
           ))}
         </Grid>
       </Container>
-
-      <Box
-        component="footer"
-        sx={{
-          height: "80px",
-          bgcolor: "#212121",
-          color: "#fff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 2, md: 3 },
-          mt: 8,
-        }}
-      >
-        <Typography variant="body2" sx={{ fontWeight: 300 }}>
-          © {new Date().getFullYear()} RIT | Contact | Terms
-        </Typography>
-      </Box>
       <Dialog open={modalOpen} onClose={handleClose} fullWidth maxWidth="sm" disableRestoreFocus>
         <DialogTitle>Send Email</DialogTitle>
         <DialogContent sx={{display: "flex", flexDirection: "column", gap: 2, mt: 1}}>
@@ -460,7 +479,7 @@ export default function WorkflowDashboard() {
                 rows={4}
                 sx={{
                     '& .MuiInputBase-inputMultiline': {
-                        resize: 'vertical',  //for resizing purposes
+                        resize: 'vertical',
                         overflow: 'auto'
                     }
                 }}

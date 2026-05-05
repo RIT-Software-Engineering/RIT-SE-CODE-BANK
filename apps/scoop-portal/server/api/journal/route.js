@@ -407,7 +407,7 @@ router.get("/:id", async (req, res) => {
   }
 })
 
-const NOTIFY_BASE = process.env.NOTIFY_BASE || 'http://localhost:4000/api/notifications'
+const NOTIFY_BASE = process.env.NOTIFY_BASE || 'http://localhost:4001/notifications'
 const APP_ID = process.env.APP_ID || 'scoop'
 export async function notifyStatus({ userId, context }) {
   const res = await fetch(`${NOTIFY_BASE}/dispatch/${APP_ID}`, {
