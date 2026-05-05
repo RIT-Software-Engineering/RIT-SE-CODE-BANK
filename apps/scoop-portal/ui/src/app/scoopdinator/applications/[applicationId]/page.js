@@ -15,6 +15,7 @@ import IconButton from "@mui/material/IconButton";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@components/Header";
 import StatusBadge from "@components/StatusBadge";
+import { sendScoopEmail } from "@utils/ScoopEmailSend";
 
 const STATUSES = ["ALL", "APPROVED", "REJECTED", "PENDING"];
 
@@ -140,6 +141,20 @@ export default function ApplicationDetailPage() {
         message: "Application approved and offer sent to student",
         severity: "success",
       });
+      /**
+         * This logic will send the person who filled out the application form a message 
+         * to respond to the offer
+         */
+        const scoopPortalLink = "http://localhost:3000/scoop-portal";
+        const recipiant = application.ritEmail;
+        const subject = "SCOOP Application";
+        const message = `Your Application in SCOOP has been recieved and reviewed.
+        \nYou have been offered a position in SCOOP.
+        \nTo move forward please login to the SCOOP-portal, 
+        \nand accept your offer.
+        \nScoop-portal Link: ${scoopPortalLink}`;
+
+        await sendScoopEmail(recipiant,subject,message);
 
       setTimeout(() => router.back(), 1500);
     } catch (err) {
@@ -181,6 +196,19 @@ export default function ApplicationDetailPage() {
         message: "Application rejected",
         severity: "success",
       });
+
+      /**
+         * This logic will handle the notification if the application is rejected
+         */
+        const recipiant = application.ritEmail;
+        const subject = "SCOOP Application";
+        const message = `Your Application in SCOOP has been recieved and reviewed.
+        \nWe appreciate the time tou took to fill out the application.
+        \nHowever we will not be moving forward with your application
+        \nBest of luck.
+        \n-SCOOP`;
+
+        await sendScoopEmail(recipiant,subject,message);
 
       setTimeout(() => router.back(), 1500);
     } catch (err) {

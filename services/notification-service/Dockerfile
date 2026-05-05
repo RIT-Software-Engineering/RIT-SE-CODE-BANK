@@ -1,18 +1,32 @@
-FROM node:20-alpine
+FROM node:18
 
 WORKDIR /app
 
-RUN apk add --no-cache openssl
+# Copy package files over to container
+## Root Package
+COPY package.json ./
+## Root Package-lock.json
+COPY package-lock.json ./
+## Notify package
+COPY services/notification-service/package.json ./services/notification-service/package.json
 
-COPY package*.json ./
-COPY prisma ./prisma/
+# Copy prisma schema to container
+COPY services/notification-service/prisma ./services/notification-service/prisma/
 
-RUN npm ci
+# Run clean install of dependencies for only the notification service
+RUN npm ci --workspace=notification-service
 
-RUN npx prisma generate
+ENV DATABASE_URL="mysql://placeholder"
+RUN npx prisma generate --schema=./services/notification-service/prisma/schema.prisma
 
-COPY . .
+COPY services/notification-service ./services/notification-service
 
-EXPOSE 4000
+WORKDIR /app/services/notification-service
 
-CMD ["npm", "start"]
+COPY services/notification-service/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+EXPOSE 4001
+
+ENTRYPOINT sh /usr/local/bin/entrypoint.sh

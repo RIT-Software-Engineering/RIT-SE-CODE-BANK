@@ -1,0 +1,107 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        Timecard Approved
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if recipient.name}}
+          Hi {{recipient.name}},
+        {{else}}
+          Hi Admin,
+        {{/if}}
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        <strong>{{employer.name}}</strong> approved a timecard for <strong>{{employee.name}}</strong>.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;">
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Employee
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{employee.name}} ({{employee.username}})
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Supervisor
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{employer.name}}
+          </td>
+        </tr>
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Position
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{job.title}} ({{job.courseCode}}-{{job.sectionNumber}})
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Week
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+          </td>
+        </tr>
+        <tr style="background-color:#f8f9fa;">
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Approved Hours
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{timecard.totalHours}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;font-size:14px;font-weight:600;">
+            Status
+          </td>
+          <td style="padding:12px;font-size:14px;">
+            <span style="color:#155724;font-weight:600;">✓ Approved</span>
+          </td>
+        </tr>
+      </table>
+
+      {{#if cta.url}}
+      <p style="margin-top:24px;margin-bottom:24px;">
+        <a href="{{cta.url}}"
+           style="display:inline-block;
+                  background-color:#F76902;
+                  color:#FFFFFF;
+                  padding:12px 20px;
+                  border-radius:4px;
+                  text-decoration:none;
+                  font-size:16px;
+                  font-weight:500;">
+          View Timecard
+        </a>
+      </p>
+      {{/if}}
+
+      <p style="font-size:14px;line-height:20px;color:#6c757d;margin-top:24px;">
+        This is an informational notification for administrative tracking.
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}

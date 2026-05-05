@@ -292,22 +292,27 @@ router.get("/workflow", async (req, res) => {
   const { userId, workflowId } = req.query;
 
   const filters = [];
-  if (workflowId) filters.push({ workflowId });
-  if (userId) {
+  if(workflowId) filters.push({ workflowId });
+  if(userId){
+    let teamIds = [];
+    try {
+      const teamsRes = await fetch(`${process.env.PORTAL_API_URL}/api/teams/${userId}`);
+      if(teamsRes.ok){
+        const teams = await teamsRes.json();
+        teamIds = teams.map(t => String(t.id));
+      }
+    } catch (e) {
+      console.error('Failed to fetch user teams:', e);
+    }
+
     filters.push({
       OR: [
         { userId },
-        {
-          participants: {
-            some: {
-              userId,
-            },
-          },
-        },
+        { participants: { some: { userId } } },
+        ...(teamIds.length > 0 ? [{ teamId: { in: teamIds } }] : []),
       ],
     });
   }
-
   const states = await prisma.workflowState.findMany({
     where: filters.length > 0 ? { AND: filters } : {},
     include: {

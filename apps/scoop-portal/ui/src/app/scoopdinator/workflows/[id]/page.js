@@ -467,30 +467,16 @@ const handleRemoveAssignee = async (userId) => {
 // console.log('sortedSteps count:', sortedSteps.length);
 
   return (
-    <Box
-      sx={{
-        fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif',
-        color: (theme) => theme.palette.text.primary,
-        backgroundColor: (theme) => theme.palette.grey[100],
-        minHeight: '100vh',
-      }}
-    >
+    <Box sx={{ fontFamily: '"Helvetica Neue", Helvetica, Roboto, Arial, sans-serif', color: '#212121' }}>
       <Header />
       <Container maxWidth="lg" sx={{ py: 4, maxWidth: '1280px' }}>
-        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: 'text.primary' }}>
+        <Typography variant="h1" sx={{ fontSize: '2rem', fontWeight: 900, mb: 5, color: '#fff' }}>
           Workflow Dashboard
         </Typography>
 
         <Grid container spacing={4} direction="column">
           <Grid item xs={12}>
-            <Paper
-              elevation={1}
-              sx={{
-                p: 3,
-                backgroundColor: (theme) => theme.palette.background.paper,
-                border: (theme) => `1px solid ${theme.palette.divider}`,
-              }}
-              >
+            <Paper elevation={1} sx={{ p: 3 }}>
               <Typography
                 variant="h2"
                 sx={{
