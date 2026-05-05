@@ -5,5 +5,8 @@
     },
     "prisma": {
         "schema": "backend/prisma/schema.prisma"
+    },
+    "dependencies": {
+        "http-server": "^14.1.1"
     }
 }

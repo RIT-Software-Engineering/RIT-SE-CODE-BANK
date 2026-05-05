@@ -60,7 +60,7 @@
     "test": "craco test",
     "eject": "react-scripts eject",
     "lint": "eslint . || true",
-    "serve": "env-cmd -f ./../.env serve -s build"
+    "serve": "npx dotenv -e ./../.env -- http-server build"
   },
   "eslintConfig": {
     "extends": [

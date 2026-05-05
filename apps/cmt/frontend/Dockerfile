@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN npm ci --workspace=apps/workflow/ecosystem --workspace=apps/cmt/frontend 
+RUN npm ci
 
 RUN npm run --workspace=apps/cmt/frontend build
 

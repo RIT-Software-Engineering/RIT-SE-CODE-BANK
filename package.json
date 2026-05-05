@@ -23,5 +23,9 @@
     "dotenv-cli": "^11.0.0",
     "kill-port": "^2.0.1",
     "nx": "^22.6.5"
+  },
+  "dependencies": {
+    "env-cmd": "^11.0.0",
+    "http-server": "^14.1.1"
   }
 }
