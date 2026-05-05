@@ -320,7 +320,7 @@ router.post('/:templateId', async (req, res) => {
                 const session = await prisma.session.create({
                     data: {
                         sessionNum: i+1,
-                        completed: course?.sessions[i]?.completed,
+                        completed: toBeTemplate ? false : course?.sessions[i]?.completed,
                         courseId: Number(newCourse.id)
                     },
                 });
@@ -337,13 +337,13 @@ router.post('/:templateId', async (req, res) => {
 
                         // if we have any resources in our label, we go through each one and update them to the new link
                         labelResourceMatches?.forEach(match => {
-                            const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
+                            const newResourceId = resourcePairs.find(resource => match.match(resource?.old))?.new;
                             actualLabel = actualLabel.replace(match, `/api/cmt/resources/download/${newResourceId}`);
                         });
 
                         // if we have any resources in our body, we go through each one and update them to the new link
                         bodyResourceMatches?.forEach(match => {
-                            const newResourceId = resourcePairs.find(resource => match.match(resource.old))?.new;
+                            const newResourceId = resourcePairs.find(resource => match.match(resource?.old))?.new;
                             actualBody = actualBody.replace(match, `/api/cmt/resources/download/${newResourceId}`);
                         });
 
