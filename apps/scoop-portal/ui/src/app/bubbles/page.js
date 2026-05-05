@@ -109,8 +109,7 @@ const deriveActionStateDetails = (
     ? actionState.submissions
     : [];
   const participantIds = getParticipantIdsFromWorkflowState(workflowState);
-  const participantCount =
-    participantIds.length > 0 ? participantIds.length : 1;
+  const participantCount = participantIds.length > 0 ? participantIds.length : 1;
   const directory = buildTeamDirectory(team, fallbackUsers);
   const requiresAllParticipantsExplicit =
     actionState?.action?.requireAllParticipants === true ||
