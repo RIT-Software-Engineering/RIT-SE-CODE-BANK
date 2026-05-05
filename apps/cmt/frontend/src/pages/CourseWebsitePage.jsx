@@ -66,7 +66,7 @@ export default function CourseWebsitePage() {
     fetchSessions();
   }, [selectedCourse, courses]);
 
-  const generateCourseHTML = async (course, sessions, weeks, isWeeks) => {
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName) => {
     let rows;
     if (isWeeks && weeks)
       rows = await Promise.all(
@@ -155,7 +155,7 @@ export default function CourseWebsitePage() {
         </h1>
       </header>
 
-      <h2> <a href="../syllabus.html">Syllabus</a> </h2>
+      <h2> <a href="../${syllabusName}">Syllabus</a> </h2>
 
       <table>
         <thead>
@@ -221,7 +221,9 @@ export default function CourseWebsitePage() {
 
     const syllabusFolder = zip.folder("public_html")
 
-    syllabusFolder.file(sanitize(syllabus.filename), blob1)
+    const syllabusName = sanitize(syllabus.filename)
+
+    syllabusFolder.file(syllabusName, blob1)
 
     const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
 
@@ -253,7 +255,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks, syllabusName);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.
