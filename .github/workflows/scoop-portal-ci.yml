@@ -78,7 +78,7 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: git fetch origin main
-      - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }} --code-coverage
+      - run: npx nx affected:test --base=${{ needs.setup.outputs.nx-base }} --head=${{ needs.setup.outputs.nx-head }}
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
