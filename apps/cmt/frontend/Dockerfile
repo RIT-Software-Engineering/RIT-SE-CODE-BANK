@@ -12,4 +12,4 @@ ENV PORT=$PORT
 
 EXPOSE 3010
 
-CMD ["npm", "run", "--workspace=apps/cmt/frontend", "serve"]
+CMD ["npm", "run", "--workspace=apps/cmt/frontend", "start"]
