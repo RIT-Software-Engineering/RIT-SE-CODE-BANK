@@ -1,6 +1,6 @@
 set -e
 
-APP_DIR="/d/RIT-SE-CODE-BANK"
+APP_DIR="/opt/scoop-portal"
 BRANCH="scoop-portal-dev"
 PORTAL_SERVER_DIR="$APP_DIR/apps/scoop-portal/server"
 PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
@@ -87,7 +87,7 @@ npx prisma db seed
 cd $APP_DIR
 cd $WORKFLOW_SERVER_DIR
 npx prisma migrate deploy
-npx prisma db seed
+#npx prisma db seed
 cd $APP_DIR
 cd $NOTIFICATIONS_SERVER_DIR
 npx prisma migrate deploy
