@@ -74,7 +74,7 @@ docker compose -f docker-compose.staging.yml down
 
 
 
-docker compose -f docker-compose.development.yml up -d --build
+docker compose -f docker-compose.staging.yml up -d --build
 echo "we made it"
 cd ./apps/scoop-portal/server
 echo $(pwd)

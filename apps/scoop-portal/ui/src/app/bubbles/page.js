@@ -109,8 +109,7 @@ const deriveActionStateDetails = (
     ? actionState.submissions
     : [];
   const participantIds = getParticipantIdsFromWorkflowState(workflowState);
-  const participantCount =
-    participantIds.length > 0 ? participantIds.length : 1;
+  const participantCount = participantIds.length > 0 ? participantIds.length : 1;
   const directory = buildTeamDirectory(team, fallbackUsers);
   const requiresAllParticipantsExplicit =
     actionState?.action?.requireAllParticipants === true ||
@@ -428,7 +427,7 @@ export default function Bubbled(){
     [workflowStates],
   );
 
-  const handleOpen = (actionState, workflowState, derivedDetails = null) => {
+  const handleOpen = async (actionState, workflowState, derivedDetails = null) => {
     setSubmissionFile(null);
     setSubmissionError("");
     const details =
@@ -447,30 +446,33 @@ export default function Bubbled(){
     setOpenAction(actionState.action);
     setActiveWorkflowState(workflowState);
     setOpen(true);
-  };
+};
 //This needs to be fixed, so when a user clicks the bubble and clicks out it automaticly doesn.t complete it.
-  const handleClose = async(shouldPromote = true) => {
-    const shouldMarkInProgress =
-      shouldPromote &&
-      openActionState?.stateType != "completed" &&
-      !openAction?.requiresSubmission;
-    if(shouldMarkInProgress){
-      try {
-        await fetch(`${workflowsApiUrl}/states/handleSubmit`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            actionStateId: openActionState.id,
-            stateType: "inProgress",
-            userId: user?.id,
-            workflowStateId: activeWorkflowState?.id,
-          }),
+  const handleClose = async () => {
+    if(openActionState && openActionState.stateType === "notStarted"){
+        try {
+        await fetch(`${workflowsApiUrl}/states/action/${openActionState.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ stateType: "inProgress" }),
         });
-        forceRefresh(previous => previous + 1);
-      } catch (e) {console.error('Error handling submit:', e);}
+
+        // optimistic UI update
+        setWorkflowStates((prev) =>
+            prev.map((wf) => ({
+            ...wf,
+            actionStates: wf.actionStates?.map((as) =>
+                as.id === openActionState.id
+                ? { ...as, stateType: "inProgress" }
+                : as
+            ),
+            }))
+        );
+        } catch (e) {
+        console.error("Failed to mark inProgress:", e);
+        }
     }
+
     setOpenAction(null);
     setOpenActionState(null);
     setActiveWorkflowState(null);
@@ -875,72 +877,72 @@ export default function Bubbled(){
                   )}
                 </Typography>
               )}
-              {openAction?.requiresSubmission && (
+              {openAction?.requiresSubmission && openActionState?.stateType !== 'completed' && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}>
-                    File submission required (PDF, DOC, DOCX, or XLSX).
-                  </Typography>
-                  <Button
-                    component="label"
-                    variant="outlined"
-                    size="small"
-                    sx={{ textTransform: "none" }}
-                  >
-                    {submissionFile?.name ? `Replace ${submissionFile.name}` : "Choose File"}
-                    <input
-                      type="file"
-                      hidden
-                      accept=".pdf,.doc,.docx,.xlsx"
-                      onChange={handleSubmissionFileChange}
-                    />
-                  </Button>
-                  {submissionFile?.name && (
-                    <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
-                      Selected: {submissionFile.name}
+                    <Typography variant="body2" sx={{ mb: 1 }}>
+                        File submission required (PDF, DOC, DOCX, or XLSX).
                     </Typography>
-                  )}
-                  {submissionError && (
-                    <Typography variant="caption" color="error" sx={{ display: "block", mt: 0.5 }}>
-                      {submissionError}
-                    </Typography>
-                  )}
-                  {Array.isArray(openActionState?.submissions) &&
-                    openActionState.submissions.length > 0 && (
-                      <Box sx={{ mt: 1.5 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                          Submitted files
+                    <Button
+                        component="label"
+                        variant="outlined"
+                        size="small"
+                        sx={{ textTransform: "none" }}
+                    >
+                        {submissionFile?.name ? `Replace ${submissionFile.name}` : "Choose File"}
+                        <input
+                            type="file"
+                            hidden
+                            accept=".pdf,.doc,.docx,.xlsx"
+                            onChange={handleSubmissionFileChange}
+                        />
+                    </Button>
+                    {submissionFile?.name && (
+                        <Typography variant="caption" sx={{ display: "block", mt: 0.5 }}>
+                            Selected: {submissionFile.name}
                         </Typography>
-                        {openActionState.submissions.map((submission) => (
-                          <Box
-                            key={`${submission.userId}-${submission.completedAt ?? submission.createdAt ?? submission.id}`}
-                            sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.5 }}
-                          >
-                            <Typography variant="caption">
-                              {submission.fileName || "Submission"} by{" "}
-                              {submission.userId ? submission.userId.slice(0, 8) : "unknown"}
-                            </Typography>
-                            {submission.fileData && (
-                              <Button
-                                size="small"
-                                href={submission.fileData}
-                                download={submission.fileName || "submission"}
-                              >
-                                Download
-                              </Button>
-                            )}
-                          </Box>
-                        ))}
-                      </Box>
+                    )}
+                    {submissionError && (
+                        <Typography variant="caption" color="error" sx={{ display: "block", mt: 0.5 }}>
+                            {submissionError}
+                        </Typography>
                     )}
                 </Box>
               )}
+              {openAction?.requiresSubmission && openActionState?.stateType === 'completed' && (
+                <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1, color: '#4caf50' }}>
+                        File submitted successfully.
+                    </Typography>
+                    {Array.isArray(openActionState?.submissions) &&
+                        openActionState.submissions.length > 0 && (
+                        <Box sx={{ mt: 1 }}>
+                            {openActionState.submissions.map((submission) => (
+                                <Box key={submission.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                                    <Typography variant="caption">
+                                        {submission.fileName || 'Submission'}
+                                    </Typography>
+                                    <Button
+                                        size="small"
+                                        href={`${workflowsApiUrl}/submissions/${submission.id}/file`}
+                                        download={submission.fileName || 'submission'}
+                                    >
+                                        Download
+                                    </Button>
+                                </Box>
+                            ))}
+                        </Box>
+                    )}
+                </Box>
+            )}
+
+
               <Button
                 onClick={submitAction}
                 disabled={
                   !openActionState ||
                   !user?.id ||
                   openActionState.stateType === "completed" ||
-                  openActionState.userHasSubmitted ||
+                  (openActionState.userHasSubmitted && openActionState.stateType !== 'inProgress') ||
                   (openAction?.requiresSubmission && !submissionFile)
                 }
               >

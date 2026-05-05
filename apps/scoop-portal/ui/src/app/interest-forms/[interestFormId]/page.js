@@ -17,6 +17,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "@components/Header";
 import StatusBadge from "@components/StatusBadge";
 import { useUser } from "../../utils/user-context/page";
+import { sendScoopEmail } from "@utils/ScoopEmailSend";
 
 /**
  * A single question/answer row used throughout the detail page.
@@ -162,6 +163,19 @@ export default function InterestFormDetailPage() {
         message: "Interest form accepted and prospect user created",
         severity: "success",
       });
+      /**
+         * This logic will send the person who filled out the interest form a message 
+         * to fill out the application if accepted
+         */
+        const applicationLink = "http://localhost:3000/scoop-portal/application";
+        const recipiant = interestForm.ritEmail;
+        const subject = "SCOOP Interest Form";
+        const message = `Your interest in SCOOP has been recieved and reviewed.
+        \nTo move forward please fill out the application
+        \nApplication Link: ${applicationLink}`;
+
+        await sendScoopEmail(recipiant,subject,message);
+
       router.back();
     } catch (err) {
       setNotification({
@@ -183,6 +197,19 @@ export default function InterestFormDetailPage() {
         message: "Interest form rejected",
         severity: "success",
       });
+
+      /**
+       * This logic will handle the notification if the interest is rejected
+       */
+      const recipiant = interestForm.ritEmail;
+        const subject = "SCOOP Interest Form";
+        const message = `Your interest in SCOOP has been recieved and reviewed.
+        \nWe appreciate the time you took to fill the interest form out.
+        \nbut we will be moving forward with other candidates.
+        \nBest of luck
+        \n-SCOOP`;
+
+        await sendScoopEmail(recipiant,subject,message);
       router.back();
     } catch (err) {
       setNotification({
