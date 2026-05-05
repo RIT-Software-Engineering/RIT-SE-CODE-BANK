@@ -145,7 +145,7 @@ export default function ApplicationDetailPage() {
          * This logic will send the person who filled out the application form a message 
          * to respond to the offer
          */
-        const scoopPortalLink = "http://localhost:3000/scoop-portal";
+        const scoopPortalLink = "https://apps.se.rit.edu/scoop-portal";
         const recipiant = application.ritEmail;
         const subject = "SCOOP Application";
         const message = `Your Application in SCOOP has been recieved and reviewed.

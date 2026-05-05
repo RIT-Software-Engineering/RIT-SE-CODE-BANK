@@ -167,7 +167,7 @@ export default function InterestFormDetailPage() {
          * This logic will send the person who filled out the interest form a message 
          * to fill out the application if accepted
          */
-        const applicationLink = "http://localhost:3000/scoop-portal/application";
+        const applicationLink = "https://apps.se.rit.edu/scoop-portal/application";
         const recipiant = interestForm.ritEmail;
         const subject = "SCOOP Interest Form";
         const message = `Your interest in SCOOP has been recieved and reviewed.

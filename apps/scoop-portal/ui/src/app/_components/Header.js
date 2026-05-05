@@ -501,7 +501,9 @@ export default function Header() {
 
             {/* Logout Button */}
             <Button
-              href={process.env.NEXT_PUBLIC_URL_BASE_PATH}
+              onClick={() => {
+                window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/logout?returnTo=${encodeURIComponent(window.location.origin + process.env.NEXT_PUBLIC_URL_BASE_PATH)}`;
+              }}              
               variant="outlined"
               color="inherit"
               startIcon={<LogoutIcon />}
