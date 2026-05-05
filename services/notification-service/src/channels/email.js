@@ -7,7 +7,13 @@ function getTransport() {
   if (transporter) return transporter;
   const host = process.env.SMTP_HOST || "localhost";
   const port = Number(process.env.SMTP_PORT || 2525);
-  transporter = nodemailer.createTransport({ host, port, secure: false });
+  transporter = nodemailer.createTransport({
+    name: "notification-service",
+    host,
+    port,
+    secure: false,
+    tls: {rejectUnauthorized: false}
+  });
   return transporter;
 }
 
@@ -18,6 +24,8 @@ function getTransport() {
  */
 export async function sendEmail({ to, subject, text, html, attachCidLogo = false }) {
   if (!to) throw new Error("Email 'to' required");
+
+  console.log("Sending Email: ",subject);
 
   const attachments = [];
   // If configured, attach a logo image as a CID so templates can reference cid:rit_logo_cid
@@ -71,4 +79,3 @@ export async function sendEmailToMany({ recipients, subject, text, html, attachC
 
     return results;
 }
-

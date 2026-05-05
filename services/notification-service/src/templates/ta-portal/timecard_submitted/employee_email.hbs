@@ -1,0 +1,81 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        ✓ Timecard Submitted Successfully
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if employee.name}}
+          Hi {{employee.name}},
+        {{else}}
+          Hi,
+        {{/if}}
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        Your timecard has been submitted and is now pending review.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;background-color:#f8f9fa;">
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Position
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{job.title}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Week
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Total Hours
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{timecard.totalHours}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;font-size:14px;font-weight:600;">
+            Status
+          </td>
+          <td style="padding:12px;font-size:14px;">
+            <span style="color:#856404;">⏳ Pending Review</span>
+          </td>
+        </tr>
+      </table>
+
+      {{#if flags.overHours}}
+      <div style="background-color:#fff3cd;border-left:4px solid #ffc107;padding:12px;margin:20px 0;font-size:14px;">
+        <strong style="color:#856404;">⚠️ Note:</strong> Your submitted hours exceed the 10-hour weekly limit. Your supervisor will review this.
+      </div>
+      {{/if}}
+
+      <p style="font-size:14px;line-height:20px;color:#6c757d;margin-top:24px;">
+        You will receive a notification once your timecard has been reviewed. Thank you for submitting on time!
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}
