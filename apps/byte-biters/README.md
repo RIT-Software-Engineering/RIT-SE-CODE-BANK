@@ -6,37 +6,49 @@ A PDP-11 simulator that can be used to help students understand assembly languag
 
 ## Installation
 
-Clone the repository and install dependencies:
+Clone the repository and install dependencies. You can copy the following commands into your terminal:
 
 ```bash
 git clone https://github.com/RIT-Software-Engineering/RIT-SE-CODE-BANK.git
 cd RIT-SE-CODE-BANK
 git checkout BB-main
-cd apps/byte-biters/frontend
-npm install
 cd apps/byte-biters/backend
 npm install
+cd ../frontend
+npm install
 ```
-Make sure Node.js is installed: https://nodejs.org/en/download
+
+For npm to work, make sure Node.js is installed: https://nodejs.org/en/download
+
     
 ## Run Locally
 
-Start the server from the frontend
+Navigative to the frontend folder:
 
 ```bash
   cd apps/byte-biters/frontend
+```
+To run the server, run:
+
+```bash
   npm run dev
 ```
 
 
 ## Running Tests
 
-To run tests, run the following command in the backend
+Navigate to the backend folder:
 
 ```bash
   cd apps/byte-biters/backend
+```
+
+To run tests, run the following command in the backend:
+
+```bash
   npm test
 ```
+
 
 ## Authors
 
