@@ -8,7 +8,7 @@ WORKDIR /app
 COPY . .
 
 # Install dependencies
-RUN npm ci --workspace=apps/workflow/server --omit=dev 
+RUN npm ci --omit=dev 
 
 # Move to workflows folder
 WORKDIR /app/apps/workflow/server
