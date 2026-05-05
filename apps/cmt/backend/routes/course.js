@@ -353,7 +353,8 @@ router.post('/:templateId', async (req, res) => {
                                 sessionId: session.id,
                                 type: material.type,
                                 body: actualBody,
-                                label: actualLabel 
+                                label: actualLabel,
+                                active: material.active
                             }
                         })
                     })
