@@ -85,18 +85,19 @@ const workflows = [
       },
     ],
   },
-  {
-    title: "Email/Slack",
-    steps: [
-      {
-        title:"Send Email",
-        roles:["scoopdinator"],
-        description: "Send email/slack dm to users, also must have it enabled from profile",
-        link: null,
-        emailModal: true
-      }
-    ],
-  },
+  // -- THIS IS ONLY FOR NOTIFICATION TESTING PURPOSES --
+  // {
+  //   title: "Email/Slack",
+  //   steps: [
+  //     {
+  //       title:"Send Email",
+  //       roles:["scoopdinator"],
+  //       description: "Send email/slack dm to users, also must have it enabled from profile",
+  //       link: null,
+  //       emailModal: true
+  //     }
+  //   ],
+  // },
   {
     title: "Scooployees",
     steps: [
