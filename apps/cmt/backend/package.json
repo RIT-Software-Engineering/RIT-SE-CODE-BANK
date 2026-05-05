@@ -9,7 +9,7 @@
     "lint": "eslint . || true"
   },
   "dependencies": {
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^6.11.0",
     "@se-code-bank/cmt-shared-utilities": "*",
     "@se-code-bank/workflows-ecosystem": "*",
     "body-parser": "^1.20.3",
@@ -22,7 +22,7 @@
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "prisma": "5.22.0",
+    "prisma": "^6.11.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

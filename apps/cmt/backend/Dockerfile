@@ -4,7 +4,7 @@ RUN apk add --no-cache openssl
 
 COPY . .
 
-RUN npm ci --workspace=apps/workflow/ecosystem --workspace=apps/cmt/backend
+RUN npm ci
 
 WORKDIR /app/apps/cmt/backend
 
