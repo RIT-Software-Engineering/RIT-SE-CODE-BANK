@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@se-code-bank/workflows-ecosystem":"../../workflow/ecosystem/se-code-bank-workflows-ecosystem-1.0.0.tgz",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
