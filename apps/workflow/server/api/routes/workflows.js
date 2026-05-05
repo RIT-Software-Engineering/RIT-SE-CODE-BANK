@@ -3,6 +3,7 @@ const router = express.Router();
 const { PrismaClient } = require("@prisma/client");
 const { importMetadata } = require("../helpers/metadata.js");
 const { exportWorkflow } = require("../helpers/workflows.js");
+const { getFullActionTree } = require("../helpers/actions.js");
 const prisma = new PrismaClient();
 const { permissionTypes } = require("../consts.js") || [];
 
@@ -188,25 +189,44 @@ router.put("/:id", async (req, res) => {
   });
 });
 
-// DELETE /workflows/:id
 router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
-  // Delete the workflow and all related entities
-  await prisma.$transaction(async () => {
+  try {
     const workflow = await prisma.workflowAttributes.findUnique({
-      where: { id: id },
+      where: { id },
     });
 
     if (!workflow) throw new Error("Workflow not found");
 
-    // Delete the base action for this workflow. Also cascades and deletes the WorkflowAttributes.
+    // Walk and delete the linked list of step actions
+    if (workflow.rootActionId) {
+      const allActions = await getFullActionTree(workflow.rootActionId);
+
+      function collectIds(actions) {
+        const ids = [];
+        for (const action of actions) {
+          ids.push(action.id);
+          if (action.childActions?.length) ids.push(...collectIds(action.childActions));
+        }
+        return ids;
+      }
+
+      const actionIds = collectIds(allActions);
+      for (const actionId of actionIds.reverse()) {
+        await prisma.action.delete({ where: { id: actionId } });
+      }
+    }
+
+    // Delete base action last, cascades WorkflowAttributes and WorkflowStates
     await prisma.action.delete({
       where: { id: workflow.baseActionId },
     });
-  });
 
-  res.json({ message: "Deleted" });
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error('Delete workflow error:', err);
+    res.status(500).json({ message: err.message });
+  }
 });
-
 module.exports = router;

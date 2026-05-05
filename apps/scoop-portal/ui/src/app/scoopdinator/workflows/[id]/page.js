@@ -20,33 +20,39 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 
 import Header from '@components/Header';
 import { useParams, useRouter } from 'next/navigation';
+import { scaffoldBaseContexts, addActionStateContext, addCallbackContext } from '@se-code-bank/workflows-ecosystem';
 
 export default function WorkflowPage() {
   const { id: workflowId } = useParams(); 
   const router = useRouter();
-  const userId = '1';
+  const userId = '1'; // still will be 1 since its only SUPER DUPER ADMIN who creates workflows
 
   const [workflowState, setWorkflowState] = useState(null);
-  const [actionsMap, setActionsMap] = useState({});
+//   const [actionsMap, setActionsMap] = useState({});
+  const [actionsWithContexts, setActionsWithContexts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [completedSteps, setCompletedSteps] = useState(new Set());
-  const [actionStateIdsMap, setActionStateIdsMap] = useState({});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newActionName, setNewActionName] = useState('');
   const [newActionDescription, setNewActionDescription] = useState('');
+  const [newActionRequiresSubmission, setNewActionRequiresSubmission] = useState(false);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingActionId, setEditingActionId] = useState(null);
   const [editingActionName, setEditingActionName] = useState('');
   const [editingActionDescription, setEditingActionDescription] = useState('');
+  const [editingActionFileSubmission, setEditingActionFileSubmission] = useState(false);
 
   //this is so i can edit and the users I assign to my workflow
   const [assignModalOpen, setAssignModalOpen] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
   const [assignedUsers, setAssignedUsers] = useState([]);
-  const [userSearch, setUserSearch] = useState([]);
+  
+  //teams stuff
+  const [allTeams, setAllTeams] = useState([]);
+  const [assignTeamModalOpen, setAssignTeamModalOpen] = useState(false);
+  const [assignedTeams, setAssignedTeams] = useState([]);
   
   //this is for the selected workflow data
   const [workflowData, setWorkflowData] = useState(null);
@@ -79,6 +85,8 @@ export default function WorkflowPage() {
             const data = await res.json();
             //each state has a user id, we gotta catch'em all!
             setAssignedUsers(Array.isArray(data) ? data.map(e => e.userId):[]);
+            //samething but for teams
+            setAssignedTeams(Array.isArray(data) ? [...new Set(data.filter(e => e.teamId).map(e => e.teamId))] : []);
         }catch(e){
             console.log("faield to fetch workflow states in scoopdinator/workflow/[id]/page.js");
         }
@@ -86,12 +94,26 @@ export default function WorkflowPage() {
     fetchAssigned();
   },[workflowId, baseUrl]);
 
+  useEffect(() => {
+    const fetchTeams = async () => {
+        try {
+            const res = await fetch(`${publicApiUrl}/api/teams`);
+            const data = await res.json();
+            setAllTeams(data);
+        } catch (e) {
+            console.error('Failed to fetch teams');
+        }
+    };
+    fetchTeams();
+}, []);
+
 
   const fetchWorkflowAndActions = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      //1) fetch workflow states for this user
       const workflowUrl = new URL(`${baseUrl}/states/workflow`);
       workflowUrl.searchParams.append('userId', userId);
       workflowUrl.searchParams.append('workflowId', workflowId);
@@ -104,73 +126,110 @@ export default function WorkflowPage() {
 
       const state = states[0];
       setWorkflowState(state);
+
+      //2) Fetch workflow metadata (rootActionId, baseActionId, etc.)
       const workflowRes = await fetch(`${baseUrl}/workflows/${workflowId}`);
-      if(workflowRes.ok){
-        const workflow_data = await workflowRes.json();
-        setWorkflowData(workflow_data);
+      if(!workflowRes.ok){
+        throw new Error("Failed to fetch workflow data");
       }
+      const workflow_data = await workflowRes.json();
+      setWorkflowData(workflow_data);
 
-      const idsMap = {};
-      state.actionStates.forEach(as => {
-        idsMap[as.actionId] = as.id;
-      });
-      setActionStateIdsMap(idsMap);
+      const {rootActionId, baseActionId} = workflow_data;
 
+      //3) Fetch all actions for this workflow's action states
       const actionIds = state.actionStates.map((as) => as.actionId);
       if (actionIds.length === 0) {
-        setActionsMap({});
-        setCompletedSteps(new Set());
+        setActionsWithContexts([]);
         setLoading(false);
         return;
       }
 
       const actionsUrl = new URL(`${baseUrl}/actions`);
       actionsUrl.searchParams.append('ids', actionIds.join(','));
-
       const actionsResponse = await fetch(actionsUrl.toString());
       if (!actionsResponse.ok) throw new Error('Failed to fetch actions');
-
       const actions = await actionsResponse.json();
 
-      const map = {};
-      actions.forEach((action) => {
-        map[action.id] = action;
-      });
-      setActionsMap(map);
 
-      const completed = new Set(
-        state.actionStates
-          .filter((as) => as.stateType === 'completed')
-          .map((as) => as.actionId)
+      //4) Build actionMaps for linked list traversal
+      const actionMaps = {};
+      actions.forEach(a => {actionMaps[a.id] = a;});
+
+      //5) Build sorted user steps via linked list traversal (excluding root/base)
+      const userActionIds = state.actionStates
+        .filter(s => s.actionId !== rootActionId && s.actionId !== baseActionId)
+        .map(s => s.actionId);
+
+      const rootAction = actionMaps[rootActionId];
+      const sortedActions = [];
+      let currentId = rootAction?.nextActionId;
+      while(currentId && actionMaps[currentId]){
+        if(userActionIds.includes(currentId)){
+          sortedActions.push(actionMaps[currentId]);
+        }
+        currentId = actionMaps[currentId]?.nextActionId ?? null;
+      }
+      //Catch any unlinked actions
+      userActionIds.forEach(id => {
+        if (!sortedActions.find(a => a.id === id)) sortedActions.push(actionMaps[id]);
+      });
+
+      //6) Use scaffoldBaseContexts to build the actionWithContexts structure,
+      //then layer in action state context via addActionStateContext.
+      //scaffoldBaseContexts expects a single action tree. Since we have a flat
+      //list of simple actions here, we scaffold each individually.
+      const baseContexts = sortedActions.map(action => scaffoldBaseContexts(action));
+
+      //addActionStateContext needs the full actionStates structure our API returns.
+      //We wrap state.actionStates into the shape that flattenActionStates expects:
+      //{baseActionState: {children: [...actionStates]}}
+      const wrappedActionStates = {
+        baseActionState: {children: state.actionStates}
+      };
+
+      const contextsWithState = baseContexts.map(awc =>
+        addActionStateContext(awc, wrappedActionStates)
       );
-      setCompletedSteps(completed);
-    } catch (err) {
-      setError(err.message || 'Failed to load workflow state');
+
+      setActionsWithContexts(contextsWithState);
+
+    }catch (err){
+      setError(err.message || 'Failed to load workflow');
+      setActionsWithContexts([]);
       setWorkflowState(null);
-      setActionsMap({});
-      setCompletedSteps(new Set());
-    } finally {
+    }finally{
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (workflowId) fetchWorkflowAndActions();
+    if(workflowId){
+        fetchWorkflowAndActions();
+    }
   }, [userId, workflowId]);
 
+  //helpers from actionsWithContexts
+  const isCompleted = (actionId) =>
+    actionsWithContexts.find(awc => awc.processedAction.id === actionId)
+    ?.actionState?.stateType === 'completed';
+    
+  const getActionStateId = (actionId) =>
+    actionsWithContexts.find(awc => awc.processedAction.id === actionId)
+    ?.actionState?.id;
+    
   const toggleComplete = async (actionId) => {
-    const actionStateId = actionStateIdsMap[actionId];
-    if (!actionStateId) {
-      alert('No actionState ID found for this action. Cannot update.');
-      return;
+    const actionStateId = getActionStateId(actionId);
+    if(!actionStateId){
+      return alert('No actionState ID found for this action.');
     }
 
-    const currentlyCompleted = completedSteps.has(actionId);
+    const currentlyCompleted = isCompleted(actionId);
     const newCompleted = !currentlyCompleted;
 
     try {
       let response;
-      if (newCompleted) {
+      if(newCompleted){
         response = await fetch(`${baseUrl}/states/handleSubmit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -188,39 +247,34 @@ export default function WorkflowPage() {
         });
       }
 
-      const resBody = await response.json().catch(() => null);
-      if (!response.ok) {
+      if(!response.ok){
+        const resBody = await response.json().catch(() => null);
         throw new Error(resBody?.message || 'Failed to update action state');
       }
 
-      setCompletedSteps((prev) => {
-        const rootActionId = workflowData?.rootActionId;
-        const newSet = new Set(prev);
-        if (newCompleted) newSet.add(actionId);
-        else newSet.delete(actionId);
+      //Auton complete root when all non root steps are done
+      const rootActionId = workflowData?.rootActionId;
+      const nonRootContexts = actionsWithContexts.filter(awc =>
+        awc.processedAction.id !== rootActionId
+      );
+      const allNonRootDone = nonRootContexts.every(awc =>
+        awc.processedAction.id === actionId ? newCompleted:isCompleted(awc.processedAction.id)
+      );
 
-        if(rootActionId){
-            const nonRootSteps = workflowState.actionStates.filter(s => s.actionId !== rootActionId);
-            const completed = nonRootSteps.every(s => newSet.has(s.actionId));
-            if(completed && nonRootSteps.length > 0){
-                newSet.add(rootActionId);
-                const rootStateActionId = actionStateIdsMap[rootActionId];
-                if(rootStateActionId){
-                    fetch(`${baseUrl}/states/handleSubmit`, {
-                        method: "POST",
-                        headers: {"Content-Type":"application/json"},
-                        body:JSON.stringify({
-                            actionStateId: rootStateActionId, userId,
-                            workflowStateId: workflowState?.id
-                        })
-                    }).catch(console.error);
-                }
-            }else{
-                newSet.delete(rootActionId);
-            }
+      if(rootActionId && allNonRootDone && nonRootContexts.length > 0){
+        const rootStateId = getActionStateId(rootActionId);
+        if(rootStateId){
+            await fetch(`${baseUrl}/states/handleSubmit`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({actionStateId: rootStateId, userId, workflowStateId: workflowState?.id})
+            }).catch(console.error);
         }
-        return newSet;
-      });
+      }
+
+      //re-fetch to sync actionWithContexts state
+      await fetchWorkflowAndActions();
+
     } catch (error) {
       alert(`Error updating step: ${error.message}`);
     }
@@ -229,7 +283,6 @@ export default function WorkflowPage() {
   // This will handle the adding of multiple users
   const handleAddAssignee = async (user) =>{
     try{
-        const rootActionId = workflowState.actionStates[0].actionId;
         const res = await fetch(`${baseUrl}/states/workflow`, {
             method:"POST",
             headers: { 'Content-Type': 'application/json' },
@@ -263,7 +316,7 @@ const handleRemoveAssignee = async (userId) => {
         }
 
         const deleteRes = await fetch(`${baseUrl}/states/workflow/${stateToDelete.id}`, {method: "DELETE"});
-        if(!deleteRes){
+        if(!deleteRes.ok){
             throw new Error("Failed to remove user in scoopdinator/workflow/[id]/pages, in handleRemoveAssignee");
         }
         setAssignedUsers(prev => prev.filter(id => id !== userId));
@@ -271,18 +324,57 @@ const handleRemoveAssignee = async (userId) => {
         alert(e.message);
     }
 }
+//Handles the adding of actions to teams
+const handleAddTeam = async (team) => {
+    try {
+        const res = await fetch(`${baseUrl}/states/workflow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                teamId: String(team.id),
+                workflowId,
+                participantUserIds: team.members.map(m => m.id)
+            }),
+        });
+        if (!res.ok) throw new Error('Failed to assign team');
+        setAssignedTeams(prev => 
+            prev.includes(String(team.id)) ? prev : [...prev, String(team.id)]
+        );
+    } catch (e) {
+        alert(e.message);
+    }
+};
 
+//handles the removal of the team
+const handleRemoveTeam = async (teamId) => {
+    try {
+        const res = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
+        const data = await res.json();
+        const stateToDelete = data.find(s => String(s.teamId) === String(teamId));
+        if (!stateToDelete) throw new Error('No workflow state found for team');
+
+        const deleteRes = await fetch(`${baseUrl}/states/workflow/${stateToDelete.id}`, { method: 'DELETE' });
+        if (!deleteRes.ok) throw new Error('Failed to remove team');
+        setAssignedTeams(prev => prev.filter(id => String(id) !== String(teamId)));
+    } catch (e) {
+        alert(e.message);
+    }
+};
+
+//Modal fucntionality
   const handleOpenModal = () => setIsModalOpen(true);
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setNewActionName('');
     setNewActionDescription('');
+    setNewActionRequiresSubmission(false);
   };
 
   const handleOpenEditModal = (action) => {
     setEditingActionId(action.id);
     setEditingActionName(action.name || '');
     setEditingActionDescription(action.description || '');
+    setEditingActionFileSubmission(action.requiresSubmission || false);
     setIsEditModalOpen(true);
   };
 
@@ -291,6 +383,7 @@ const handleRemoveAssignee = async (userId) => {
     setEditingActionId(null);
     setEditingActionName('');
     setEditingActionDescription('');
+    setEditingActionFileSubmission(false);
   };
   
   //This function used actionMaps which fetches asyncronasly, but now instead we will fetch directly from the db, so the 
@@ -301,25 +394,23 @@ const handleRemoveAssignee = async (userId) => {
     if (!workflowState?.id) return alert('No workflow state loaded');
 
     try {
-        const rootActionId = workflowData?.rootActionId;
-        const baseActionId = workflowData?.baseActionId;
+        const {rootActionId, baseActionId} = workflowData;
 
-        //Fetches actions from the server doesn't rely on actionMaps anymore.
-        const nonRootStates = workflowState.actionStates.filter(
-            s => s.actionId !== rootActionId && s.actionId !== baseActionId
-        );
-        const actionIds = nonRootStates.map(s => s.actionId);
+        //Build a fresh actionsMap directly from the server
+        const nonRootStateIds = workflowState.actionStates
+            .filter(s => s.actionId !== rootActionId && s.actionId !== baseActionId)
+            .map(s => s.actionId);
 
         let freshActionsMap = {};
-        if(actionIds.length > 0){
+        if(nonRootStateIds.length > 0){
             const actionsUrl = new URL(`${baseUrl}/actions`);
-            actionsUrl.searchParams.append('ids', actionIds.join(','));
+            actionsUrl.searchParams.append('ids', nonRootStateIds.join(','));
             const res = await fetch(actionsUrl.toString());
             const freshActions = await res.json();
             freshActions.forEach(a => {freshActionsMap[a.id] = a;});
         }
 
-        //Walks through the linked list from root to find the tailm instead of relying on state to hold previous tail.
+        //Walks through the linked list from root to find the tail
         let tailActionId = rootActionId;
         const rootAction = await fetch(`${baseUrl}/actions/${rootActionId}`).then(r => r.json());
         let currentId = rootAction?.nextActionId;
@@ -338,13 +429,16 @@ const handleRemoveAssignee = async (userId) => {
                 name: newActionName.trim(),
                 description: newActionDescription.trim(),
                 userId,
-                metadata: {title: newActionName.trim()}
+                requiresSubmission: newActionRequiresSubmission,
+                metadata: {title: JSON.stringify(newActionName.trim())}
             })
         });
-        if (!response.ok) throw new Error('Failed to create action');
+        if(!response.ok){
+            throw new Error('Failed to create action');
+        }
         const newAction = await response.json();
 
-        //(Link tail) goes to (new action) which goes to (nothing yet)
+        //(Link tail) goes to (new action) which goes to (nothing yet) because its new
         await fetch(`${baseUrl}/actions/${tailActionId}`,{
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -362,15 +456,17 @@ const handleRemoveAssignee = async (userId) => {
             method: 'PUT',
             headers: {'Content-Type': 'application/json'},
         });
-        if (!attachRes.ok) throw new Error('Failed to attach action to workflow state');
+        if(!attachRes.ok){
+            throw new Error('Failed to attach action to workflow state');
+        }
 
-        //syncing new action to ALL assigned users workflow states
+        //syncing new action to ALL assigned users
         const allStatesRes = await fetch(`${baseUrl}/states/workflow?workflowId=${workflowId}`);
         if (allStatesRes.ok) {
             const allStates = await allStatesRes.json();
             await Promise.all(
                 allStates
-                    .filter(s => s.id !== workflowState.id) //skipping current user
+                    .filter(s => s.id !== workflowState.id)
                     .map(s => fetch(`${baseUrl}/states/workflow/${s.id}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
@@ -402,8 +498,9 @@ const handleRemoveAssignee = async (userId) => {
         body: JSON.stringify({
           name: editingActionName.trim(),
           description: editingActionDescription.trim(),
-          metadata: { title: editingActionName.trim() }
-        }),
+          requiresSubmission: editingActionFileSubmission,
+          metadata: { title: JSON.stringify(editingActionName.trim()) }
+        })
       });
 
       if (!response.ok) throw new Error('Failed to update action');
@@ -441,30 +538,6 @@ const handleRemoveAssignee = async (userId) => {
   if (loading) return <Typography sx={{ p: 4 }}>Loading workflows...</Typography>;
   if (error) return <Typography sx={{ p: 4, color: 'red' }}>{error}</Typography>;
   if (!workflowState) return <Typography sx={{ p: 4 }}>No workflow state available</Typography>;
-
-  const rootActionId = workflowData?.rootActionId;
-  const baseActionId = workflowData?.baseActionId;
-  const userSteps = workflowState.actionStates.filter(
-    s => s.actionId !== rootActionId && s.actionId !== baseActionId
-  );
-  const sortedSteps = [];
-  if (userSteps.length > 0) {
-    const stepsByActionId = {};
-    userSteps.forEach(s => { stepsByActionId[s.actionId] = s; });
-    const rootAction = actionsMap[rootActionId];
-    let currentActionId = rootAction?.nextActionId;
-    while (currentActionId && stepsByActionId[currentActionId]) {
-        sortedSteps.push(stepsByActionId[currentActionId]);
-        currentActionId = actionsMap[currentActionId]?.nextActionId ?? null;
-    }
-    userSteps.forEach(s => {
-        if (!sortedSteps.find(ss => ss.id === s.id)) sortedSteps.push(s);
-    });
-   }
-   const steps = sortedSteps;
-   
-//    console.log('userSteps count:', userSteps.length);
-// console.log('sortedSteps count:', sortedSteps.length);
 
   return (
     <Box
@@ -524,129 +597,112 @@ const handleRemoveAssignee = async (userId) => {
                 >
                   Manage Users
                 </Button>
-              </Box>
+                <Button
+                    variant="outlined"
+                    size="small"
+                    sx={{ textTransform: 'none' }}
+                    onClick={() => setAssignTeamModalOpen(true)}
+                >
+                    Manage Teams
+                </Button>
                 <Button
                   variant="outlined"
                   size="small"
                   color="error"
-                  sx={{ textTransform: 'none' }}
+                  sx={{ textTransform: 'none', ml:"auto"}}
                   onClick={() => handleDeleteWorkflow(workflowId)}
                 >
                   Delete
                 </Button>
-
-              {/* Steps rendering */}
+              </Box>
+                <hr color=""/>
+              {/* rendering with actionsWithContexts */}
               <Box>
-                {steps.map((step, index) => {
-                  const prevStep = steps[index - 1];
-                  const isLocked = index > 0 && !completedSteps.has(prevStep.actionId);
-                  const isCompleted = completedSteps.has(step.actionId);
-                  const action = actionsMap[step.actionId];
+                {actionsWithContexts.map((awc, index) => {
+                const action = awc.processedAction;
+                const actionState = awc.actionState;
+                const prevAwc = actionsWithContexts[index - 1];
+                const isLocked = index > 0 && prevAwc?.actionState?.stateType !== 'completed';
+                const completed = actionState?.stateType === 'completed';
+                const metadataTitle = action.parsedMetadata?.title || '';
 
-                  let metadataTitle = '';
-                  if (Array.isArray(action?.metadata)) {
-                    metadataTitle = action.metadata.find((m) => m.key === 'title')?.value || '';
-                  } else if (action?.metadata && typeof action.metadata === 'object') {
-                    metadataTitle = action.metadata.title || '';
-                  }
-
-                  return (
+                return (
                     <Box
-                      key={step.id}
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        mb: index !== steps.length - 1 ? 3 : 0,
+                    key={action.id}
+                    sx={{
+                        display: 'flex', flexDirection: 'row', alignItems: 'center',
+                        mb: index !== actionsWithContexts.length - 1 ? 3 : 0,
                         flexWrap: 'nowrap',
-                        opacity: isLocked ? 0.5 : 1,
-                        pointerEvents: isLocked ? 'none' : 'auto',
-                      }}
+                        // opacity: isLocked ? 0.5 : 1,
+                        // pointerEvents: isLocked ? 'none' : 'auto',
+                    }}
                     >
-                      <Checkbox
-                        checked={isCompleted}
-                        onChange={() => toggleComplete(step.actionId)}
+                    {/* <Checkbox
+                        checked={completed}
+                        onChange={() => toggleComplete(action.id)}
                         disabled={isLocked}
                         sx={{ color: '#F76902', mr: 1 }}
                         inputProps={{ 'aria-label': 'Mark step complete' }}
-                      />
-                      <Box
+                    /> */}
+                    <Box
                         sx={{
-                          minWidth: 32,
-                          minHeight: 32,
-                          borderRadius: '50%',
-                          bgcolor: isCompleted ? '#4caf50' : '#F76902',
-                          color: '#fff',
-                          fontWeight: 700,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mr: 2,
-                          userSelect: 'none',
-                          fontSize: '1rem',
-                          flexShrink: 0,
+                        minWidth: 32, minHeight: 32, borderRadius: '50%',
+                        bgcolor: completed ? '#4caf50' : '#F76902',
+                        color: '#fff', fontWeight: 700,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        mr: 2, userSelect: 'none', fontSize: '1rem', flexShrink: 0,
                         }}
-                      >
+                    >
                         {index + 1}
-                      </Box>
-                      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                    </Box>
+                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                         <Typography
-                          variant="h3"
-                          sx={{
-                            fontSize: '1.25rem',
-                            fontWeight: 300,
-                            mb: 0.5,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            textDecoration: isCompleted ? 'line-through' : 'none',
-                            color: isCompleted ? '#888' : 'inherit',
-                          }}
-                          title={metadataTitle || action?.name || 'Untitled Step'}
+                        variant="h3"
+                        sx={{
+                            fontSize: '1.25rem', fontWeight: 300, mb: 0.5,
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            textDecoration: completed ? 'line-through' : 'none',
+                            color: completed ? '#888' : 'inherit',
+                        }}
+                        title={metadataTitle || action.name || 'Untitled Step'}
                         >
-                          {metadataTitle || action?.name || 'Untitled Step'}
+                        {metadataTitle || action.name || 'Untitled Step'}
                         </Typography>
                         <Typography
-                          sx={{
-                            fontSize: '1rem',
-                            lineHeight: 1.5,
-                            color: '#555',
+                        sx={{
+                            fontSize: '1rem', lineHeight: 1.5, color: '#555',
                             whiteSpace: 'normal',
-                            textDecoration: isCompleted ? 'line-through' : 'none',
-                          }}
+                            textDecoration: completed ? 'line-through' : 'none',
+                        }}
                         >
-                          {action?.description || 'No description available'}
+                        {action.description || 'No description available'}
                         </Typography>
-                      </Box>
-                      <Button
+                    </Box>
+                    {/* <Button
                         variant="contained"
                         disabled={isLocked}
                         sx={{
-                          backgroundColor: '#F76902',
-                          textTransform: 'none',
-                          ml: 2,
-                          flexShrink: 0,
-                          '&:hover': { backgroundColor: '#d65a00' },
+                        backgroundColor: '#F76902', textTransform: 'none', ml: 2, flexShrink: 0,
+                        '&:hover': { backgroundColor: '#d65a00' },
                         }}
                         endIcon={<ArrowForwardIosIcon fontSize="small" />}
                         onClick={() => {
-                          const url = stepIndexToUrl[index];
-                          if (url?.startsWith('http')) window.open(url, '_blank');
-                          else router.push(url);
+                        const url = stepIndexToUrl[index];
+                        if (url?.startsWith('http')) window.open(url, '_blank');
+                        else router.push(url);
                         }}
-                      >
+                    >
                         Open
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
+                    </Button> */}
+                    <Button
+                        variant="outlined" size="small"
                         sx={{ textTransform: 'none', ml: 1 }}
                         onClick={() => handleOpenEditModal(action)}
-                      >
+                    >
                         Edit
-                      </Button>
+                    </Button>
                     </Box>
-                  );
+                );
                 })}
               </Box>
             </Paper>
@@ -675,6 +731,14 @@ const handleRemoveAssignee = async (userId) => {
             value={newActionDescription}
             onChange={(e) => setNewActionDescription(e.target.value)}
           />
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <Checkbox
+                checked={newActionRequiresSubmission}
+                onChange={(e) => setNewActionRequiresSubmission(e.target.checked)}
+                sx={{ color: '#F76902' }}
+            />
+            <Typography variant="body2">Requires file submission</Typography>
+        </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseModal}>Cancel</Button>
@@ -705,6 +769,14 @@ const handleRemoveAssignee = async (userId) => {
             value={editingActionDescription}
             onChange={(e) => setEditingActionDescription(e.target.value)}
           />
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <Checkbox
+                checked={editingActionFileSubmission}
+                onChange={(e) => setEditingActionFileSubmission(e.target.checked)}
+                sx={{ color: '#F76902' }}
+            />
+            <Typography variant="body2">Requires file submission</Typography>
+        </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseEditModal}>Cancel</Button>
@@ -753,9 +825,43 @@ const handleRemoveAssignee = async (userId) => {
                 }}
                 renderInput={(params) => <TextField {...params} label="Select a SCOOPloyee" size='small'/>}
             />
-            
         </DialogContent>
-        <Button onClick={() => {setAssignModalOpen(false); setUserSearch('');}}>Close</Button>
+        <Button onClick={() => {setAssignModalOpen(false);}}>Close</Button>
+      </Dialog>
+      <Dialog open={assignTeamModalOpen} onClose={() => setAssignTeamModalOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Manage Teams</DialogTitle>
+        <DialogContent>
+            <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>Currently Assigned Teams</Typography>
+            {assignedTeams.length === 0 && (
+                <Typography variant='body2' color="secondary" sx={{ mb: 2 }}>No teams assigned yet</Typography>
+            )}
+            {assignedTeams.map(tid => {
+                const team = allTeams.find(t => String(t.id) === String(tid));
+                if (!team) return null;
+                return (
+                    <Box key={tid} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                        <Typography>{team.name || `Team ${tid}`}</Typography>
+                        <Button size="small" color='error' variant='contained' onClick={() => handleRemoveTeam(tid)}>
+                            Remove
+                        </Button>
+                    </Box>
+                );
+            })}
+            <Typography variant='subtitle2' sx={{ mt: 2, mb: 1, fontWeight: 600 }}>Add Team</Typography>
+            <Autocomplete
+                options={allTeams.filter(t => !assignedTeams.map(String).includes(String(t.id)))}
+                getOptionLabel={(t) => t.name || `Team ${t.id}`}
+                onChange={(e, selected) => { if (selected) handleAddTeam(selected); }}
+                componentsProps={{
+                    popper: {
+                        placement: 'bottom-start',
+                        modifiers: [{ name: 'flip', enabled: false }],
+                    }
+                }}
+                renderInput={(params) => <TextField {...params} label="Select a Team" size='small' />}
+            />
+        </DialogContent>
+        <Button onClick={() => setAssignTeamModalOpen(false)}>Close</Button>
       </Dialog>
     </Box>
   );
