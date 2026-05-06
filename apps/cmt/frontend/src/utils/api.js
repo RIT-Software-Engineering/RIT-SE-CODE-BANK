@@ -2,6 +2,7 @@ import { CMTFetch } from "@se-code-bank/cmt-shared-utilities"
 
 export const API_BASE = process.env.REACT_APP_BACKEND_URL || "http://localhost:5010/api/cmt";
 export const BASE_URL = process.env.REACT_APP_BASE_URL || "http://localhost:5010";
+export const AUTH_BASE = process.env.REACT_APP_AUTH_BASE || "http://localhost:5010";
 
 /**
  * Uses {@link CMTFetch}
