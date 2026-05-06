@@ -7,6 +7,9 @@ RUN npm ci --omit-dev
 
 RUN npm run --workspace=apps/cmt/frontend build
 
+ARG NODE_ENV
+ENV NODE_ENV=$NODE_ENV
+
 ARG PORT
 ENV PORT=$PORT
 
