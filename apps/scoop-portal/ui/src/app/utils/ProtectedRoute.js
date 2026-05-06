@@ -33,7 +33,7 @@ export default function ProtectedRoute({ children, requiredRoles = [] }) {
   //   );
   // }
 
-  // if (!user) return null;
+  if (!user) return null;
 
   if (requiredRoles.length > 0 && !requiredRoles.includes(user.type)) {
     return <UnauthorizedPage />;
