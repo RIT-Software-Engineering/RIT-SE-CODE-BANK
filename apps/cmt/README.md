@@ -65,6 +65,8 @@ Tips for usage:
 
 > If you don't use VSCode, this may not work. I suggest looking into if your IDE has a similar feature, otherwise, you can either vibe code a script to do it generically, or do the manual option.
 
+> If you are getting weird issues, try the reset all data command, in the cmt package.json
+
 #### 2. (Option 2): Manual
 
 Run `npm i` in the root, then open 3 terminals and run this in each.

@@ -231,7 +231,7 @@ export default function CourseWebsitePage() {
 
     await Promise.all(resources.map(async (resource) => {
       try {
-        const resp = await CMTJsonFetchRaw("GET", `/resources/download/${resource.id}`).catch(createErrorHandler("`Failed to fetch resource ${resource.id}"));
+        const resp = await CMTJsonFetchRaw("GET", `/resources/download/${resource.id}`).catch(createErrorHandler(`Failed to fetch resource ${resource.id}`));
 
         const blob = await resp.blob();
         const fileName = sanitize(resource.filename);
@@ -265,7 +265,7 @@ export default function CourseWebsitePage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId})
+    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId}).catch(createErrorHandler("Error downloading course."))
   };
 
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>

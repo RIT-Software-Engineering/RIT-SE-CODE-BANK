@@ -7,6 +7,8 @@ This monorepo hosts several projects and shared components. Most documentation c
 These docs are best read inside of Github, because links look better and images work, but if you want to read them in VSCode, you can get
 an extension that can render markdown files as Github markdown files.
 
+**`Ctrl`+`Shift`+`V` can open up the builtin vscode renderer.** The above extension modifies it.
+
 # High Level Documentation
 
 High level documentation can be found in the shared [se-code-bank drive](https://drive.google.com/drive/u/1/folders/1eDbtGrgsCikuy221MIa72kXh0j31CQ5K)
