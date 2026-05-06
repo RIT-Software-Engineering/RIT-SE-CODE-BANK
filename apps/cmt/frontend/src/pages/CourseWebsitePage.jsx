@@ -5,6 +5,7 @@ import { createErrorHandler } from "../utils/error.jsx";
 import JSZip from "jszip";
 import { Alert, Form } from "react-bootstrap";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import logo from "../images/se_logo_new.png";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
@@ -62,7 +63,7 @@ export default function CourseWebsitePage() {
     fetchSessions();
   }, [selectedCourse, courses]);
 
-  const generateCourseHTML = async (course, sessions, weeks, isWeeks) => {
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName) => {
     let rows;
     if (isWeeks && weeks)
       rows = await Promise.all(
@@ -92,8 +93,23 @@ export default function CourseWebsitePage() {
           padding: 20px;
         }
 
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
         h1 {
-          text-align: center;
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.4em;
+        }
+
+        h2 a {
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.2em;
         }
 
         table {
@@ -126,8 +142,17 @@ export default function CourseWebsitePage() {
       </style>
     </head>
     <body>
+      <header class="header">
+        <a href="https://www.se.rit.edu">
+          <img alt="Software Engineering Department" src="../resources/se_logo_new.png">
+        </a>
 
-      <h1>${course.classId}-${course.section} | ${course.name}</h1>
+        <h1>
+          ${course.classId}<br>${course.name}
+        </h1>
+      </header>
+
+      <h2> <a href="../${syllabusName}">Syllabus</a> </h2>
 
       <table>
         <thead>
@@ -180,11 +205,29 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
+    const syllabusArray = await CMTJsonFetch("GET", `/resources/syllabus/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting syllabus ID"))
+
+    const syllabus = syllabusArray[0];
+
+    const syll = await CMTJsonFetchRaw("GET", `/resources/download/${syllabus.id}`).catch(createErrorHandler("Error getting syllabus"))
+
+    const blob1 = await syll.blob();
+
+    const syllabusFolder = zip.folder("public_html")
+
+    const syllabusName = sanitize(syllabus.filename)
+
+    syllabusFolder.file(syllabusName, blob1)
+
     const resources = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting resources"));
 
-    console.log("Resources for course:", resources);
 
     const resourcesFolder = zip.folder("public_html/resources");
+
+    const resp = await fetch(logo);
+    const blob = await resp.blob();
+
+    resourcesFolder.file("se_logo_new.png", blob);
 
     await Promise.all(resources.map(async (resource) => {
       try {
@@ -200,7 +243,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks, syllabusName);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.

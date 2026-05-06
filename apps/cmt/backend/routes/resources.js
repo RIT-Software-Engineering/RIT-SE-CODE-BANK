@@ -210,6 +210,23 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
 })
 
 /**
+ * GET /api/cmt/resources/syllabus/:courseId
+ * Get syllabus resource of a course
+ */
+router.get('/syllabus/:courseId', async (req, res) => {
+    try {
+        const { courseId } = req.params
+        const resources = await req.prisma.resource.findMany({
+            where: { courseId: parseInt(courseId), isSyllabus: true, },
+            orderBy: { createdAt: 'desc' },
+        })
+        res.json(resources)
+    } catch (error) {
+        throw new CMTError({ userFacingMessage: "Error getting syllabus", cause: error })
+    }
+})
+
+/**
  * GET /api/cmt/resources/id/:id
  * Get a single resource by ID
  */
