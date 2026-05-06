@@ -1,47 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
+import { CMTJsonFetch, CMTJsonFetchRaw } from "../utils/api.js";
+import { createErrorHandler } from "../utils/error.jsx";
 import JSZip from "jszip";
+import { Alert, Form } from "react-bootstrap";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import logo from "../images/se_logo_new.png";
 
 export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
+  const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isWeeks, setIsWeeks] = useState(false);
 
   // Fetch courses
-  useEffect(() => {
-    (async () => {
-      await CMTJsonFetch("GET", `course`).then(async response => {
-          const result = await response.json();
-          setCourses(result);
-      }).catch(async error => {
-        console.error(error);
-      });
-    })();
-  }, []);
-
-  // Fetch sessions and materials for selected course
-  useEffect(() => {
-    if (!selectedCourse) return;
-
-    const fetchSessions = async () => {
-      setLoading(true);
-      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async response => {
-        const result = await response.json();
-        const combined = result.sessions.map((session, index) => ({
-          ...session,
-          materials: result.sessionMaterials[index]?.material || [],
-        }));
-        setSessions(combined);
-      }).catch(async error => {
-        console.error("Error fetching sessions:", error);
-        setSessions([]);
-      }).finally(() => setLoading(false));
-    };
-
-    fetchSessions();
-  }, [selectedCourse]);
+  useEffect(() => 
+    void CMTJsonFetch("GET", `course?isActive=true`)
+      .then(setCourses)
+      .catch(createErrorHandler("Failed to fetch courses.")),
+    []
+  )
 
   // the full course object to get course name & course id
   const selectedCourseObj = useMemo(() => {
@@ -50,14 +30,56 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  const  generateCourseHTML = async (course, sessions) => {
-    const rows = await Promise.all(
-      sessions
-        .sort((a, b) => a.sessionNum - b.sessionNum)
-        .map(session =>
-          generateSessionRowHTML(session, visibleColumns)
-        )
-    );
+    // Fetch sessions and materials for selected course
+  useEffect(() => {
+    if (!selectedCourse) return;
+
+    const fetchSessions = async () => {
+      setLoading(true);
+      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async json => {
+        const combined = json.sessions.map((session, index) => ({
+          ...session,
+          materials: json.sessionMaterials[index]?.material || [],
+        })).sort((a, b) => a.sessionNum - b.sessionNum);
+        setSessions(combined);
+
+        // AI-generated code
+        if (courses.find(c => c.id === selectedCourse)?.days)
+          setWeeks(combined.reduce((acc, item, index) => {
+            const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
+            if (!acc[group]) acc[group] = [];
+            acc[group].push(item);
+            return acc;
+          }, []));
+        else
+          setWeeks(null);
+
+      }).catch(async error => {
+        console.error("Error fetching sessions:", error);
+        setSessions([]);
+      }).finally(() => setLoading(false));
+    };
+
+    fetchSessions();
+  }, [selectedCourse, courses]);
+
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName) => {
+    let rows;
+    if (isWeeks && weeks)
+      rows = await Promise.all(
+        weeks
+          .map((week, index) =>
+            generateWeekRowHTML(week, visibleColumns, index)
+          )
+      );
+    else
+      rows = await Promise.all(
+        sessions
+          .sort((a, b) => a.sessionNum - b.sessionNum)
+          .map(session =>
+            generateSessionRowHTML(session, visibleColumns)
+          )
+      );
 
     return `
     <!DOCTYPE html>
@@ -71,8 +93,23 @@ export default function CourseWebsitePage() {
           padding: 20px;
         }
 
+        header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin: 0;
+        }
+
         h1 {
-          text-align: center;
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.4em;
+        }
+
+        h2 a {
+            color: #0484c9;
+            text-align: left;
+            font-size: 1.2em;
         }
 
         table {
@@ -91,7 +128,6 @@ export default function CourseWebsitePage() {
         td:first-child {
           text-align: center;
           vertical-align: middle;
-          font-weight: bold;
         }
 
         td {
@@ -106,13 +142,22 @@ export default function CourseWebsitePage() {
       </style>
     </head>
     <body>
+      <header class="header">
+        <a href="https://www.se.rit.edu">
+          <img alt="Software Engineering Department" src="../resources/se_logo_new.png">
+        </a>
 
-      <h1>${course.classId}-${course.section} | ${course.name}</h1>
+        <h1>
+          ${course.classId}<br>${course.name}
+        </h1>
+      </header>
+
+      <h2> <a href="../${syllabusName}">Syllabus</a> </h2>
 
       <table>
         <thead>
           <tr>
-            <th>Session</th>
+            <th>${isWeeks ? 'Week' : 'Session'}</th>
             ${visibleColumns.map(col => `<th>${col}</th>`).join("")}
           </tr>
         </thead>
@@ -160,32 +205,45 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
-    const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
+    const syllabusArray = await CMTJsonFetch("GET", `/resources/syllabus/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting syllabus ID"))
 
-    if (!response.ok) throw new Error("Failed to fetch resources");
+    const syllabus = syllabusArray[0];
 
-    const resources = await response.json();
+    const syll = await CMTJsonFetchRaw("GET", `/resources/download/${syllabus.id}`).catch(createErrorHandler("Error getting syllabus"))
 
-    console.log("Resources for course:", resources);
+    const blob1 = await syll.blob();
+
+    const syllabusFolder = zip.folder("public_html")
+
+    const syllabusName = sanitize(syllabus.filename)
+
+    syllabusFolder.file(syllabusName, blob1)
+
+    const resources = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting resources"));
+
 
     const resourcesFolder = zip.folder("public_html/resources");
 
+    const resp = await fetch(logo);
+    const blob = await resp.blob();
+
+    resourcesFolder.file("se_logo_new.png", blob);
+
     await Promise.all(resources.map(async (resource) => {
       try {
-        const resp = await CMTJsonFetch("GET", `/resources/download/${resource.id}`);
-        if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
+        const resp = await CMTJsonFetchRaw("GET", `/resources/download/${resource.id}`).catch(createErrorHandler(`Failed to fetch resource ${resource.id}`));
 
         const blob = await resp.blob();
         const fileName = sanitize(resource.filename);
         resourcesFolder.file(fileName, blob);
 
       } catch (err) {
-        console.error("Failed resource:", resource, err);
+        throw new CMTError({ userFacingMessage: `Failed resource ${resource} ${err}`, cause: err })
       }
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks, syllabusName);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.
@@ -206,6 +264,8 @@ export default function CourseWebsitePage() {
 
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+
+    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId}).catch(createErrorHandler("Error downloading course."))
   };
 
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>
@@ -218,8 +278,8 @@ export default function CourseWebsitePage() {
     <div>
       {/* Course Selector */}
       <div>
-        <select
-          className="border rounded-lg p-2 text-lg"
+        <Form.Select
+          className="border rounded-lg p-2 text-lg max-w-[30%]"
           value={selectedCourse || ""}
           onChange={(e) => setSelectedCourse(Number(e.target.value))}>
           <option value="" disabled>Select a course</option>
@@ -228,14 +288,19 @@ export default function CourseWebsitePage() {
               {course.classId}-{course.section} | {course.name} ({course.season} {course.year})
             </option>
           ))}
-        </select>
+        </Form.Select>
+      </div>
+      <div className="flex text-lg gap-2 mt-3">
+        <Form.Label className={`${selectedCourse ? '' : 'text-gray-300'}`}>Display as weeks?</Form.Label>
+        <Form.Check disabled={!selectedCourse} onChange={() => setIsWeeks(prev => !prev)}/>
       </div>
 
       {selectedCourse && (
+        // AI-generated
         <div className="text-center">
           <button
             onClick={downloadCourseZIP}
-            className="group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer"
+            className={`${(isWeeks && weeks) || !isWeeks ? 'block' : 'hidden'} group mt-6 inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-all duration-150 cursor-pointer`}
           >
             <svg
               className="w-4 h-4 transition-transform duration-150 group-hover:translate-y-0.5"
@@ -260,14 +325,14 @@ export default function CourseWebsitePage() {
 
       {/* Events Table */}
       {loading ? (
-        <div className="text-center p-6">Loading events...</div>
+        <div className="text-center p-6">Loading material...</div>
       ) : sessions.length === 0 ? (
-        <p className="text-gray-500 text-center">No events found for this course.</p>
+        <p className="text-gray-500 text-center">No material found for this course.</p>
       ) : (
         <table className="mx-auto w-full border-collapse">
           <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-blue-300 p-3 text-center">Session</th>
+              <th className="border border-blue-300 p-3 text-center">{isWeeks ? 'Week' : 'Session'}</th>
                 {visibleColumns.map(col => (
                   <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
@@ -276,16 +341,16 @@ export default function CourseWebsitePage() {
             </tr>
           </thead>
           <tbody>
-            {sessions
-              .sort((a, b) => a.sessionNum - b.sessionNum)
+            {!isWeeks ? sessions
               .map((session, index) => {
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
                 return (
                   <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
 
-                    <td className="border border-blue-300 p-3 font-semibold text-center">
-                      {session.sessionNum}
+                    <td className="border border-blue-300 p-3 text-center">
+                      <p className="font-semibold">{session.sessionNum}</p>
+                      <p>{session?.date ?? "TBD"}</p>
                     </td>
 
                     {grouped.map((colItems, colIndex) => (
@@ -299,7 +364,42 @@ export default function CourseWebsitePage() {
                     ))}
                 </tr>
                 );
-              })}
+              }) : 
+
+              (weeks? weeks.map((week, index) => {
+                const materials = week.flatMap(session => session?.materials);
+                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+
+                return (<>
+                <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                  <td className="border border-blue-300 p-3 text-center">
+                    <p className="font-semibold">{index+1}</p>
+                    <small>
+                      <span>{week[0]?.date ?? "TBD"} -</span>
+                      <p>{week[week.length-1]?.date ?? "TBD"}</p>
+                    </small>
+                  </td>
+
+                    {grouped.map(colItems => (
+                        <td key={colItems} className="border border-blue-300 p-3 align-top">
+                          {colItems.map(item => (
+                          <div key={item.id} className="mb-1">
+                            <ReadOnlyEditor value={item.label} />
+                          </div>
+                        ))}
+                        </td>
+                    ))}
+
+                </tr>
+                </>)
+              }) :
+              <Alert variant="danger">
+                <p>You have not selected days in your course, so we cannot display the site in weeks.</p>
+                <p>If you would like to see your course in weeks, please finish the first multi-step to continue.</p>
+              </Alert>
+            )
+
+            }
           </tbody>
         </table>
       )}
@@ -357,12 +457,63 @@ async function generateSessionRowHTML(session, visibleColumns) {
 
   return `
     <tr>
-      <td>${session.sessionNum}</td>
+      <td>
+      <p><strong>${session.sessionNum}</strong></p>
+      <p>${session?.date ?? "TBD"}</p>
+      </td>
       ${columnsHTML.join("")}
     </tr>
   `;
 }
 
+async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
+  const materials = week.flatMap(session => session?.materials);
+  const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+
+  const columnsHTML = await Promise.all(
+    grouped.map(async colItems => {
+      const itemsHTML = await Promise.all(
+        colItems.map(async item => {
+          // If an item has a body rewrite any resource links in the body and encoded it.
+          // Then whenever the title is clicked open a new page with the body content
+          if (item.body) {
+            const rewrittenBody = await rewriteResourceLinks(item.body);
+            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+
+            return `<a href="#" onclick="openItem('${encoded}'); return false;">
+              ${item.label}
+            </a>`;
+          }
+
+          // Rewrite resource links in title
+          const rewrittenLabel = await rewriteResourceLinks(item.label);
+
+          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+            return `<span>${item.label}</span>`;
+          }
+
+          return `<span>${rewrittenLabel}</span>`;
+        })
+      );
+
+      return `<td>${itemsHTML.join("")}</td>`;
+    })
+  );
+
+  return `
+    <tr>
+      <td>
+      <p><strong>${weekIndex+1}</strong></p>
+      <small>
+      <span>${week[0]?.date ?? "TBD"} - </span>
+      <p>${week[week.length-1]?.date ?? "TBD"}</p>
+      </small>
+      </td>
+      ${columnsHTML.join("")}
+    </tr>
+  `;
+}
 
 // Helper function to rewrite the resource links from api calls to relatives paths
 async function rewriteResourceLinks(html) {
@@ -378,8 +529,7 @@ async function rewriteResourceLinks(html) {
     const id = href.split('/').filter(Boolean).pop();
 
     try {
-      const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
-      const resource = await response.json();
+      const resource = await CMTJsonFetch("GET", `/resources/id/${id}`);
 
       if (!resource || !resource.filename) continue;
 

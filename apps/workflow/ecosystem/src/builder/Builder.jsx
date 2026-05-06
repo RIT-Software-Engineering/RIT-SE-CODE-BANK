@@ -26,7 +26,6 @@ export function WorkflowModal( {isOpen, setIsOpen, workflows, setWorkflows,
     WorkflowSubmit, curWorkflow ,isEdit, setIsEdit, 
     workflowEditSubmit, extraData, loadFunction, clearFunction, children, renderers} ){
 
-        console.log("haha i shouldnt be here")
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [tags, setTags] = useState('');
@@ -232,15 +231,22 @@ export function ActionModal({isOpen, setIsOpen, index, workflows, setWorkflows, 
  * @param {() => void} props.refresh - a function to refresh the page. Can be used to avoid tricky logic and rely on the API
  * 
  */
-export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows, actionDelete, workflowDelete, renderers, refresh}){
+export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows, actionDelete, workflowDelete, renderers, refresh }){
+    const [error, setError] = useState(null)
 
     async function deleteAction(){
         // Top level workflows don't actually have the actionType key/value pair, so we can also check if it's undefined.
         if (action.actionType === 'workflow' || !action.actionType){
-            await workflowDelete(workflows, setWorkflows, action, refresh).then(() => setIsOpen(false))
+            const deleteResult = await workflowDelete(workflows, setWorkflows, action, refresh, setError)
+            if (deleteResult === "Good") {
+                setIsOpen(false)
+            }
         }
         else {
-            await actionDelete(action, refresh).then(() => setIsOpen(false)) 
+            const deleteResult = await actionDelete(action, refresh, setError)
+            if (deleteResult === "Good") {
+                setIsOpen(false)
+            }
         }
     }
 
@@ -250,6 +256,8 @@ export function DeleteModal({isOpen, setIsOpen, action, workflows, setWorkflows,
         action={action}
         onHide={()=>setIsOpen(false)}
         onExit={()=>setIsOpen(false)}
+        onOpen={()=>setError(null)}
+        error={error}
 
         onCancel={() => setIsOpen(false)}
         onSubmit={() => deleteAction()}

@@ -1,25 +1,20 @@
 {
   "name": "@se-code-bank/workflows-ecosystem",
-  "version": "1.0.0",
   "description": "Build, Contextualize, and Render your Workflows.",
   "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./src/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./components": "./dist/react.js"
+    ".": {
+      "default": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./components": {
+      "default": "./src/react.js",
+      "types": "./src/react.d.ts"
+    }
   },
-  "files": [
-    "dist"
-  ],
-  "scripts": {
-    "prepare": "npm run build",
-    "build:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime",
-    "build:types": "tsc -p tsconfig.build.json",
-    "build": "npm run build:js && npm run build:types",
-    "watch:js": "esbuild src/index.js src/react.js --bundle --format=esm --outdir=dist --external:react --external:react/jsx-runtime --watch",
-    "watch:types": "tsc -p tsconfig.build.json --watch",
-    "watch": "concurrently \"npm:watch:js\" \"npm:watch:types\""
+  "peerDependencies": {
+    "react": "19.1.1"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",

@@ -1,18 +1,70 @@
+import { CMTError, CMTErrorToString, extractUserFacingError } from "@se-code-bank/cmt-shared-utilities"
 import { Alert } from "react-bootstrap"
 
 /**
- * Utility function for not filling the user's console with errors while also making error state management easier.
+ * Creates a function that takes an error, wraps it with a general user facing message, prints that error (which will include the "most specific" user facing message), and then passes in that user facing message to a callback function.
  * 
- * @param {string} description technical description of error. Or, generic description, if you only wish to provide one description
- * @param {Error | any} error Javascript Error, from something like a .catch. or just whatever
- * @param {React.Dispatch<import("react").SetStateAction<string>>} [setError] will set the error to either the userFacingDescription if given, or the description.
- * @param {string} [userFacingDescription] If you want to present the user with a simpler message, provide this field. 
+ * ### You can turn CMTFetch's catch block from this:
+ * 
+ * ```
+ * CMTJsonFetch('DELETE', `resources/${resourceId}`)
+ *      .then(refresh)
+ *      .catch(error => {
+ *          const wrappedError = new CMTError({ userFacingMessage: "Error deleting resource", cause: error })
+ *          console.log(CMTErrorToString(wrappedError))
+ *          const textToDisplay = extractUserFacingError(wrappedError)
+ *          setResources([])
+ *      })
+ * ```
+ * 
+ * ### to this:
+ * 
+ * ```
+ * CMTJsonFetch('DELETE', `resources/${resourceId}`)
+ *      .then(refresh)
+ *      .catch(createErrorHandler("Error deleting resource", setError))
+ * ```
+ * 
+ * ### If your catch function is more complicated, you can leverage the callback function for other purposes this:
+ * 
+ * ```
+ * CMTJsonFetch('DELETE', `resources/${resourceId}`)
+ *      .then(refresh)
+ *      .catch(createErrorHandler("Error deleting resource", userFacingMessage => {
+ *          setError(userFacingMessage)
+ *          setResources([])
+ *          // Other error logic    
+ *      }))
+ * ```
+ * 
+ * If you find yourself wanting to specify more complex user facing messages, instead of putting complex logic in the frontend function, instead just throw different errors inside of your endpoints.
+ * 
+ * @param {string} userFacingMessage 
+ * @param {(userFacingMessage: string) => void} [callback] 
+ * @returns 
  */
-export function LogError(description, error, setError, userFacingDescription) {
-    if (process.env.NODE_ENV === "DEV") 
-        console.error(description, error)
+export function createErrorHandler(userFacingMessage, callback) {
+    return error => {
+        const wrappedError = new CMTError({ userFacingMessage , cause: error })
+        console.error("Error from createErrorHandler:\n", CMTErrorToString(wrappedError))
+        if (callback) callback(extractUserFacingError(wrappedError))
+    }
+}
 
-    setError && setError(userFacingDescription ?? description)
+/**
+ * Alternative to createErrorHandler for more complex logic. Best used when there is complex logic in the frontend function to determine the user facing message.
+ * Normally, when you want to have complex conditions for determining the user facing message, that should be the responsibility of the backend throwing errors, but some places in this codebase would be scary to refactor.
+ * 
+ * @param {Error} error 
+ * @param {(message: string) => void} setError 
+ * @returns 
+ */
+export function handleError(error, setError) {
+    console.error("Error from handleError:\n", CMTErrorToString(error))
+    if (!setError) return
+
+    const textToDisplay = extractUserFacingError(error)
+    setError(typeof textToDisplay === "string" ? textToDisplay : JSON.stringify(textToDisplay)) // Prevent objects from messing things up
 }
 
 /**

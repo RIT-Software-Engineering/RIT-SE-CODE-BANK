@@ -29,6 +29,68 @@ import { HighlightPicker, TextPicker } from "./Pickers.jsx";
 import { BubbleMenu } from '@tiptap/react/menus'
 import { Link } from "react-router-dom";
 
+// This is to prevent rerenders that would be caused by inline definitions.
+// I believe the setRerender call has to do with it as well.
+// An alternative to this is a useMemo, since all we really want is for tooltip definitions to be stable.
+// There are better ways to do this, but we're low on time (:
+const TOOLTIP_OVERLAYS = {
+    bold: <Tooltip id="rte-bold-tooltip">Bold</Tooltip>,
+    italic: <Tooltip id="rte-italic-tooltip">Italics</Tooltip>,
+    underline: <Tooltip id="rte-underline-tooltip">Underline</Tooltip>,
+    code: <Tooltip id="rte-code-tooltip">Code Block</Tooltip>,
+    textColor: <Tooltip id="rte-text-color-tooltip">Text Color</Tooltip>,
+    highlight: <Tooltip id="rte-highlight-tooltip">Highlight</Tooltip>,
+    bulletList: <Tooltip id="rte-bullet-list-tooltip">Dot list</Tooltip>,
+    orderedList: <Tooltip id="rte-ordered-list-tooltip">Ordered List</Tooltip>,
+    header: <Tooltip id="rte-header-tooltip">Header</Tooltip>,
+    centerText: <Tooltip id="rte-center-text-tooltip">Center Text</Tooltip>,
+    externalLink: <Tooltip id="rte-external-link-tooltip">Insert External Link</Tooltip>,
+    removeLink: <Tooltip id="rte-remove-link-tooltip">Remove Link/Resource</Tooltip>,
+    table: <Tooltip id="rte-table-tooltip">Table</Tooltip>,
+}
+
+const emptyToolbarState = {
+    bold: false,
+    italic: false,
+    underline: false,
+    code: false,
+    textStyle: false,
+    highlight: false,
+    bulletList: false,
+    orderedList: false,
+    heading: false,
+    heading1: false,
+    heading3: false,
+    heading5: false,
+    centerText: false,
+    link: false,
+}
+
+function getToolbarState(editor) {
+    if (!editor) return emptyToolbarState
+
+    return {
+        bold: editor.isActive('bold'),
+        italic: editor.isActive('italic'),
+        underline: editor.isActive('underline'),
+        code: editor.isActive('code'),
+        textStyle: editor.isActive('textStyle'),
+        highlight: editor.isActive('highlight'),
+        bulletList: editor.isActive('bulletList'),
+        orderedList: editor.isActive('orderedList'),
+        heading: editor.isActive('heading'),
+        heading1: editor.isActive('heading', { level: 1 }),
+        heading3: editor.isActive('heading', { level: 3 }),
+        heading5: editor.isActive('heading', { level: 5 }),
+        centerText: editor.isActive({ textAlign: "center" }),
+        link: editor.isActive('link'),
+    }
+}
+
+function toolbarStateChanged(previous, next) {
+    return Object.keys(next).some(key => previous[key] !== next[key])
+}
+
 export function ReadOnlyEditor({ value }) {
     const editor = useEditor({
         editable: false,
@@ -106,14 +168,20 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
         },
     })
 
-    // Used purely just to update button state correctly when pressed or keyboard shortcut
-    const [, setRerender] = useState(0)
+    const [toolbarState, setToolbarState] = useState(emptyToolbarState)
     useEffect(() => {
         if (!editor) return
 
         const handleUpdate = () => {
-            setRerender(prev => prev + 1)
+            const nextToolbarState = getToolbarState(editor)
+            setToolbarState(previousToolbarState =>
+                toolbarStateChanged(previousToolbarState, nextToolbarState)
+                    ? nextToolbarState
+                    : previousToolbarState
+            )
         }
+
+        handleUpdate()
 
         editor.on('selectionUpdate', handleUpdate)
         editor.on('transaction', handleUpdate)
@@ -140,34 +208,34 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
         <div className="flex flex-col" style={{ opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' : 'auto' }}>
                   
           <ButtonGroup className='*:!rounded-none *:!flex *:!justify-center'>
-              <OverlayTrigger delay={200} overlay={<Tooltip>Bold</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.bold}>
+                <Button variant='outline-secondary' active={toolbarState.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
                     <Bold />
                 </Button>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Italics</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.italic}>
+                <Button variant='outline-secondary' active={toolbarState.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
                     <Italic />
                 </Button>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Underline</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('underline')} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.underline}>
+                <Button variant='outline-secondary' active={toolbarState.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
                     <Underline />
                 </Button>
               </OverlayTrigger>
               
-              <OverlayTrigger delay={200} overlay={<Tooltip>Code Block</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('code')} onClick={() => editor.chain().focus().toggleCode().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.code}>
+                <Button variant='outline-secondary' active={toolbarState.code} onClick={() => editor.chain().focus().toggleCode().run()}>
                     <Code />
                 </Button>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Text Color</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.textColor}>
                 <Button
                     variant='outline-secondary'
-                    active={extraToShow === Extras.TextPicker || editor.isActive('textStyle')}
+                    active={extraToShow === Extras.TextPicker || toolbarState.textStyle}
                     onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.TextPicker ? Extras.None : Extras.TextPicker) }}
                     className="group"
                 >
@@ -178,10 +246,10 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
                 </Button>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Highlight</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.highlight}>
                 <Button
                     variant='outline-secondary'
-                    active={extraToShow === Extras.HighlightPicker || editor.isActive('highlight')}
+                    active={extraToShow === Extras.HighlightPicker || toolbarState.highlight}
                     onClick={e => { e.stopPropagation(); setExtraToShow(current => current === Extras.HighlightPicker ? Extras.None : Extras.HighlightPicker) }}
                     className="group"
                 >
@@ -194,40 +262,40 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
 
               {isBody ? 
             <>
-              <OverlayTrigger delay={200} overlay={<Tooltip>Dot list</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.bulletList}>
+                <Button variant='outline-secondary' active={toolbarState.bulletList} onClick={() => editor.chain().focus().toggleBulletList().run()}>
                     <List />
                 </Button>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Ordered List</Tooltip>}>
-                <Button variant='outline-secondary' active={editor.isActive('orderedList')} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.orderedList}>
+                <Button variant='outline-secondary' active={toolbarState.orderedList} onClick={() => editor.chain().focus().toggleOrderedList().run()}>
                     <ListOrdered />
                 </Button>
               </OverlayTrigger>
             </>
             : <></>}
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Header</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.header}>
                 <Dropdown as={ButtonGroup} className="grow">
                     <Dropdown.Toggle
                     variant="outline-secondary"
-                    active={editor.isActive("heading")}
+                    active={toolbarState.heading}
                     >
                     <Heading className="inline-block" />
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
-                    <Dropdown.Item eventKey="1" active={editor.isActive('heading', { level: 1 })} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 /></Dropdown.Item>
-                    <Dropdown.Item eventKey="2" active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading2 /></Dropdown.Item>
-                    <Dropdown.Item eventKey="3" active={editor.isActive('heading', { level: 5 })} onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}><Heading3 /></Dropdown.Item>
+                    <Dropdown.Item eventKey="1" active={toolbarState.heading1} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 /></Dropdown.Item>
+                    <Dropdown.Item eventKey="2" active={toolbarState.heading3} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading2 /></Dropdown.Item>
+                    <Dropdown.Item eventKey="3" active={toolbarState.heading5} onClick={() => editor.chain().focus().toggleHeading({ level: 5 }).run()}><Heading3 /></Dropdown.Item>
                     </Dropdown.Menu>
                 </Dropdown>
               </OverlayTrigger>
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Center Text</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.centerText}>
                 <Button
                     variant="outline-secondary"
-                    active={editor.isActive({ textAlign: "center" })}
+                    active={toolbarState.centerText}
                     onClick={() => editor.chain().focus().toggleTextAlign("center").run()}
                 >
                     <TextAlignCenter className="inline-block" />
@@ -238,7 +306,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
 
               <ExternalLinkModal editor={editor} />
 
-              <OverlayTrigger delay={200} overlay={<Tooltip>Remove Link/Resource</Tooltip>}>
+              <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.removeLink}>
                 <Button
                     variant='outline-secondary'
                     onClick={() => {
@@ -260,7 +328,7 @@ export function RichTextEditor({ value, onChange, courseId, isBody, onEditor, di
 
               
               {isBody && 
-                <OverlayTrigger delay={200} overlay={<Tooltip>Table</Tooltip>}>
+                <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.table}>
                     <Button variant="outline-secondary" onClick={() => setExtraToShow(current => current === Extras.Table ? Extras.None : Extras.Table)}>
                         <Table />
                     </Button>
@@ -377,11 +445,11 @@ export function ExternalLinkModal({ editor }) {
     }
 
     return (<>          
-        <OverlayTrigger delay={200} overlay={<Tooltip>Insert External Link</Tooltip>}>
+        <OverlayTrigger delay={200} overlay={TOOLTIP_OVERLAYS.externalLink}>
             <Button
                 variant='outline-secondary'
                 onClick={() => setShow(true)}
-                active={editor.isActive('link')}
+                active={getToolbarState(editor).link}
                 >
                     <Link2/>
             </Button>

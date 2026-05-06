@@ -4,6 +4,7 @@ import path from 'path'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
+import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 
 const router = express.Router()
 
@@ -57,7 +58,7 @@ const upload = multer({
         if (allowedTypes.includes(file.mimetype)) {
             cb(null, true)
         } else {
-            cb(new Error(`Invalid file type ${file.mimetype}`))
+            cb(new CMTError({ userFacingMessage: `Invalid file type: ${file.mimetype}. Please upload a pdf, text file, slideshow, or similar.` }))
         }
     },
 })
@@ -67,28 +68,22 @@ const upload = multer({
  * Get all resources for a course
  */
 router.get('/:courseId', async (req, res) => {
-    try {
-        const { courseId } = req.params
-        const resources = await req.prisma.resource.findMany({
-            where: { courseId: parseInt(courseId) },
-            orderBy: { createdAt: 'desc' },
-        })
-        res.json(resources)
-    } catch (error) {
-        console.error('Error fetching resources:', error)
-        res.status(500).json({ error: `Error fetching resources: ${error}` })
-    }
+    const { courseId } = req.params
+    const resources = await req.prisma.resource.findMany({
+        where: { courseId: parseInt(courseId), isSyllabus: false, },
+        orderBy: { createdAt: 'desc' },
+    })
+    res.json(resources)
 })
 
 /**
  * POST /api/cmt/resources/:courseId
  * Upload a new resource
  */
-router.post('/:courseId', upload.single('file'), async (req, res) => {
+router.post('/:courseId', upload.single('file'), async (req, res, next) => {
     try {
         const { courseId } = req.params
         const { name } = req.body
-
         if (!req.file)
             return res.status(400).json({ error: 'No file uploaded' })
 
@@ -105,7 +100,6 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
         res.json(resource)
     } catch (error) {
         console.error('Error uploading resource:', error)
-
         // Clean up file if database creation failed
         if (req.file && req.file.path) {
             try {
@@ -114,8 +108,7 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
                 console.error('Error cleaning up file:', unlinkError)
             }
         }
-
-        res.status(500).json({ error: `Error uploading resource: ${error}` })
+        next(error)
     }
 })
 
@@ -124,19 +117,112 @@ router.post('/:courseId', upload.single('file'), async (req, res) => {
  * Update resource name
  */
 router.put('/:id', async (req, res) => {
+    const { id } = req.params
+    const { name } = req.body
+
+    const resource = await req.prisma.resource.update({
+        where: { id: id },
+        data: { name },
+    })
+
+    res.json(resource)
+})
+
+// We don't want professors uploading things like images for syllabi so we heavily limit options
+const syllabusUpload = multer({
+    storage: storage,
+    fileFilter: function (_, file, cb) {
+        // These correspond to mimetype headers and are neccesary for http
+        const allowedTypes = [
+            'application/pdf',
+            'text/html',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ]
+
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true)
+        } else {
+            cb(new Error(`Invalid file type ${file.mimetype}`))
+        }
+    },
+})
+
+/**
+ * POST /api/cmt/resources/syllabus/:courseId
+ * Creates a syllabus if one doesn't exist or updates the file if one does
+ */
+router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, res) => {
     try {
-        const { id } = req.params
-        const { name } = req.body
+        const { courseId } = req.params
 
-        const resource = await req.prisma.resource.update({
-            where: { id: id },
-            data: { name },
+        
+        if (!req.file)
+            return res.status(400).json({ error: 'No file uploaded' })
+        
+        const course = await req.prisma.course.findUnique({
+            where: {id: parseInt(courseId), professorId: req.user.uid}
         })
+        
+        let resource;
+        
+        const existingSyllabus = await req.prisma.resource.findMany({
+            where: {isSyllabus: true, courseId: parseInt(courseId)}
+        })
+        
+        if (existingSyllabus.length > 0) {
+            resource = await req.prisma.resource.updateMany({
+                where: {isSyllabus: true},
+                data: {
+                    filename: req.file.originalname,
+                    mimeType: req.file.mimetype,
+                    filePath: req.file.path,
+                },
+            });
+            await req.prisma.course.update({
+                where: {id: parseInt(courseId)},
+                data: {syllabusName: req.file.originalname}
+            });
+        } else {
+            resource = await req.prisma.resource.create({
+                data: {
+                    name: `${course.name}-Syllabus`,
+                    filename: req.file.originalname,
+                    mimeType: req.file.mimetype,
+                    filePath: req.file.path,
+                    courseId: parseInt(courseId),
+                    isSyllabus: true
+                },
+            });
+            await req.prisma.course.update({
+                where: {id: parseInt(courseId)},
+                data: {syllabusName: req.file.originalname}
+            });
+        }
 
-        res.json(resource)
+        const { uid: _userId, asid: actionStateId } = req.query
+        if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
+        
+        res.status(200).json(resource)
     } catch (error) {
-        console.error('Error updating resource:', error)
-        res.status(500).json({ error: `Error updating resource: ${error}` })
+        res.status(500).json({error})
+    }
+})
+
+/**
+ * GET /api/cmt/resources/syllabus/:courseId
+ * Get syllabus resource of a course
+ */
+router.get('/syllabus/:courseId', async (req, res) => {
+    try {
+        const { courseId } = req.params
+        const resources = await req.prisma.resource.findMany({
+            where: { courseId: parseInt(courseId), isSyllabus: true, },
+            orderBy: { createdAt: 'desc' },
+        })
+        res.json(resources)
+    } catch (error) {
+        throw new CMTError({ userFacingMessage: "Error getting syllabus", cause: error })
     }
 })
 
@@ -168,28 +254,23 @@ router.get('/id/:id', async (req, res) => {
  * Delete resource and file
  */
 router.delete('/:id', async (req, res) => {
-    try {
-        const { id } = req.params
+    const { id } = req.params
 
-        const resource = await req.prisma.resource.findUnique({
-            where: { id: id },
-        })
-        if (!resource) {
-            console.error(`Resource with ID ${id} not found`)
-            return res.status(404).json({ error: `Resource with ID ${id} not found` })
-        }
-
-        if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
-
-        await req.prisma.resource.delete({
-            where: { id: id },
-        })
-
-        res.sendStatus(200)
-    } catch (error) {
-        console.error('Error deleting resource:', error)
-        res.status(500).json({ error: `Error deleting resource: ${error}` })
+    const resource = await req.prisma.resource.findUnique({
+        where: { id: id },
+    })
+    if (!resource) {
+        console.error(`Resource with ID ${id} not found`)
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `Resource with ID ${id} not found` }) })
     }
+
+    if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
+
+    await req.prisma.resource.delete({
+        where: { id: id },
+    })
+
+    res.sendStatus(200)
 })
 
 /**
@@ -197,38 +278,33 @@ router.delete('/:id', async (req, res) => {
  * Download resource file
  */
 router.get('/download/:id', async (req, res) => {
-    try {
-        // Find in DB
-        const { id } = req.params
-        const resource = await req.prisma.resource.findUnique({
-            where: { id: id },
-        })
-        if (!resource) {
-            console.log(`File with ID ${id} not found in DB`)
-            return res.status(404).json({ error: `File with ID ${id} not found in DB` })
-        }
-
-        // Find in filesystem
-        if (!fs.existsSync(resource.filePath)) {
-            console.log(`File with ID ${id} not found in filesystem`)
-            return res.status(404).json({ error: `File with ID ${id} not found in filesystem` })
-        }
-
-        res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resource.filename)}"`)
-        res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream')
-        res.setHeader('Content-Length', fs.statSync(resource.filePath).size)
-
-        // File stream
-        fs.createReadStream(resource.filePath)
-            .on('error', streamError => {
-                console.error(`Error reading file with ID ${id}: ${streamError}`)
-                return res.status(500).json({ error: `Error reading file with ID ${id}: ${streamError}` })
-            })
-            .pipe(res)
-    } catch (error) {
-        console.error('Error downloading file:', error)
-        res.status(500).json({ error: `Error downloading file: ${error}` })
+    // Find in DB
+    const { id } = req.params
+    const resource = await req.prisma.resource.findUnique({
+        where: { id: id },
+    })
+    if (!resource) {
+        console.log(`File with ID ${id} not found in DB`)
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `File with ID ${id} not found in DB` }) })
     }
+
+    // Find in filesystem
+    if (!fs.existsSync(resource.filePath)) {
+        console.log(`File with ID ${id} not found in filesystem`)
+        return res.status(404).json({ error: new CMTError({ userFacingMessage: `File with ID ${id} not found in filesystem` }) })
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(resource.filename)}"`)
+    res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream')
+    res.setHeader('Content-Length', fs.statSync(resource.filePath).size)
+
+    // File stream
+    fs.createReadStream(resource.filePath)
+        .on('error', streamError => {
+            console.error(`Error reading file with ID ${id}: ${streamError}`)
+            return res.status(500).json({ error: new CMTError({ userFacingMessage: `Error reading file with ID ${id}: ${streamError}` }) })
+        })
+        .pipe(res)
 })
 
 export default router

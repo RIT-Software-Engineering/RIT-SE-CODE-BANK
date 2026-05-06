@@ -7,10 +7,11 @@
 **/.env
 
 ## prisma
-**/client
+**/generated
 
 # git
 **/.git
+.git
 **/.gitignore
 
 # logs

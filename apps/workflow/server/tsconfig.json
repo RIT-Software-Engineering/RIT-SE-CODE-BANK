@@ -5,7 +5,6 @@
 
     // These things may need to be messed around with, depending on which type of Javascript your project is using. The two options I think are CommonJS and ES Modules, but StackOverflow has all the answers.
     "module": "commonjs",
-    "moduleResolution": "bundler",
 
     // Preference
     "noUnusedParameters": true,

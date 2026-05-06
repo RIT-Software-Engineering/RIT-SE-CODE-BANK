@@ -1,7 +1,7 @@
 import { Form } from "react-bootstrap"
 
 /**
- * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, TextOutputProps } from "@se-code-bank/workflows-ecosystem"
+ * @import { CheckmarkOutputProps, NumberOutputProps, OutputContainerProps, OutputViewProps, SelectOutputProps, SelectMultiOutputProps, TextOutputProps, FileOutputProps, DateOutputProps } from "@se-code-bank/workflows-ecosystem"
  */
 
 /**
@@ -52,6 +52,25 @@ export const TextOutput = ({ value, onChange, onBlur, required, placeholder, isI
 }
 
 /**
+ * @param {DateOutputProps} props
+ */
+export const DateOutput = ({ value, onChange, onBlur, required, isInvalid, error }) => {
+    return (
+        <div className='shrink'>
+            <Form.Control
+                type='date'
+                required={required ?? false}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                isInvalid={isInvalid}
+            />
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
  * @param {NumberOutputProps} props
  */
 export const NumberOutput = ({ value, onChange, onBlur, required, placeholder, isInvalid, error }) => {
@@ -91,6 +110,48 @@ export const SelectOutput = ({ output, value, onChange, onBlur, required, isInva
                     </option>
                 ))}
             </Form.Select>
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
+ * @param {SelectMultiOutputProps} props
+ */
+export const SelectMultiOutput = ({ output, value, onChange, onBlur, isInvalid, error }) => {
+    return (
+        <div className='shrink'>
+            <Form className="flex gap-2" onChange={onChange} onBlur={onBlur}>
+            {output.validation?.options?.map((option, i) => (
+                <Form.Check
+                key={i}
+                type="checkbox"
+                label={option}
+                id={option}
+                value={option}
+                checked={value?.includes(option)}
+                isInvalid={isInvalid}
+                />
+            ))}
+            </Form>
+            <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
+        </div>
+    )
+}
+
+/**
+ * @param {FileOutputProps} props
+ */
+export const FileOutput = ({ onChange, error, isInvalid, onBlur }) => {
+    return (
+        <div className='shrink'>
+            <Form.Control
+                type='file'
+                onChange={onChange}
+                required
+                isInvalid={isInvalid}
+                onBlur={onBlur}
+            />
             <Form.Control.Feedback type='invalid'>{error}</Form.Control.Feedback>
         </div>
     )

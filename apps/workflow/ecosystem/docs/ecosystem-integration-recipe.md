@@ -104,11 +104,10 @@ function isCheckmark() {
 ### refresh
 ```jsx
 function refresh() {
-	return CMTJsonFetch('GET', `course/${id}`).then(async response => {
-		const data = await response.json()
-		setCourse(data.course)
-		setActionsWithContexts(data.actionsWithContexts)
-		setWorkflow(data.workflow)
+	return CMTJsonFetch('GET', `course/${id}`).then(async json => {
+		setCourse(json.course)
+		setActionsWithContexts(json.actionsWithContexts)
+		setWorkflow(json.workflow)
 	})
 }
 ```
@@ -145,11 +144,11 @@ function onNavigateFactory() {
 
 When instantiating the Workflow logic component, Typescript autofill may give you a very big and scary object type for the renderers. This is because the logic components have a big tree of renderers they need.
 
-Use `createWorkflowRenderers` from [../../components/src/components/Workflows.jsx](../../components/src/components/Workflows.jsx) to provide a flat renderer map instead of constructing the full nested tree manually.
+Use `createWorkflowRenderers` from [../src/components/components/Workflows.jsx](../src/components/components/Workflows.jsx) to provide a flat renderer map instead of constructing the full nested tree manually.
 
 The most useful way to learn how to create the renderers is to go off of the examples here:
-- [../../components/src/examples/ReactBootstrapExample.jsx](../../components/src/examples/ReactBootstrapExample.jsx)
-- [../../components/src/examples/MaterialUIExample.jsx](../../components/src/examples/MaterialUIExample.jsx)
+- [../src/components/examples/ReactBootstrapExample.jsx](../src/components/examples/ReactBootstrapExample.jsx)
+- [../src/components/examples/MaterialUIExample.jsx](../src/components/examples/MaterialUIExample.jsx)
 
 If you want a better understanding of what is actually happening, check out the [visual abstraction tutorial](./visual
 
@@ -227,9 +226,8 @@ res.json({ course, ... })
 
 In the frontend, we receive it!
 ```jsx
-CMTJsonFetch('GET', `course/${id}`).then(async response => {
-	const data = await response.json()
-	setCourse(data.course)
+CMTJsonFetch('GET', `course/${id}`).then(async json => {
+	setCourse(data.json)
 	...
 })
 ```
@@ -284,3 +282,7 @@ Assuming the user has entered `"Swen-101"` and `30` for these outputs, this will
 ```
 
 To reiterate, the keys of an action's output's inform both how `previousValues` is read for form hydration, and also how `outputValues` are passed to your given `fetchToCallback` function.
+
+### Note on Files
+
+Files introduce a bit of an edge case. Read more about them in the components maintenance file.

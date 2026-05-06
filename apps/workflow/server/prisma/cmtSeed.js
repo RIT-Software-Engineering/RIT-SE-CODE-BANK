@@ -2,33 +2,16 @@ const { PrismaClient } = require("@prisma/client");
 const { createWorkflow } = require("./seedUtils");
 const prisma = new PrismaClient();
 
-/**
- * Delete all the data in the workflows database
- */
-
-async function deleteWorkflows() {
-    await prisma.action.deleteMany({});
-    await prisma.actionState.deleteMany({});
-    await prisma.workflowState.deleteMany({});
-    await prisma.metadata.deleteMany({});
-    await prisma.permission.deleteMany({});
-    await prisma.tag.deleteMany({});
-    await prisma.workflowStateParticipant.deleteMany({});
-    await prisma.workflowAttributes.deleteMany({});
-}
-
-/**
- * Main function
- */
 async function main() {
-  
 
-  if (process.env.NODE_ENV === "production") {
-    throw Error(
-      "This action should only be used in development for populating the database with test data."
-    );
-  }
-    await deleteWorkflows();
+    // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
+    // This is to allow start scripts to remain idempotent.
+    // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
+    const doesSeedDataExist = await prisma.action.findFirst({ where: { name: "Create Course" } }) 
+    if (doesSeedDataExist) {
+        console.log("WARNING: Skipping seeding as workflow with name 'create course' already exists.");
+        return
+    }
 
   ///////////
   // Users //
@@ -52,10 +35,29 @@ async function main() {
     actions: [
         {
             name: 'Course Details',
-            description: 'Add details to Your course to help differentiate it!',
+            description: 'Add relevant details to the course!',
             actionType: 'workflow',
             userId: users[0].id,
             actions: [
+                {
+                    name: 'Upload syllabus',
+                    description: 'Upload a syllabus file!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_SYLLABUS',
+                        outputs: [
+                            {
+                                name: 'Syllabus',
+                                key: 'syllabusName',
+                                type: 'file',
+                                isRequired: true,
+                                validation: {
+                                    allowedTypes: ["html", "pdf", "docx"] 
+                                }
+                            },
+                        ],
+                    },
+                },
                 {
                     name: 'Course Section',
                     description: 'Enter the section for your course!',
@@ -104,6 +106,41 @@ async function main() {
                         ],
                     },
                 },
+                {
+                    name: 'Course Days',
+                    description: 'Select on which days that your course will take place!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_DAYS',
+                        outputs: [
+                            {
+                                name: 'Course Days',
+                                key: 'days',
+                                type: 'multiselect',
+                                isRequired: true,
+                                validation: {
+                                    options: ['Mo', 'Tu', 'We', 'Tr', 'Fr'],
+                                },
+                            },
+                        ],
+                    },
+                },
+                {
+                    name: 'Start Date',
+                    description: 'Select the date for when the course starts! Session dates will be autopopulated using this and course days!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_START_DATE',
+                        outputs: [
+                            {
+                                name: 'Start Date',
+                                key: 'startDate',
+                                type: 'date',
+                                isRequired: true,
+                            },
+                        ],
+                    },
+                },  
             ],
         },
         {

@@ -1,7 +1,6 @@
 import express from "express";
 import { PrismaClient } from "./prisma/generated/client/index.js";
 import cors from "cors";
-import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 
@@ -15,15 +14,14 @@ import resourceRoutes from './routes/resources.js';
 
 import path from "path";
 import { fileURLToPath } from "url";
-import makeCourseWebsiteRouter from "./routes/courseWebsite.js";
 import { readFileSync } from "fs";
 import dotenv from "dotenv";
+import { CMTErrorToString, serializeError } from "@se-code-bank/cmt-shared-utilities";
+import { getTimeString } from "../shared-utilities/cmtLogging.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const envPath = path.resolve(__dirname, '..', '.env');
-
 dotenv.config({
   path: envPath,
 });
@@ -34,7 +32,7 @@ const app = express();
 
 const BACKEND_PORT = Number(process.env.BACKEND_PORT) || 5010; // API server
 const FRONTEND_PORT = Number(process.env.PORT) || 3010;        // React dev server
-const BASE_URL = process.env.BASE_URL || `http://localhost:${FRONTEND_PORT}`;
+const BASE_URL = process.env.BASE_URL || `http://localhost:${BACKEND_PORT}`;
 
 /* ------------------------------------------------------------------
    MIDDLEWARE
@@ -49,7 +47,6 @@ const allowedOrigins = [
 ];
 if (process.env.REMOTE_DEV_SERVER_ORIGIN) allowedOrigins.push(process.env.REMOTE_DEV_SERVER_ORIGIN)
 
-const courseWebsiteRoutes = makeCourseWebsiteRouter(prisma);
 const teamBuilderRoutes = makeTeamBuilderRouter(prisma);
 
 app.use(
@@ -62,14 +59,28 @@ app.use(
         return callback(null, true);
       }
 
-      return callback(new Error("Not allowed by CORS: " + origin + ", Allowed origins: " + allowedOrigins.join(", ")));
+      return callback(new Error("CMT Error: Not allowed by CORS: " + origin + ", Allowed origins: " + allowedOrigins.join(", ")));
     },
     credentials: true,
   })
 );
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+// Logs requests on finish. May give confusing results if requests are long-running, but that really shouldn't happen. Additionally, knowing the resultant code and elapsed time can be helpful.
+app.use((req, res, next) => {
+  const startedAt = process.hrtime.bigint();;
+
+  res.on("finish", () => {
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1000000;
+    console.log(
+      `${getTimeString()} ${req.method} ${req.originalUrl} - ${res.statusCode} - ${durationMs.toFixed(1)}ms`
+    );
+  });
+
+  next();
+});
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Middleware to attach prisma to request for workflow routes
@@ -80,12 +91,6 @@ app.use((req, _res, next) => {
 
 // Attach req.user from the cmt_id cookie
 app.use(authMiddleware);
-
-// Simple logger
-app.use((req, _res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-  next();
-});
 
 /* ------------------------------------------------------------------
    ROUTES
@@ -182,7 +187,6 @@ app.get("/", (_req, res) => {
 // API Routes
 app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
-app.use("/api/cmt/course-website", courseWebsiteRoutes);
 app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
@@ -192,16 +196,36 @@ app.use("/api/cmt/resources", resourceRoutes);
    ------------------------------------------------------------------ */
 
 // Error handling middleware
-app.use((err, _req, res, _next) => {
-  console.error("Error:", err.stack);
-  res.status(500).json({
-    error: "Something went wrong!",
-    message: err.message,
-  });
+app.use((err, req, res, next) => {
+  console.error(`
+    Error in: ${req.method} ${req.path}
+    Full request URL: ${req.url}
+    
+    Request body:
+    ${JSON.stringify(req.body ?? "")}
+    
+    Error: ${CMTErrorToString(err)}
+  `)
+
+  // If error happens during streaming of response, allow express to handle
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // Prisma Record Not Found
+  if (err.code === 'P2025') {
+    return res.sendStatus(404)
+  }
+
+  // Otherwise, start streaming the response manually.
+  // Default error serialization is garbo, so specify things manually.
+  res.status(err.status || err.statusCode || 500).json({
+    error: err ? serializeError(err): "Internal Server Error"
+  })
 });
 
 // 404 handler - MUST BE LAST!
-app.use("*", (req, res) => {
+app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
     path: req.originalUrl,
@@ -214,6 +238,8 @@ app.use("*", (req, res) => {
 
 // Start server
 app.listen(BACKEND_PORT, () => {
-  console.log(`🚀 Server running on port ${BACKEND_PORT}`);
-  console.log(`🔗 API endpoints available at ${BASE_URL}/api`);
+  console.log(
+    `Server running on port ${BACKEND_PORT}
+and URL: ${BASE_URL}/api`
+  );
 });

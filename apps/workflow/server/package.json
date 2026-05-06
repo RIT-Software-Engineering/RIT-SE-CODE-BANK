@@ -3,20 +3,22 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon index.js"
+    "start": "nodemon index.js",
+    "start-cmt": "npx prisma migrate dev && node prisma/cmtSeed.js && npm run start",
+    "force-reset-data-cmt": "npx prisma migrate reset --force --skip-seed && npx prisma migrate dev && node prisma/cmtSeed.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/client": "^6.10.1",
+    "@prisma/client": "^6.18.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.10.1",
+    "prisma": "^6.18.0",
     "mysql2": "^3.14.3"
   },
   "prisma": {
@@ -25,6 +27,9 @@
   "nx": {
     "targets": {
       "start": {
+        "continuous": true
+      },
+      "start-cmt": {
         "continuous": true
       }
     }

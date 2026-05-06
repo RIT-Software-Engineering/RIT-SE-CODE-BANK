@@ -1,0 +1,15 @@
+{
+  "name":"scoop-portal",
+  "targets": {
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands":[
+          "chmod +x ./scripts/deploy-scoop-portal.sh",
+          "./scripts/deploy-scoop-portal.sh"
+        ]
+      }
+    }
+  },
+  "implicitDependencies": ["scoop-portal-backend", "scoop-portal-frontend"]
+}

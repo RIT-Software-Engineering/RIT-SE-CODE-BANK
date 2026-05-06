@@ -32,6 +32,11 @@ import { metadataObjectToState } from '../utils.jsx'
  * } CardActionRenderers
  */
 /**
+ * An action that, based on the action type, will either recurse or display the action.
+ * 
+ * When an action is displayed, if its incomplete, it should display in a directly-interactible state,
+ * while if its complete, it should display as a {@link ViewEditAction}
+ * 
  * @template T
  * @param { ActionProps<T> & CardActionRenderers & { isCheckmark: IsCheckmark } } props
  */
@@ -73,6 +78,9 @@ export function CardAction(props) {
  *  } ViewEditActionRenderers
  */
 /**
+ * An Action that is meant to display the user-entered value in a "finalized" way, but also provide the user with an "edit" button that can be pressed
+ * which will then show the forms that allow the user to edit their submission.
+ * 
  * @template T
  * @param { ActionProps<T> & ViewEditActionRenderers } props
  */
@@ -136,6 +144,8 @@ export function ViewEditAction(props) {
  *  } FormActionRenderers
  */
 /**
+ * An action that is meant to always display a form-style input to the user with a submission button
+ * 
  * @template T
  * @param { ActionProps<T> & FormActionRenderers } props
  */
@@ -185,6 +195,8 @@ export function FormAction(props) {
  *  } CheckmarkActionRenderers
  */
 /**
+ * An action that is meant to display a checkmark to the user
+ * 
  * @param {{
  *  actionWithContexts: ActionWithContexts,
  *  fetchToCallback: FetchToCallback
@@ -231,6 +243,8 @@ export function CheckmarkAction({ actionWithContexts, onNavigateFactory, fetchTo
  * } ActionContentRenderers
  */
 /**
+ * Called by most actions to display their outputs as forms.
+ * 
  * @param {{
  *  actionWithContexts: ActionWithContexts,
  *  outputValues: Object,
@@ -250,18 +264,22 @@ export function ActionContent({ actionWithContexts, outputValues, setOutputValue
         <renderers.NavigateButton actionWithContexts={actionWithContexts} onClick={onNavigate}></renderers.NavigateButton>
     ) : (
         <>
-            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => (
-                <Output
+            {actionWithContexts.processedAction.parsedMetadata.outputs.map(output => {
+                let defaultValue = outputValues[output.key]
+                if (output.type === 'multiselect' && !defaultValue){
+                    defaultValue = new Array(output.validation.options.length).fill(false);
+                }
+                return <Output
                     key={output.key}
                     output={output}
-                    value={outputValues[output.key]}
+                    value={defaultValue}
                     setValue={value => setOutputValues(prevValues => ({ ...prevValues, [output.key]: value }))}
                     submitted={submitted}
                     validatorRegistry={validatorRegistry}
                     renderers={renderers.OutputRenderers}
                     disabled={actionWithContexts.processedAction.isFrozen}
                 />
-            ))}
+            })}
         </>
     )
 }

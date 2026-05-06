@@ -1,3 +1,5 @@
+Back to [RIT-SE-CODE-BANK Overview](./../../README.md)
+
 # Scoop Portal Setup Guide
 How to set up and run the Scoop Portal project locally using **Express**, **Prisma**, **React**, **Next.js** and **MariaDB**.
 ## Prerequisites

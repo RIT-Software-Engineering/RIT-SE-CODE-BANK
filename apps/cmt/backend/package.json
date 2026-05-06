@@ -4,21 +4,25 @@
   "description": "Backend API for Course Management Calendar",
   "main": "server.js",
   "scripts": {
-    "start": "node --watch server.js"
+    "start": "npx dotenv -e ./../.env -- node --watch server.js",
+    "start-cmt": "npx dotenv -e ./../.env -- npx prisma db push && npx dotenv -e ./../.env -- node prisma/seed.js && npm run start",
+    "lint": "eslint . || true"
   },
   "dependencies": {
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^6.18.0",
+    "@se-code-bank/cmt-shared-utilities": "*",
     "@se-code-bank/workflows-ecosystem": "*",
     "body-parser": "^1.20.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
-    "express": "^4.21.2",
+    "eslint": "^10.3.0",
+    "express": "^5.2.1",
     "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "prisma": "5.22.0",
+    "prisma": "^6.18.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {
@@ -35,6 +39,9 @@
   "nx": {
     "targets": {
       "start": {
+        "continuous": true
+      },
+      "start-cmt": {
         "continuous": true
       }
     }

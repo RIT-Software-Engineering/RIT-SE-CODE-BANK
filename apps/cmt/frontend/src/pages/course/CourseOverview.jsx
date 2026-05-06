@@ -1,12 +1,12 @@
-import { Check, Loader2, PlusIcon, Palette, Search } from 'lucide-react'
+import { Check, Loader2, PlusIcon, Search, Settings } from 'lucide-react'
 import React, { useCallback, useEffect, useState } from 'react'
-import { Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner } from 'react-bootstrap'
+import { Alert, Badge, Button, Card, Col, Container, Form, Modal, Offcanvas, Row, Spinner, Tab, Tabs } from 'react-bootstrap'
 import { useNavigate } from 'react-router-dom'
 import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
-import { LogError } from '../../utils/error.jsx';
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx';
 
 /**
  * @import { SetStateAction } from "react"
@@ -17,43 +17,45 @@ export function CourseOverview() {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
-    const [courseId, setCourseId] = useState(0);
+    const [error, setError] = useState(null)
+    const [archiveOpen, setArchiveOpen] = useState(false);
+    const [course, setCourse] = useState({});
     
     useEffect(() => {
         fetchCourses();
     }, []);
 
-    const fetchCourses = async () => {
-        CMTJsonFetch("GET", `course`).then(async response => {
-            const result = await response.json();
-            setCourseOverview(result ?? []);
-        });
-      };
+    const fetchCourses = () => CMTJsonFetch("GET", `course`)
+        .then(setCourseOverview)
+        .catch(createErrorHandler("Failed to fetch courses", setError))
 
     return (
         <>
             <Container>
                 <div className='flex items-center mb-4 gap-4'>
                     <h1>My Courses</h1>
-                        <Button onClick={() => {setModalOpen(true); setCourseId(0);}} className='h-min' variant='outline-primary'>
+                        <Button onClick={() => {setModalOpen(true); setCourse({});}} className='h-min' variant='outline-primary'>
                         <div className='flex gap-1 -ml-1'><PlusIcon />Create Course</div>
                         </Button>
                 </div>
                 <CourseCreationModal isOpen={modalOpen} setIsOpen={setModalOpen}/>
-                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} courseId={courseId} refresh={fetchCourses}/>
+                <CourseEditModal isOpen={editModalOpen} setIsOpen={setEditModalOpen} course={course} refresh={fetchCourses}/>
+                <UnarchiveModal isOpen={archiveOpen} setIsOpen={setArchiveOpen} course={course} refresh={fetchCourses}/>
+                <Tabs className="mb-3">
+                <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
-                    {courseOverview.map(course => (
-                        <Col md={4}>
+                    {courseOverview.filter(course => course.active).map(course => (
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
-                                    <Palette className={`hidden group-hover:block size-10 hover:size-12
+                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
                                     ${isDarkColor(course.color) ? 
                                         "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
                                     }
                                     onClick={(e) =>{
                                         e.stopPropagation();
                                         setEditModalOpen(true);
-                                        setCourseId(course.id);
+                                        setCourse(course);
                                     }} />
                                 </Card.Header>
                                 <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
@@ -62,11 +64,52 @@ export function CourseOverview() {
                         </Col>
                     ))}
                 </Row>
+                </Tab>
+                <Tab eventKey={"archived"} title="Archived">
+                    <Row className='gy-4'>
+                    {courseOverview.filter(course => !course.active).map(course => (
+                        <Col md={4} key={course}>
+                            <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
+                                <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
+                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
+                                    ${isDarkColor(course.color) ? 
+                                        "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
+                                    }
+                                    onClick={(e) =>{
+                                        e.stopPropagation();
+                                        setArchiveOpen(true);
+                                        setCourse(course);
+                                    }} />
+                                </Card.Header>
+                                <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
+                                    {course.classId} - {course.name}</Card.Body>
+                            </Card>
+                        </Col>
+                    ))}
+                </Row>
+                </Tab>
+                </Tabs>
             </Container>
         </>
     )
 }
 
+/**
+ * Modal to create a new course
+ * The user can either pick a pre-existing template or create a new one from scratch
+ * The user's personal templats are first displayed along with the ability to search public templates
+ * The public template search is in {@link TemplateSearchModal}
+ * Each template is displayed as {@link SelectableTemplateCard}
+ * 
+ * If the user does not select a template, they can create a course from scratch starting with a code and name
+ * 
+ * Regardless of what the user chooses to do, they have to select a color to proceed. Once that's done, they can create the course!
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @returns {React.ReactElement} 
+ */
 function CourseCreationModal({isOpen, setIsOpen}) {
 
     const [courseCode, setCourseCode] = useState('');
@@ -105,19 +148,20 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         }
         setSubmitting(true);
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
+        // The endpoint differs depending on if we're creating from scratch or not
         CMTJsonFetch('POST', `/course${selectedTemplate ? `/${selectedTemplate.id}` : ''}`, 
             { 
-            courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
-            }).then(async response => {
-            setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
-            setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
-        }).catch(async error => {
-            const data = await error.response.json();
-            setWarning(data.details);
-            setSubmitButtonElement(<><PlusIcon />Submit</>)
-            setSubmitting(false);
-        });
+                courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
+            })
+            .then(async json => {
+                setSubmitButtonElement(<><Check />Created!</>)
+                setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
+            })
+            .catch(createErrorHandler("Error creating course", userFacingMesage => {
+                setWarning(userFacingMesage)
+                setSubmitButtonElement(<><PlusIcon />Submit</>)
+                setSubmitting(false);
+            }))
     }
 
     function resetForm() {
@@ -134,12 +178,11 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const loadProfTemplates = async () => {
         setLoading(true);
         CMTJsonFetch('GET', `course/?isTemplate=true`)
-            .then(async response => {
-                const data = (await response.json()) || [];
-                setTemplates(data);
-                setOriginalTemplates(data);
+            .then(async json => {
+                setTemplates((json || []).filter(item => item.active));
+                setOriginalTemplates((json || []).filter(item => item.active));
             })
-            .catch(error => LogError("Failed to load templates.", error, setWarning))
+            .catch(createErrorHandler("Failed to load templates.", setWarning))
             .finally(() => setLoading(false))
     };
 
@@ -168,12 +211,12 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                         : templates.length > 0 
                         ? <div className="max-h-64 overflow-y-scroll mb-2">
                             {templates.map(template => (
-                                <div className="mb-3">
+                                <div className="mb-3" key={template}>
                                     <SelectableTemplateCard template={template} selected={selectedTemplate} setSelected={setSelectedTemplate}/>
                                 </div>
                             ))}
                             </div> : 
-                            <p>You have not created a template. You can create one or try searching public templates.</p>
+                            <p>You have not created templates or don&apos;t have any available. You can create one or try searching public templates.</p>
                         }
                         <Button variant='primary' onClick={() => setTemplateSearchOpen(true)}>
                             <div className='flex justify-between'>
@@ -204,7 +247,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                     <div className="flex gap-2 mb-4 min-w-full min-h-full">
                         {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                         {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                            <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                            <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                         )}
                     </div>
                     {showWheel && <div>{<ColorWheel setColor={setColor}/>}</div>}
@@ -221,19 +264,38 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     )
 }
 
-function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
+/**
+ * A modal for the settings of a course
+ * Here you can edit the color, copy it as a template, or archive a course
+ * Each thing is separated into a different tab for easy readability
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
+function CourseEditModal({isOpen, setIsOpen, course, refresh}){
     const [color, setColor] = useState('')
+    const [courseCode, setCourseCode] = useState(course.classId ?? '')
+    const [courseName, setCourseName] = useState(course.name ?? '')
 
     const [submitButtonElement, setSubmitButtonElement] = useState(<><PlusIcon />Submit</>)
 
     const [warning, setWarning] = useState('');
     const [showWheel, setShowWheel] = useState(false);
-
+    const [submitting, setSubmitting] = useState(false);
+    
+    const navigate = useNavigate()
+    
     function resetForm() {
         setIsOpen(false);
         setColor("");
         setWarning('');
         setShowWheel(false);
+        setCourseCode('');
+        setCourseName('');
     }
 
     function handleColorEdit(e){
@@ -244,43 +306,143 @@ function CourseEditModal({isOpen, setIsOpen, courseId, refresh}){
             return false;
         }
         setSubmitButtonElement(<><Loader2 className='animate-spin' />Submitting...</>)
-        CMTJsonFetch('PUT', `course/${courseId}`, {color: color}).then(() => {
+        CMTJsonFetch('PUT', `course/${course.id}`, {color: color}).then(() => {
             setIsOpen(false);
             setSubmitButtonElement(<><PlusIcon />Submit</>);
             refresh();
         });
     }
+    
+
+    function handleCopy(){
+        setSubmitting(true);
+        setSubmitButtonElement(<><Loader2 className='animate-spin' />Creating...</>)
+        CMTJsonFetch('POST', `/course/${course.id}`, 
+            { 
+            code: courseCode, name: courseName, color: '#000000', workflowId: course?.workflowId, toBeTemplate: true,
+            }).then(async json => {
+            setSubmitButtonElement(<><Check />Created!</>)
+            setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
+        }).catch(createErrorHandler("Failed to copy", (userFacingMessage) => {
+            setWarning(userFacingMessage);
+            setSubmitButtonElement(<><PlusIcon />Submit</>)
+            setSubmitting(false);
+        }))
+    }
 
     return (
-        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered>
-            <Modal.Header closeButton>Edit Color</Modal.Header>
+        <Modal show={isOpen} onHide={resetForm} onExit={resetForm} centered 
+        onShow={() => {setCourseCode(course.classId ?? ''); setCourseName(course.name ?? '')}}>
+            <Modal.Header closeButton>Course Settings</Modal.Header>
                 <Modal.Body>
-                    <div className={`${warning ? 'block' : 'hidden'} alert alert-danger`}>{warning}</div>
-                    <div className="flex gap-2 mb-4 min-w-full">
-                        {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
-                        {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                            <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
-                        )}
-                    </div>
-                    {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button onClick={handleColorEdit}>
-                        <div className='flex gap-1 -ml-1 mr-1'>
-                            {submitButtonElement}
+                    <Tabs className='mb-3'>
+                    <Tab eventKey={"color"} title="Edit Color">
+                        <div className={`${warning ? 'block' : 'hidden'} alert alert-danger`}>{warning}</div>
+                        <div className="flex gap-2 mb-4 min-w-full">
+                            {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
+                            {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
+                                <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                            )}
                         </div>
-                    </Button>
-                </Modal.Footer>
+                        {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
+                        <Button onClick={handleColorEdit} disabled={submitting}>
+                            <div className='flex gap-1 -ml-1 mr-1'>
+                                {submitButtonElement}
+                            </div>
+                        </Button>
+                    </Tab>
+                    <Tab eventKey={"copy"} title="Copy as Template">
+                        <Form className='flex gap-5 items-center mb-3'>
+                            <div>
+                                <Form.Label>Course Code</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. SWEN-101' defaultValue={course.classId} value={courseCode} 
+                                onChange={e => setCourseCode(e.target.value)} required={true} />
+                            </div>
+                            <div className='pt-2'>
+                                <Form.Label>Course Name</Form.Label>
+                                <Form.Control type='text' placeholder='e.g. Freshman Seminar' defaultValue={course.name} value={courseName} 
+                                onChange={e => setCourseName(e.target.value)} required={true} />
+                            </div>
+                        </Form>
+                        <Button onClick={handleCopy} disabled={submitting}>
+                            <div className='flex gap-1 -ml-1 mr-1'>
+                                {submitButtonElement}
+                            </div>
+                        </Button>
+                    </Tab>
+                    <Tab eventKey={"archive"} title="Archive Course">
+                        <Alert variant="warning">
+                            <h2>Warning!</h2>
+                            <p>
+                                This template will be removed from your active courses list and will become archived.
+                                You can unarchive it later.
+                                Are you sure you want to proceed?
+                            </p>
+                        </Alert>
+                        <div className="flex justify-between">
+                            <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                            <Button className="justify-end" variant="danger" disabled={submitting}
+                            onClick={() => {
+                                CMTJsonFetch("DELETE", `/course/${course.id}`).then(refresh);
+                                setIsOpen(false);
+                            }}>Archive Course</Button>
+                        </div>
+                    </Tab>
+                    </Tabs>
+                </Modal.Body>
         </Modal>
     )
 }
 
+/**
+ * Modal only for unarchiving a course
+ * Separate from course edit modal so we don't have it as a single tab
+ * Upon confirmation sets the course to be active again and removes it from the archived list
+ *
+ * @param {Object} props 
+ * @param {boolean} props.isOpen 
+ * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen 
+ * @param {Object} props.course 
+ * @param {() => void} props.refresh 
+ * @returns {React.ReactElement} 
+ */
+function UnarchiveModal({isOpen, setIsOpen, course, refresh}) {
+    return (<>
+    <Modal show={isOpen} onHide={() => setIsOpen(false)} onExit={() => setIsOpen(false)} centered>
+        <Modal.Header closeButton>Unarchive Course</Modal.Header>
+        <Modal.Body>
+            <Alert variant="warning">
+                <p>
+                    This course will be added back to your active templates list.
+                    Are you sure you want to proceed?
+                </p>
+            </Alert>
+            <div className="flex justify-between">
+                <Button className="justify-start" onClick={() => setIsOpen(false)}>Cancel</Button>
+                <Button className="justify-end" variant="danger"
+                onClick={() => {
+                    CMTJsonFetch("PUT", `/course/${course.id}`, {active: true}).then(refresh);
+                    setIsOpen(false);
+                }}>Unarchive Course</Button>
+            </div>
+        </Modal.Body>
+    </Modal>
+    </>)
+}
+
+/**
+ * A color wheel that users can drag to select a custom color
+ *
+ * @export
+ * @param {Object} props 
+ * @param {React.Dispatch<SetStateAction<string>>} props.setColor 
+ * @returns {React.ReactElement} 
+ */
 export function ColorWheel({setColor}) {
     const [hsva, setHsva] = useState({ h: 122, s: 0, v: 90, a: 1 });
     return (
         <>
         <div className='flex items-center justify-between'>
-            {/* @ts-ignore TODO: fix maybe the issue solves itself after all this typescript 6.0 stuff*/}
             <div className='inline'>
             <Wheel color={hsva} onChange={(color) => {
                 setHsva(color.hsva)
@@ -288,7 +450,6 @@ export function ColorWheel({setColor}) {
             }} />
             </div>
             <div className='w-2/3 h-16 mt-5 ml-8 visible inline' style={{ background: hsvaToHex(hsva)}}>
-            {/* <span className='min-w-1/2 h-1/3 invisible'>Test duysbaniuasndsian oaidnisandnasi asdno iausdbsia idbaisub diusab ibdsuiabiubsaui</span> */}
             </div>
         </div>
         </>
@@ -357,11 +518,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
 
     // gets all the public templates and displays them
     const setPublishedTemplates = useCallback(async () => {
-        await CMTJsonFetch("GET", "/course/templates").then(async response => {
-            const data = await response.json();
-            data.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
-            setAllTemplates(data);
-            setShownTemplates(data);
+        await CMTJsonFetch("GET", "/course/templates").then(async json => {
+            json.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
+            setAllTemplates(json);
+            setShownTemplates(json);
         })
     }, []);
 
@@ -395,11 +555,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
             return;
         }
 
-        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async response => {
-            const data = await response.json();
+        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async json => {
             
             // Partiall AI-generated code
-            const newTemplates = data.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
+            const newTemplates = json.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
             newTemplates.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order as before
             setShownTemplates(newTemplates)
         })
@@ -460,6 +619,14 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
     )
 }
 
+/**
+ * Partially AI-generated function
+ * Takes the hex code of the course color and determines if it's likely a dark color or not
+ * We do this to alter the display of the settings icon
+ * 
+ * @param {*} hex - color as hex code that we're looking at
+ * @returns {boolean} 
+ */
 function isDarkColor(hex) {
   const c = hex.replace('#', '');
   const r = parseInt(c.substr(0, 2), 16);
