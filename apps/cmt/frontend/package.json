@@ -4,12 +4,13 @@
   "private": true,
   "type": "module",
   "homepage": "/cmt",
+  "proxy": "http://127.0.0.1:5010",
   "dependencies": {
-    "dotenv-cli": "^11.0.0",
     "@floating-ui/dom": "^1.7.6",
     "@floating-ui/react": "^0.27.19",
     "@prisma/client": "5.22.0",
     "@radix-ui/react-popover": "^1.1.15",
+    "@se-code-bank/cmt-shared-utilities": "*",
     "@se-code-bank/workflows-ecosystem": "*",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
@@ -33,25 +34,34 @@
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",
     "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
+    "env-cmd": "^11.0.0",
+    "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "http-server": "^14.1.1",
     "jsonwebtoken": "^9.0.3",
     "jszip": "^3.10.1",
     "lucide-react": "^0.544.0",
     "multer": "^2.0.2",
-    "react": "^18.2.0",
+    "react": "19.1.1",
     "react-bootstrap": "^2.10.10",
-    "react-dom": "^18.2.0",
+    "react-dom": "19.1.1",
     "react-router-dom": "^6.14.1",
     "react-scripts": "5.0.1",
-    "typescript": "4.9.5",
+    "typescript": "^5",
     "web-vitals": "^2.1.4",
     "yaml": "2.8.3"
   },
   "scripts": {
-    "start": "npx dotenv -e ./../.env -- react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
+    "start": "npx dotenv -e ./../.env -- craco start",
+    "build": "craco build",
+    "test": "craco test",
     "eject": "react-scripts eject",
-    "lint": "eslint \"src/**/*.{js,jsx}\""
+    "lint": "eslint . || true",
+    "serve": "npx dotenv -e ./../.env -- http-server build"
   },
   "eslintConfig": {
     "extends": [
@@ -75,28 +85,33 @@
     "targets": {
       "start": {
         "continuous": true
+      },
+      "start-cmt": {
+        "continuous": true
       }
     }
   },
   "devDependencies": {
     "@base-ui/react": "^1.4.0",
+    "@craco/craco": "^7.1.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/material": "^7.3.9",
-    "@prisma/client": "5.22.0",
+    "@prisma/client": "^6.18.0",
     "@tailwindcss/typography": "^0.5.19",
     "@types/eslint__js": "^8.42.3",
     "baseline-browser-mapping": "^2.9.19",
     "class-variance-authority": "^0.7.1",
-    "eslint": "^8.57.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react": "^7.37.5",
     "mysql2": "^3.15.1",
-    "prisma": "5.22.0",
+    "prisma": "^6.18.0",
     "react-scripts": "^5.0.1",
     "sass": "^1.99.0",
     "sass-embedded": "^1.99.0",
     "serve": "^14.2.6",
     "tailwindcss": "^3.4.19"
+  },
+  "overrides": {
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   }
 }

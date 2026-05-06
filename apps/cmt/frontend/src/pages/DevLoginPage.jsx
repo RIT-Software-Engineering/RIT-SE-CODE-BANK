@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "../styles/devLogin.css";
 import { API_BASE } from "../utils/api.js";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState("");
@@ -24,7 +25,7 @@ export default function DevLoginPage() {
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`Login failed (${res.status}): ${text}`);
+        throw new CMTError({ userFacingMessage: `Login failed (${res.status}): ${text}` });
       }
 
       window.location.href = "/cmt/";

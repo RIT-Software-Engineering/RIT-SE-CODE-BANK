@@ -1,39 +1,7 @@
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+
 export const WORKFLOWS_API = (process.env.WORKFLOWS_API_URL || 'http://localhost:3001').replace(/\/$/, '')
 
-/**
- * Based off of CMTFetch, but is simplified for server usage.
- * Throws when a non-ok status is received.
- * 
- * If you wish to modify throw behavior, I reccomend adding an "allowed error codes" parameter. Example in CMTFetch
- * 
- * @param {string} method 
- * @param {string} url url of resource within workflows endpoint. the given url is appended to the workflows api base url.
- * @param {object} body 
- * @param {object} headers 
- * @returns 
- */
-export async function workflowsFetch(method, url, body, headers) {
-  const fullURL = `${WORKFLOWS_API}/${url.startsWith("/") ? url.substring(1) : url}` // Remove leading '/' if present
-  const bodyJSON = JSON.stringify(body)
-  const fullHeaders = { ...headers, "Content-Type": "application/json", }
-  const headersJSON = JSON.stringify(fullHeaders)
-
-  console.log(`🎑 fetching to url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-
-  try {
-    const options = { method, headers: fullHeaders }
-    if (bodyJSON !== undefined) options.body = bodyJSON
-    const response = await fetch(fullURL, { ...options, credentials: 'include' })
-    if (!response.ok) {
-      console.error(`🐘 Error status ${response.status} received: ${await response.json()} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-      throw Error(`🐘 Error status ${response.status} received: ${await response.json()} from url ${fullURL} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-    }
-    return await response.json()
-  } catch (error) {
-    console.error(`🥕 Error when fetching to url ${fullURL}: ${error} ${error.message} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-    throw Error(`🐦‍🔥 Error when fetching to url ${fullURL}: ${error} ${error.message} with body ${bodyJSON} and headers ${headersJSON} and method ${method}`)
-  }
-}
 
 /**
  * Helper to create action
@@ -141,14 +109,14 @@ export async function updateAction(name, description, nextActionId, actionId){
  */
 export async function objectToNewWorkflow(workflow, ownerId) {
   if (!workflow.childActions)
-    throw new Error(`There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}`)
+    throw new CMTError({ userFacingMessage: `There was a workflow action with no simple action attached. Please contact Kenn Martinez to have this addressed. Action name: ${workflow.name}` })
   if (workflow.childActions.length !== 0 && workflow.childActions[0]) {
     if (workflow.userId || workflow.childActions[0].userId) {
-      throw Error(`Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!`)
+      throw new CMTError({ userFacingMessage: `Cannot create workflow from object ${workflow}: userId is specified either in the workflow or root action. It should not be!` })
     }
   }
   if (!ownerId) {
-    throw Error(`Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.`)
+    throw new CMTError({ userFacingMessage: `Cannot create workflow from object ${workflow}: Missing ownerId argument: ${ownerId}! If you are specifying ownerId in the object, instead pass it as a second argument to this function.` })
   }
 
   // Create actions
@@ -334,7 +302,9 @@ export async function objectToNewAction(action, ownerId, parentActionId) {
       }
     }
     else {
-      throw new Error(`There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`)
+      throw new CMTError({ 
+        userFacingMessage: `There was a complex action with no simple actions attached. Please contact Kenn Martinez to have this addressed. Action name: ${action.name}`
+      })
     }
   }
 
@@ -393,7 +363,6 @@ export async function findWorkflowFromAction(action){
     return findWorkflowFromAction(parentAction); 
   }
   else if (action.previousAction){
-    console.log(action.previousAction)
     const previousAction = await workflowsFetch("GET", `/actions/${action.previousAction.id}`);
     return findWorkflowFromAction(previousAction);
   }

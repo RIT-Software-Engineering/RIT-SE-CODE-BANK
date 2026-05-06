@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Accordion, Button, Form,} from "react-bootstrap";
-import { CMTJsonFetch, workflowsFetch } from "../utils/api.js";
+import { CMTJsonFetch } from "../utils/api.js";
 import { ActionModal, DeleteModal, WorkflowComponent, WorkflowModal } from "@se-code-bank/workflows-ecosystem/components";
 import { 
     WorkflowModalRenderer, 
@@ -11,6 +11,8 @@ import {
     WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { CMTDangerAlert, createErrorHandler, handleError } from "../utils/error.jsx";
 
 /**
  * @import { SetStateAction } from "react"
@@ -47,6 +49,7 @@ export function BuilderPageAdmin({isAdmin}){
     const [isEdit, setIsEdit] = useState(false);
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [metaWorkflow, setMetaWorkflow] = useState('None');
+    const [error, setError] = useState(null)
 
     // Action modal info
     const [code, setCode] = useState(availCodes[0][0]);
@@ -64,15 +67,13 @@ export function BuilderPageAdmin({isAdmin}){
      * Once all that is done, sets the workflows in alphabetical order.
      */
     const update = useCallback(async () => {
-        return CMTJsonFetch("GET", `/workflow/workflowTemplate?tags=${updateQuery}`).then(async response => {
-            const data = await response.json();
-            const workflowPromises = data.workflows.map(async workflow => {
+        return CMTJsonFetch("GET", `/workflow/workflowTemplate?tags=${updateQuery}`).then(async json => {
+            const workflowPromises = json.workflows.map(async workflow => {
                 const info = workflow.baseAction;
                 let actions = [];
                 let usedCodes = [];
                 if (workflow.rootActionId){
-                    const actionResponse = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
-                    const returnedActions = await actionResponse.json();
+                    const returnedActions = await CMTJsonFetch("GET", `workflow/actionTemplate/workflow/${workflow.id}`)
                     actions = returnedActions.actions;
 
                     usedCodes = Array.from(new Set(returnedActions.codes))
@@ -83,7 +84,7 @@ export function BuilderPageAdmin({isAdmin}){
                     name: info.name,
                     description: info.description,
                     actions: actions,
-                    metadata: info.metadata,
+                    parsedMetadata: info.metadata,
                     tags: workflow.tags?.filter(tag => 
                         isAdmin ? 
                         tag !== "WorkflonyFirstTheRestNowhere_CMT_Template" :
@@ -96,7 +97,8 @@ export function BuilderPageAdmin({isAdmin}){
             const sortedWorkflows = resolvedWorkflows.sort((a, b) => a.name.localeCompare(b.name));
             setWorkflows(sortedWorkflows);
             setLoading(false);
-        });
+            return "Good"
+        }).catch(createErrorHandler("Failed to fetch workflows.", setError));
     }, [isAdmin, updateQuery])
     useEffect(() => void update(), [update])
 
@@ -172,7 +174,7 @@ export function BuilderPageAdmin({isAdmin}){
      */
     function loadWorkflowForm(){
         if (isAdmin)
-            setMetaWorkflow(curAction?.metadata?.code);
+            setMetaWorkflow(curAction?.parsedMetadata?.code);
     }
 
     /** 
@@ -196,6 +198,7 @@ export function BuilderPageAdmin({isAdmin}){
         ComplexActionRenderer
     }
 
+    if (error) return <CMTDangerAlert error={error} />
     return (
     loading ? <><h1>Loading...</h1></> :
     <>
@@ -239,7 +242,7 @@ export function BuilderPageAdmin({isAdmin}){
         
         <DeleteModal isOpen={deleteOpen} setIsOpen={setDeleteOpen} action={curAction} 
         workflows={workflows} setWorkflows={setWorkflows}
-        actionDelete={deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update} renderers={renderers}/>
+        actionDelete={  deleteStandardAction} workflowDelete={deleteWorkflow} refresh={update} renderers={renderers}/>
 
         {workflows.length !== 0 ? <Accordion>
         {workflows ? Array.from({length: workflows.length}, (_, i) => {
@@ -483,7 +486,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 if (placeholder && (placeholder.length <= parseInt(validation[0]))) 
                     output[0]['placeholder'] = placeholder
                 else if (placeholder)
-                    throw new Error("Length of placeholder string must be less than validation length.s")
+                    throw new Error("Length of placeholder string must be less than validation length.")
             } 
             else {
                 if (placeholder)
@@ -501,17 +504,21 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
 
             // Our validation is a 2d array containing one element each. The first one is min and second is max
             if (validation[0][0] && validation[1][0]) {
-                if (validation[0][0] > validation[1][0])
+                const min = parseInt(validation[0][0]);
+                const max = parseInt(validation[1][0]);
+                if (min > max)
                     // Just skip and don't set validation if the min is greater than the max
                     throw new Error("Max must be greater than min.")
+                else if (min < 0 || max < 0)
+                    throw new Error("Min and max must be greater than 0.")
 
                 output[0]['validation'] = {
-                max: validation[1][0],
-                min: validation[0][0]
+                max,
+                min
                 }
 
                 // If the placeholder fits within the validation constraints
-                if (placeholder && ((parseInt(placeholder) >= parseInt(validation[0][0]) && parseInt(placeholder) <= parseInt(validation[1][0]))))
+                if (placeholder && ((parseInt(placeholder) >= min && parseInt(placeholder) <= max)))
                     output[0]['placeholder'] = placeholder;
                 else if (placeholder)
                     throw new Error("Placeholder must fall between validation options.")
@@ -628,7 +635,7 @@ function createActionWithContexts(action) {
         }
     };
 }
-
+    
 /**
  * A helper function to submit template workflows
  * Because we have our CMT-specific special tag and our own endpoint, we pass this into the {@link WorkflowModal}.
@@ -641,7 +648,7 @@ function createActionWithContexts(action) {
  * @param {Array} workflows - An array containing all of the workflows
  * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - The state setter to set all our workflows
  * @param {Object} extraData - Any extra data, which is metadata/the meta workflow in our case
- * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason
+ * @param {(error:string) => void} setError - Sets a display error in the {@link WorkflowModal} if it fails to add the workflow for any reason 
  */
 async function workflowSubmit(name, description, tags, workflows, setWorkflows, extraData, setError){
     // We define extraData to have a metaWorkflow attribute, but just in case it can be set to null.
@@ -664,32 +671,21 @@ async function workflowSubmit(name, description, tags, workflows, setWorkflows, 
 
     // We have a return value in case our request fails for some reason. It's mainly so the WorkflowModal knows to clear and close everything or not.
     let returnVal;
-    await CMTJsonFetch("POST", "/workflow/workflowTemplate", {workflow}).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("POST", "/workflow/workflowTemplate", {workflow}).then(async json => {
         setWorkflows(previousWorkflows => [...previousWorkflows, {
-            id: data.workflow.baseActionId,
-            attributeId: data.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
+            id: json.workflow.baseActionId,
+            attributeId: json.workflow.id, // The ID is for the WorkflowAttribute, not the actual workflow
             name: name,
             description: description,
             actions: [],
             tags: tags.sort(), // We do original tags here to not include the special tag
-            metadata: {
+            parsedMetadata: {
                 code: metaWorkflow
             },
             usedCodes: [],
         }].sort((a, b) => a.name.localeCompare(b.name))); // Just sort them
         returnVal = "Good";
-    }).catch(async error => {
-        console.log(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -715,7 +711,7 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
         if (extraData.metaWorkflow) 
             tags.push("WorkflonyFirstTheRestNowhere_CMT_Template");
         else 
-            workflowToUpdate?.metadata?.CMTemplate.forEach(item => tags.push(item));
+            workflowToUpdate?.parsedMetadata?.CMTemplate?.forEach(item => tags.push(item));
     }
 
     if (!name)
@@ -730,45 +726,33 @@ async function workflowEditSubmitAdmin(name, description, tags, workflows, setWo
 
     // We have a return value in case our request fails for some reason. It's mainly so the WorkflowModal knows to clear and close everything or not.
     let returnVal;
-    await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("PUT", `/workflow/workflowTemplate/${workflowToUpdate.attributeId}`, {name, description, tags, metadata}).then(async json => {
         // If we have tags then we remove our special tag so the user can't mess with it
         if (tags) {
             if (extraData.metaWorkflow) 
                 tags = tags?.slice(0, -1);
             else 
-                tags = tags.slice(0, workflowToUpdate?.metadata?.CMTemplate.length * -1);
+                tags = tags.slice(0, workflowToUpdate?.parsedMetadata?.CMTemplate.length * -1);
         }
-            
         const workflowsCopy = workflows.map(workflow => {
-            if (workflow.id !== data.workflow.baseActionId)
+            if (workflow.id !== json.workflow.baseActionId)
                 return workflow
             else
                 return {
-                    id: data.workflow.baseActionId,
-                    attributeId: data.workflow.id,
+                    id: json.workflow.baseActionId,
+                    attributeId: json.workflow.id,
                     name: name,
                     description: description,
                     actions: workflowToUpdate.actions,
                     tags: tags.sort(),
-                        metadata: {
-                            code: extraData.metaWorkflow ?? workflowToUpdate.metadata.code,
-                        },
+                    parsedMetadata: {
+                        code: extraData.metaWorkflow ?? workflowToUpdate.parsedMetadata.code,
+                    },
                     }
         })
         setWorkflows(workflowsCopy);
         returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     // Finally does not return our value so we just return it after our request
     return returnVal;
 }
@@ -979,8 +963,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         
 
     let returnVal;
-    await CMTJsonFetch("POST", postEndpoint, postObject).then(async response => {
-        const data = await response.json();
+    await CMTJsonFetch("POST", postEndpoint, postObject).then(async json => {
 
         let workflowsCopy = [];
         for (let j = 0; j < workflows.length; j++) {
@@ -995,14 +978,14 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                 const actions = workflows[index].actions.slice(0,-1);
                 if (workflows[index].actions.length > 0){
                     let prevAction = workflows[index].actions[workflows[index].actions.length - 1];
-                    prevAction.processedAction.nextActionId = data.action.id;
-                    await CMTJsonFetch("PUT", `/workflow/actionTemplate/nextAction/${prevAction.processedAction.id}`, {name: prevAction.processedAction.name, description: prevAction.processedAction.description, nextActionId: data.action.id});
+                    prevAction.processedAction.nextActionId = json.action.id;
+                    await CMTJsonFetch("PUT", `/workflow/actionTemplate/nextAction/${prevAction.processedAction.id}`, {name: prevAction.processedAction.name, description: prevAction.processedAction.description, nextActionId: json.action.id});
                     actions.push({...prevAction});
                 }
                 // Now that all our actions are put back together we add our newly created action
                 workflowActions = actions;
                 workflowActions.push(createActionWithContexts({
-                        id: data.action.id,
+                        id: json.action.id,
                         name: name,
                         description: description,
                         actionType: actionType,
@@ -1019,7 +1002,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     for (let j = 0; j < workflows[index].actions.length; j++) {
                         const actions = workflows[index].actions[j];
                         actions.processedAction.childActionsWithContexts = await setNextActionInfo(
-                            actions, [], workflowParent.id, data.action.id,
+                            actions, [], workflowParent.id, json.action.id,
                             name, description, actionType, parentActionId, metadata
                         )
                         workflowActions.push(actions)
@@ -1030,7 +1013,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     workflowActions = workflows[index].actions
                     workflowParent.childActionsWithContexts = [];
                     workflowParent.childActionsWithContexts.push(createActionWithContexts({
-                            id: data.action.id,
+                            id: json.action.id,
                             name: name,
                             description: description,
                             actionType: actionType,
@@ -1049,7 +1032,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                     description: workflows[j].description,
                     actions: workflowActions,
                     tags: workflows[j].tags,
-                    metadata: workflows[j].metadata,
+                    parsedMetadata: workflows[j].parsedMetadata,
                     usedCodes: workflows[j].usedCodes
                 });
 
@@ -1061,7 +1044,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             // If this is the first action then we set the root action
             if (workflowsCopy[index].actions.length === 1 && workflowParent.id === workflowsCopy[index].id)
                 await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+                rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             else 
                 setWorkflows(workflowsCopy);
         }
@@ -1071,21 +1054,11 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
                 setWorkflows(workflowsCopy);
             else {
                 await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
-                rootActionId: data.action.id}).then(()=>setWorkflows(workflowsCopy));
+                rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             }
         }
         returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
     return returnVal;
 }
 
@@ -1110,7 +1083,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
         try {
             outputs = BuilderOutputsHelper(code, extraData.required, extraData.placeholder, extraData.validation)
         } catch (error) {
-            setError(error.message);
+            handleError(error, setError)
             return "Bad";
         }
         
@@ -1143,17 +1116,7 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
     await CMTJsonFetch("PUT", postEndpoint, {name, description, metadata}).then(async _ => {
             await refresh();
             returnVal = "Good";
-    }).catch(async error => {
-        console.error(error)
-        if (error.response){
-            const data = await error.response.json();
-            setError(data.error);
-        }
-        else {
-            setError("Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.")
-        }
-        returnVal = "Bad";
-    });
+    }).catch(createWorkflowErrorHandler(setError, value => returnVal = value));
 
     return returnVal;
 }
@@ -1166,10 +1129,13 @@ async function editStandardAction(name, description, actionToUpdate, extraData, 
  * @async
  * @param {Object} actionToDelete - the action that will be deleted
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
+ * @param {(error: string) => void} setError - Will be called with any generated errors 
  */
-async function deleteStandardAction(actionToDelete, refresh){
+async function deleteStandardAction(actionToDelete, refresh, setError){
     // TODO works with simple and complex actions, but for complex actions does not delete child actions. We may want that so we don't have stranded child actions in the DB as cleanup.
-    await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`).then(async _ => await refresh());
+    return await CMTJsonFetch("DELETE", `workflow/actionTemplate/action/${actionToDelete.id}`)
+        .then(() => { refresh(); return "Good" })
+        .catch(createErrorHandler("Failed to delete action.", setError))
 }
 
 /**
@@ -1182,8 +1148,9 @@ async function deleteStandardAction(actionToDelete, refresh){
  * @param {React.Dispatch<SetStateAction<Object[]>>} setWorkflows - state setter for the top-level workflows
  * @param {Object} workflowToDelete - the workflow we are deleting. Can be either a workflow action or a template workflow
  * @param {() => void} refresh - Function to refresh the page upon completion. Used so we don't have to do complicated logic and let the API handle stuff
+ * @param {(error: string) => void} setError - Will be called with any generated errors
  */
-async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh){
+async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh, setError, setIsOpen){
     // TODO deletes but does not cleanup any actions with the workflow
     if (workflowToDelete.attributeId)
         await CMTJsonFetch("DELETE", `workflow/workflowTemplate/${workflowToDelete.attributeId}`).then(async _ => {
@@ -1193,8 +1160,34 @@ async function deleteWorkflow(workflows, setWorkflows, workflowToDelete, refresh
                     workflowsCopy.push(workflows[index]);
             }
             setWorkflows(workflowsCopy);
-        });
+            return "Good"
+        })
+        .catch(createErrorHandler("Failed to delete workflow.", setError));
     else
-        await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`).then(async _ => refresh());
+        return await CMTJsonFetch("DELETE", `workflow/actionTemplate/workflow/${workflowToDelete.id}`)
+        .then(() => { refresh(); return "Good" })
+        .catch(createErrorHandler("Failed to delete workflow.", setError));
 }
 
+function createWorkflowErrorHandler(setError, setReturnVal) {
+    
+    const logGenericError = (error) => handleError(
+        new CMTError({ userFacingMessage: "Something went wrong. Please verify your data is correct and contact Kenn Martinez if the problem persists.", cause: error }),
+        setError
+    )
+
+    return async (error) => {
+        try {
+            if (error.response){
+                const data = await error.response.json();
+                handleError(data.error, setError)
+            } else {
+                logGenericError(error)
+            }
+        } catch {
+            logGenericError(error)
+        } finally {
+            setReturnVal("Bad");
+        }
+    }
+}

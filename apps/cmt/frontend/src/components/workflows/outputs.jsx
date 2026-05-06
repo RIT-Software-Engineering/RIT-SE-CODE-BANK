@@ -122,9 +122,9 @@ export const SelectMultiOutput = ({ output, value, onChange, onBlur, isInvalid, 
     return (
         <div className='shrink'>
             <Form className="flex gap-2" onChange={onChange} onBlur={onBlur}>
-            {output.validation?.options?.map(option => (
+            {output.validation?.options?.map((option, i) => (
                 <Form.Check
-                key={option}
+                key={i}
                 type="checkbox"
                 label={option}
                 id={option}

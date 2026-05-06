@@ -1,14 +1,18 @@
 {
-  "name": "SE-CODE-BANK",
+  "name": "se-code-bank",
   "workspaces": [
     "apps/workflow/ecosystem",
+    "apps/workflow/server",
+    "apps/cmt",
     "apps/cmt/frontend",
-    "apps/cmt/backend"
+    "apps/cmt/backend",
+    "apps/cmt/shared-utilities",
+    "apps/scoop-portal/server",
+    "apps/scoop-portal/ui",
+    "services/notification-service"
   ],
   "scripts": {
-    "start-cmt": "npm run stop-cmt && npx nx run-many -t start -p cmt-frontend cmt-backend workflows-server",
-    "prepare-cmt": "npm i && cd apps/cmt && npx prisma db push --schema backend/prisma/schema.prisma && cd ../workflows/server && npx prisma db push",
-    "stop-cmt": "npx kill-port 3000 3001 5010",
+    "start-cmt": "echo 'To run CMT, press ctrl+shift+p, type \"Tasks: Run Task\", press enter, then type/select \"Start CMT\", then hit enter twice (the scanning task output thing is irrelevant). For more info, check the CMT README'",
     "setupportal": "node ./scripts/setupportal.js",
     "startportal": "node ./scripts/startportal.js",
     "stopportal": "node ./scripts/stopportal.js"
@@ -19,5 +23,9 @@
     "dotenv-cli": "^11.0.0",
     "kill-port": "^2.0.1",
     "nx": "^22.6.5"
+  },
+  "dependencies": {
+    "env-cmd": "^11.0.0",
+    "http-server": "^14.1.1"
   }
 }

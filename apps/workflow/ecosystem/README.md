@@ -10,6 +10,8 @@ For information on the builder, see [here](./docs/builder.md).
 
 For information on the technical details of the component system, see [this guide](./docs/visual-abstraction/visual-abstraction.md).
 
+If you are looking to edit the components package, see this [maintainers guide](./docs/components-maintenance.md)
+
 # Using this package
 
 To install the package, check the package documentation in the se-code-bank Google Drive. When importing things from this package, keep this distinction in mind:

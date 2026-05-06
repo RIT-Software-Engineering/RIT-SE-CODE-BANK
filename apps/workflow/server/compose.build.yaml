@@ -3,6 +3,6 @@ name: workflows
 services:
   workflows-backend:
     build:
-      context: ../../workflow/server
-      dockerfile: Dockerfile
+      context: ../../..
+      dockerfile: ./apps/workflow/server/Dockerfile
     image: workflows-backend:${TAG:-latest}

@@ -26,7 +26,8 @@ replay_pid*
 # vs code individual workspace settings
 .env
 *.code-workspace
-*.vscode
+.vscode/*
+!.vscode/tasks.json
 
 # editor 
 *.nvim.lua

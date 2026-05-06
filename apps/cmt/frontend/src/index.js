@@ -15,6 +15,7 @@ import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
 import { BuilderPageAdmin } from "./pages/WorkflowBuilderPage.jsx";
 import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
 import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
+import { serializeError } from "@se-code-bank/cmt-shared-utilities";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development

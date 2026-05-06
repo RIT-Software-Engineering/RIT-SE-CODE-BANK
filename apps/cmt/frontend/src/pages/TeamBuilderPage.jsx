@@ -28,7 +28,6 @@ export default function TeamBuilderPage() {
           credentials: 'include',
         });
         const data = await res.json();
-        console.log("API response:", data, Array.isArray(data));
         setCourses(Array.isArray(data) ? data : []);
       } catch (e) {
         console.error(e);

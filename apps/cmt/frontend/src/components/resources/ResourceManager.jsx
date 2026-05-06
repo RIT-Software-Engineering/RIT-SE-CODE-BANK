@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Spinner, Button } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
-import { CMTDangerAlert, LogError } from '../../utils/error'
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { UploadResourceModal } from './modals'
 import { ResourceCard } from './resourceRenderers'
-import { CMTJsonFetch } from '../../utils/api'
+import { BASE_URL, CMTJsonFetch } from '../../utils/api'
 
 /**
  * Generate the correct download URL for a resource based on the environment
@@ -12,7 +12,7 @@ import { CMTJsonFetch } from '../../utils/api'
  * @returns {string}
  */
 export function getResourceDownloadUrl(resourceId) {
-    return `${process.env.REACT_APP_BASE_URL}/api/cmt/resources/download/${resourceId}`
+    return `${BASE_URL}/api/cmt/resources/download/${resourceId}`
 }
 
 /**
@@ -73,15 +73,15 @@ export function useResources(courseId) {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
-    const loadResources = useCallback(async () => {
+    const loadResources = useCallback(() => {
         if (!courseId) return
 
         setError(null)
         setLoading(true)
 
-        CMTJsonFetch('GET', `resources/${courseId}`)
-            .then(async response => setResources((await response.json()) || []))
-            .catch(error => LogError("Failed to load resources.", error, setError))
+        return CMTJsonFetch('GET', `resources/${courseId}`)
+            .then(async json => setResources(json || []))
+            .catch(createErrorHandler("Failed to load resources.", setError))
             .finally(() => setLoading(false))
     }, [courseId])
 

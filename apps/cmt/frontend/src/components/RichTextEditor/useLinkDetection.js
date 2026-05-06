@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react';
 
+function detectLinks(editor) {
+    const hasExternalLinks = editor.isActive('link');
+    const htmlContent = editor.getHTML();
+    const hasResourceLinks = htmlContent.includes('<a ') && htmlContent.includes('href=');
+
+    return hasExternalLinks || hasResourceLinks;
+}
+
 /**
  * Utility hook to detect if a TipTap editor contains any links
  * @param {Object} editor - The TipTap editor instance
@@ -12,26 +20,20 @@ export function useLinkDetection(editor) {
         if (!editor) return;
 
         const checkForLinks = () => {
-            const hasExternalLinks = editor.isActive('link');
-            
-            const htmlContent = editor.getHTML();
-            const hasResourceLinks = htmlContent.includes('<a ') && htmlContent.includes('href=');
-            
-            const linksPresent = hasExternalLinks || hasResourceLinks;
-            setHasLinks(linksPresent);
+            const linksPresent = detectLinks(editor);
+            setHasLinks(previousHasLinks =>
+                previousHasLinks === linksPresent ? previousHasLinks : linksPresent
+            );
         };
 
         checkForLinks();
 
-        const updateHandler = editor.on('update', checkForLinks);
-        const selectionHandler = editor.on('selectionUpdate', checkForLinks);
-
-        const transactionHandler = editor.on('transaction', checkForLinks);
+        editor.on('update', checkForLinks);
+        editor.on('selectionUpdate', checkForLinks);
 
         return () => {
-            updateHandler?.off('update', checkForLinks);
-            selectionHandler?.off('selectionUpdate', checkForLinks);
-            transactionHandler?.off('transaction', checkForLinks);
+            editor.off('update', checkForLinks);
+            editor.off('selectionUpdate', checkForLinks);
         };
     }, [editor]);
 

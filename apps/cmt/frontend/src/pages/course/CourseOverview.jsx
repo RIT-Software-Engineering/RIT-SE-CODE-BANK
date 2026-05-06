@@ -6,7 +6,7 @@ import Wheel from '@uiw/react-color-wheel';
 import { hsvaToHex } from '@uiw/color-convert';
 import { CMTJsonFetch } from '../../utils/api.js';
 import { ColorOption } from '../../components/forms/ColorPicker.jsx';
-import { LogError } from '../../utils/error.jsx';
+import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx';
 
 /**
  * @import { SetStateAction } from "react"
@@ -17,6 +17,7 @@ export function CourseOverview() {
     const navigate = useNavigate();
     const [modalOpen, setModalOpen] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
+    const [error, setError] = useState(null)
     const [archiveOpen, setArchiveOpen] = useState(false);
     const [course, setCourse] = useState({});
     
@@ -24,12 +25,9 @@ export function CourseOverview() {
         fetchCourses();
     }, []);
 
-    const fetchCourses = async () => {
-        CMTJsonFetch("GET", `course`).then(async response => {
-            const result = await response.json();
-            setCourseOverview(result ?? []);
-        });
-      };
+    const fetchCourses = () => CMTJsonFetch("GET", `course`)
+        .then(setCourseOverview)
+        .catch(createErrorHandler("Failed to fetch courses", setError))
 
     return (
         <>
@@ -47,7 +45,7 @@ export function CourseOverview() {
                 <Tab eventKey={"active"} title="Active">
                 <Row className='gy-4'>
                     {courseOverview.filter(course => course.active).map(course => (
-                        <Col md={4}>
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
                                     <Settings className={`hidden group-hover:block size-10 hover:size-12
@@ -70,7 +68,7 @@ export function CourseOverview() {
                 <Tab eventKey={"archived"} title="Archived">
                     <Row className='gy-4'>
                     {courseOverview.filter(course => !course.active).map(course => (
-                        <Col md={4}>
+                        <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
                                     <Settings className={`hidden group-hover:block size-10 hover:size-12
@@ -153,17 +151,17 @@ function CourseCreationModal({isOpen, setIsOpen}) {
         // The endpoint differs depending on if we're creating from scratch or not
         CMTJsonFetch('POST', `/course${selectedTemplate ? `/${selectedTemplate.id}` : ''}`, 
             { 
-            courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
-            }).then(async response => {
-            setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
-            setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
-        }).catch(async error => {
-            const data = await error.response.json();
-            setWarning(data.details);
-            setSubmitButtonElement(<><PlusIcon />Submit</>)
-            setSubmitting(false);
-        });
+                courseCode, courseName, color, workflowId: selectedTemplate?.workflowId,
+            })
+            .then(async json => {
+                setSubmitButtonElement(<><Check />Created!</>)
+                setTimeout(async () => navigate(`/courses/${json.course.id}`), 500);
+            })
+            .catch(createErrorHandler("Error creating course", userFacingMesage => {
+                setWarning(userFacingMesage)
+                setSubmitButtonElement(<><PlusIcon />Submit</>)
+                setSubmitting(false);
+            }))
     }
 
     function resetForm() {
@@ -180,12 +178,11 @@ function CourseCreationModal({isOpen, setIsOpen}) {
     const loadProfTemplates = async () => {
         setLoading(true);
         CMTJsonFetch('GET', `course/?isTemplate=true`)
-            .then(async response => {
-                const data = (await response.json()) || [];
-                setTemplates(data.filter(item => item.active));
-                setOriginalTemplates(data.filter(item => item.active));
+            .then(async json => {
+                setTemplates((json || []).filter(item => item.active));
+                setOriginalTemplates((json || []).filter(item => item.active));
             })
-            .catch(error => LogError("Failed to load templates.", error, setWarning))
+            .catch(createErrorHandler("Failed to load templates.", setWarning))
             .finally(() => setLoading(false))
     };
 
@@ -214,12 +211,12 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                         : templates.length > 0 
                         ? <div className="max-h-64 overflow-y-scroll mb-2">
                             {templates.map(template => (
-                                <div className="mb-3">
+                                <div className="mb-3" key={template}>
                                     <SelectableTemplateCard template={template} selected={selectedTemplate} setSelected={setSelectedTemplate}/>
                                 </div>
                             ))}
                             </div> : 
-                            <p>You have not created templates or don't have any available. You can create one or try searching public templates.</p>
+                            <p>You have not created templates or don&apos;t have any available. You can create one or try searching public templates.</p>
                         }
                         <Button variant='primary' onClick={() => setTemplateSearchOpen(true)}>
                             <div className='flex justify-between'>
@@ -250,7 +247,7 @@ function CourseCreationModal({isOpen, setIsOpen}) {
                     <div className="flex gap-2 mb-4 min-w-full min-h-full">
                         {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                         {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                            <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                            <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                         )}
                     </div>
                     {showWheel && <div>{<ColorWheel setColor={setColor}/>}</div>}
@@ -323,16 +320,14 @@ function CourseEditModal({isOpen, setIsOpen, course, refresh}){
         CMTJsonFetch('POST', `/course/${course.id}`, 
             { 
             code: courseCode, name: courseName, color: '#000000', workflowId: course?.workflowId, toBeTemplate: true,
-            }).then(async response => {
+            }).then(async json => {
             setSubmitButtonElement(<><Check />Created!</>)
-            const json = await response.json();
             setTimeout(async () => navigate(`/templates/${json.course.id}`), 500);
-        }).catch(async error => {
-            const data = await error.response.json();
-            setWarning(data.details);
+        }).catch(createErrorHandler("Failed to copy", (userFacingMessage) => {
+            setWarning(userFacingMessage);
             setSubmitButtonElement(<><PlusIcon />Submit</>)
             setSubmitting(false);
-        });
+        }))
     }
 
     return (
@@ -346,7 +341,7 @@ function CourseEditModal({isOpen, setIsOpen, course, refresh}){
                         <div className="flex gap-2 mb-4 min-w-full">
                             {/* // Colors are based of Open Colors, but adjusted using oklch.com to alter chroma/lightness to maintain contract for colorblind users */}
                             {["#ff9749", "#ee605c", "#e64980", "#cb2d6a", "#405cc9", "#88e4bd", "#76d380", "rainbow"].map(hex =>
-                                <ColorOption color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
+                                <ColorOption key={hex} color={color} setColor={setColor} hex={hex} setShowWheel={setShowWheel}/>
                             )}
                         </div>
                         {showWheel && <div className='mb-3'>{<ColorWheel setColor={setColor}/>}</div>}
@@ -523,11 +518,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
 
     // gets all the public templates and displays them
     const setPublishedTemplates = useCallback(async () => {
-        await CMTJsonFetch("GET", "/course/templates").then(async response => {
-            const data = await response.json();
-            data.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
-            setAllTemplates(data);
-            setShownTemplates(data);
+        await CMTJsonFetch("GET", "/course/templates").then(async json => {
+            json.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order when searching
+            setAllTemplates(json);
+            setShownTemplates(json);
         })
     }, []);
 
@@ -561,11 +555,10 @@ function TemplateSearchModal({isOpen, setIsOpen, selected, setSelected, template
             return;
         }
 
-        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async response => {
-            const data = await response.json();
+        await CMTJsonFetch("GET", `/workflow/publishedTemplates?searchValue=${searchValue.toLowerCase()}`).then(async json => {
             
             // Partiall AI-generated code
-            const newTemplates = data.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
+            const newTemplates = json.flat().filter(val => val !== null).filter((value, index, self) => (index === self.findIndex((t) => (t?.id === value?.id))));
             newTemplates.sort((a, b) => parseInt(a.id) - parseInt(b.id)); // sort so we have the same order as before
             setShownTemplates(newTemplates)
         })

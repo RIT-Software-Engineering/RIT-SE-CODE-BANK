@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { CMTJsonFetch } from "../utils/api.js";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
+import { CMTJsonFetch, CMTJsonFetchRaw } from "../utils/api.js";
+import { createErrorHandler } from "../utils/error.jsx";
 import JSZip from "jszip";
 import { Alert, Form } from "react-bootstrap";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import logo from "../images/se_logo_new.png";
 
 export default function CourseWebsitePage() {
@@ -14,16 +16,12 @@ export default function CourseWebsitePage() {
   const [isWeeks, setIsWeeks] = useState(false);
 
   // Fetch courses
-  useEffect(() => {
-    (async () => {
-      await CMTJsonFetch("GET", `course`).then(async response => {
-          const result = await response.json();
-          setCourses(result);
-      }).catch(async error => {
-        console.error(error);
-      });
-    })();
-  }, []);
+  useEffect(() => 
+    void CMTJsonFetch("GET", `course?isActive=true`)
+      .then(setCourses)
+      .catch(createErrorHandler("Failed to fetch courses.")),
+    []
+  )
 
   // the full course object to get course name & course id
   const selectedCourseObj = useMemo(() => {
@@ -32,17 +30,16 @@ export default function CourseWebsitePage() {
     return courses.find(c => c.id === selectedCourse) || null;
   }, [selectedCourse, courses]);
 
-  // Fetch sessions and materials for selected course
+    // Fetch sessions and materials for selected course
   useEffect(() => {
     if (!selectedCourse) return;
 
     const fetchSessions = async () => {
       setLoading(true);
-      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async response => {
-        const result = await response.json();
-        const combined = result.sessions.map((session, index) => ({
+      await CMTJsonFetch("GET", `session/${selectedCourse}`).then(async json => {
+        const combined = json.sessions.map((session, index) => ({
           ...session,
-          materials: result.sessionMaterials[index]?.material || [],
+          materials: json.sessionMaterials[index]?.material || [],
         })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
 
@@ -208,14 +205,11 @@ export default function CourseWebsitePage() {
 
     const sanitize = (name) => name.replace(/[^a-z0-9.\-_]/gi, "_");
 
-    const syllabusId = await CMTJsonFetch("GET", `/resources/syllabus/${selectedCourseObj.id}`)
+    const syllabusArray = await CMTJsonFetch("GET", `/resources/syllabus/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting syllabus ID"))
 
-    if (!syllabusId.ok) throw new Error("Failed to fetch resources");
-
-    const syllabusArray = await syllabusId.json();
     const syllabus = syllabusArray[0];
 
-    const syll = await CMTJsonFetch("GET", `/resources/download/${syllabus.id}`)
+    const syll = await CMTJsonFetchRaw("GET", `/resources/download/${syllabus.id}`).catch(createErrorHandler("Error getting syllabus"))
 
     const blob1 = await syll.blob();
 
@@ -225,13 +219,8 @@ export default function CourseWebsitePage() {
 
     syllabusFolder.file(syllabusName, blob1)
 
-    const response = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`);
+    const resources = await CMTJsonFetch("GET", `/resources/${selectedCourseObj.id}`).catch(createErrorHandler("Error getting resources"));
 
-    if (!response.ok) throw new Error("Failed to fetch resources");
-
-    const resources = await response.json();
-
-    console.log("Resources for course:", resources);
 
     const resourcesFolder = zip.folder("public_html/resources");
 
@@ -242,15 +231,14 @@ export default function CourseWebsitePage() {
 
     await Promise.all(resources.map(async (resource) => {
       try {
-        const resp = await CMTJsonFetch("GET", `/resources/download/${resource.id}`);
-        if (!resp.ok) throw new Error(`Failed to fetch resource ${resource.id}`);
+        const resp = await CMTJsonFetchRaw("GET", `/resources/download/${resource.id}`).catch(createErrorHandler(`Failed to fetch resource ${resource.id}`));
 
         const blob = await resp.blob();
         const fileName = sanitize(resource.filename);
         resourcesFolder.file(fileName, blob);
 
       } catch (err) {
-        console.error("Failed resource:", resource, err);
+        throw new CMTError({ userFacingMessage: `Failed resource ${resource} ${err}`, cause: err })
       }
     }));
 
@@ -277,7 +265,7 @@ export default function CourseWebsitePage() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId})
+    await CMTJsonFetch("PUT", `/workflow/editDownloadCourseAction`, {workflowId: selectedCourseObj.workflowId}).catch(createErrorHandler("Error downloading course."))
   };
 
   const visibleColumns = MATERIAL_COLUMNS.filter(col =>
@@ -393,7 +381,7 @@ export default function CourseWebsitePage() {
                   </td>
 
                     {grouped.map(colItems => (
-                        <td className="border border-blue-300 p-3 align-top">
+                        <td key={colItems} className="border border-blue-300 p-3 align-top">
                           {colItems.map(item => (
                           <div key={item.id} className="mb-1">
                             <ReadOnlyEditor value={item.label} />
@@ -541,8 +529,7 @@ async function rewriteResourceLinks(html) {
     const id = href.split('/').filter(Boolean).pop();
 
     try {
-      const response = await CMTJsonFetch("GET", `/resources/id/${id}`);
-      const resource = await response.json();
+      const resource = await CMTJsonFetch("GET", `/resources/id/${id}`);
 
       if (!resource || !resource.filename) continue;
 

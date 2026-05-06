@@ -2,12 +2,25 @@
 
 This monorepo hosts several projects and shared components. Most documentation can be found in the appropriate Google Drive folders/drives.
 
+# Reading these docs
+
+These docs are best read inside of Github, because links look better and images work, but if you want to read them in VSCode, you can get
+an extension that can render markdown files as Github markdown files.
+
+**`Ctrl`+`Shift`+`V` can open up the builtin vscode renderer.** The above extension modifies it.
+
 # High Level Documentation
 
 High level documentation can be found in the shared [se-code-bank drive](https://drive.google.com/drive/u/1/folders/1eDbtGrgsCikuy221MIa72kXh0j31CQ5K)
 
+It is reccomended that you read this [overview of how npm](https://docs.google.com/document/d/1zm7hI2R7Hz0tgCx5eHXF9r4FrxAF3QfVFQjCfUWRb9g/edit?tab=t.0#heading=h.rquxpzgjogju) is used in this monorepo, as it is notably different than single-project repos. 
+
 # Directory
 
 These links go to the README files for shared components and other projects. Even if it is not listed here, a README may still exist in the project folder.
+
+[CMT](./apps/cmt/README.md)
+
+[SCOOPPortal](./apps/scoop-portal/README.md)
 
 [Workflows Ecosystem Documentation](./apps/workflow/ecosystem/README.md)
