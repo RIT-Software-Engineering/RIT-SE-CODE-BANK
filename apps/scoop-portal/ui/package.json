@@ -4,13 +4,12 @@
   "prviate": true,
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "next dev --turbopack",
+    "dev": "next dev -p 3020 --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@se-code-bank/workflows-ecosystem":"../../workflow/ecosystem/se-code-bank-workflows-ecosystem-1.0.0.tgz",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",

@@ -15,6 +15,6 @@ RUN npx prisma generate
 # Copy rest of application
 COPY . .
 
-EXPOSE 3003
+EXPOSE 5001
 
 CMD ["npm", "start"]

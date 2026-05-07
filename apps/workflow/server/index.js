@@ -1,4 +1,5 @@
-require('dotenv').config({ path: '.env' });
+const env = process.env.NODE_ENV || "development";
+require('dotenv').config({ path: `.env.${env}` });
 
 const express = require('express');
 const app = express();
@@ -13,7 +14,7 @@ const port = process.env.PORT || 5001;
 
 app.use(
   cors({
-    origin: process.env.BASE_URL || "http://localhost:3000",
+    origin: process.env.BASE_URL || "http://localhost:3020",
     credentials: true,
   }),
 );
