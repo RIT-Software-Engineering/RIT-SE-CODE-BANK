@@ -31,6 +31,9 @@ export default function AuthPage() {
         );
 
         if (!authRes.ok) {
+          // Clear any stale user data if authentication fails
+          localStorage.removeItem("user");
+          setUser(null);
           setLoading(false);
           return;
         }
@@ -40,6 +43,8 @@ export default function AuthPage() {
 
         if (!authId) {
           setError("No user ID received from authentication service");
+          localStorage.removeItem("user");
+          setUser(null);
           setLoading(false);
           return;
         }
@@ -56,24 +61,30 @@ export default function AuthPage() {
             "Your account is authenticated, but you don't have access to this application. " +
               "Please contact your administrator."
           );
+          localStorage.removeItem("user");
+          setUser(null);
           setLoading(false);
           return;
         }
 
         if (!dbRes.ok) {
           setError("Unable to fetch user data from database");
+          localStorage.removeItem("user");
+          setUser(null);
           setLoading(false);
           return;
         }
 
         const dbUser = await dbRes.json();
 
-        // Set user + redirect
+        // Set the authenticated user (this will save to localStorage)
         setUser(dbUser);
         router.push("/dashboard");
       } catch (err) {
         console.error("Auth check error:", err);
         setError("An error occurred during authentication");
+        localStorage.removeItem("user");
+        setUser(null);
         setLoading(false);
       }
     };

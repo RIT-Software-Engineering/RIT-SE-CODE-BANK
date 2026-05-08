@@ -105,7 +105,7 @@ export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
-  const { user, setUser } = useUser();
+  const { user, setUser, logout } = useUser();
   const [teams, setTeams] = useState([]);
   const [projects, setProjects] = useState([]);
   const fileInputRef = useRef(null);
@@ -168,7 +168,7 @@ export default function Header() {
     if (!user || !user.id) return;
     try {
       const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const url = `${baseUrl}/preferences/scoop/${user.id}`;
+      const url = `${baseUrl}/preferences/scoop-portal/${user.id}`;
       const res = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" }});
 
       if (!res.ok) {
@@ -195,7 +195,7 @@ export default function Header() {
     if (!user || !user.id) return;
     try {
       const baseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const url = `${baseUrl}/preferences/scoop/${user.id}`;
+      const url = `${baseUrl}/preferences/scoop-portal/${user.id}`;
       
       let formattedSlack = tempPrefs.slackUsername.trim();
       if (formattedSlack.length > 0 && !formattedSlack.startsWith("@")) {
@@ -261,7 +261,7 @@ export default function Header() {
 
       const notifPayload = { ...tempPrefs, slackUsername: formattedSlack };
       const notifBaseUrl = getBaseUrl(process.env.NEXT_PUBLIC_NOTIFICATION);
-      const notifUrl = `${notifBaseUrl}/preferences/scoop/${user.id}`;
+      const notifUrl = `${notifBaseUrl}/preferences/scoop-portal/${user.id}`;
       
       const notifRes = await fetch(notifUrl, {
         method: "PUT",
@@ -501,11 +501,16 @@ export default function Header() {
 
             {/* Logout Button */}
             <Button
-              // Replace href with onClick to ensure proper redirection and session clearing once env for prod and dev are setup
-              // onClick={() => {
-              //   window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/logout?returnTo=${encodeURIComponent(window.location.origin + process.env.NEXT_PUBLIC_URL_BASE_PATH)}`;
-              // }}              
-              href={process.env.NEXT_PUBLIC_URL_BASE_PATH}
+              onClick={() => {
+                // Set flag to prevent ProtectedRoute from re-authenticating during logout
+                localStorage.setItem("logging_out", "true");
+                // Clear user context, then redirect to landing page
+                logout();
+                // Uncomment for production and remove the redirect to base path
+                // window.location.href = `${process.env.NEXT_PUBLIC_AUTH_URL}/logout?returnTo=${encodeURIComponent("https://apps.se.rit.edu/scoop-portal/")}`;
+                window.location.href = `${process.env.NEXT_PUBLIC_URL_BASE_PATH}`;
+
+              }}              
               variant="outlined"
               color="inherit"
               startIcon={<LogoutIcon />}

@@ -5,12 +5,18 @@ const UserContext = createContext();
 
 
 export const UserProvider = ({ children }) => {
-  const [user, setUserState] = useState(); 
+  const [user, setUserState] = useState();
 
   // Load user from localStorage on mount
   useEffect(() => {
     const stored = localStorage.getItem("user");
-    if (stored) setUserState(JSON.parse(stored));
+    if (stored) {
+      try {
+        setUserState(JSON.parse(stored));
+      } catch {
+        localStorage.removeItem("user");
+      }
+    }
   }, []);
 
   // Save user to localStorage whenever it changes
@@ -21,11 +27,14 @@ export const UserProvider = ({ children }) => {
       localStorage.removeItem("user");
     }
   }, [user]);
-  
-  // Wrap setUser to update state and storage
+
+  // Wrap setUser to update state
   const setUser = (u) => setUserState(u);
 
-const logout = () => setUser(undefined);
+  const logout = () => {
+    localStorage.removeItem("user");
+    setUserState(undefined);
+  };
 
 
   return (

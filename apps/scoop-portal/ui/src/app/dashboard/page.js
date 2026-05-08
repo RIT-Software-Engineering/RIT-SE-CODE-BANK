@@ -5,8 +5,9 @@ import {
   DialogTitle, TextField, CircularProgress, Alert, Snackbar, Divider
 } from '@mui/material';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
-import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
+import NotificationsActive from '@mui/icons-material/NotificationsActive';
 import { useUser } from "../utils/user-context/page";
+import { useRouter } from 'next/navigation';
 import { sendScoopEmail } from 'utils/ScoopEmailSend';
 
 import Header from '@components/Header';
@@ -85,18 +86,19 @@ const workflows = [
       },
     ],
   },
-  {
-    title: "Email",
-    steps: [
-      {
-        title:"Send Email",
-        roles:["scoopdinator"],
-        description: "Send email to users",
-        link: null,
-        emailModal: true
-      }
-    ],
-  },
+  // -- THIS IS ONLY FOR NOTIFICATION TESTING PURPOSES --
+  // {
+  //   title: "Email/Slack",
+  //   steps: [
+  //     {
+  //       title:"Send Email",
+  //       roles:["scoopdinator"],
+  //       description: "Send email/slack dm to users, also must have it enabled from profile",
+  //       link: null,
+  //       emailModal: true
+  //     }
+  //   ],
+  // },
   {
     title: "Scooployees",
     steps: [
@@ -226,6 +228,7 @@ export default function WorkflowDashboard() {
     const [filteredWorkflows, setfilteredWorkflows] = useState([]);
     const [hasPendingOffer, setHasPendingOffer] = useState(false);
     const { user } = useUser();
+    const router = useRouter();
 
     const [modalOpen, setModalOpen] = useState(false);
     const [recipient, setRecipient] = useState("");
@@ -234,6 +237,13 @@ export default function WorkflowDashboard() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [snackbar, setSnackbar] = useState({open: false, message: "", success: false});
+
+    // Redirect to login if not authenticated
+    useEffect(() => {
+        if (user === null) {
+            router.push('/user-login');
+        }
+    }, [user, router]);
 
     const handleOpen = () => {
         setResult(null); 
@@ -304,6 +314,25 @@ export default function WorkflowDashboard() {
     fetchData();
   }, [user]);
 
+    // Show loading if user is not yet determined
+    if (user === undefined) {
+        return (
+            <Box
+                display="flex"
+                justifyContent="center"
+                alignItems="center"
+                minHeight="100vh"
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
+
+    // Don't render if not authenticated (will redirect)
+    if (!user) {
+        return null;
+    }
+
   return (
     <Box
       sx={{
@@ -327,7 +356,7 @@ export default function WorkflowDashboard() {
         {hasPendingOffer && (
           <Alert
             severity="success"
-            icon={<NotificationsActiveIcon />}
+            icon={<NotificationsActive />}
             sx={{ mb: 3 }}
             action={
               <Button
