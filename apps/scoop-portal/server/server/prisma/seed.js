@@ -11,12 +11,18 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Clearing data");
 
+  // Delete dependent tables first (before users)
   await prisma.teams.deleteMany();
   await prisma.journalEntry.deleteMany();
-  await prisma.project.deleteMany();
-  await prisma.users.deleteMany();
-  await prisma.login.deleteMany();
+  await prisma.projectProposal.deleteMany();
   await prisma.application.deleteMany();
+  
+  // Then delete users (no more FK constraints)
+  await prisma.users.deleteMany();
+  
+  // Then delete remaining tables
+  await prisma.project.deleteMany();
+  await prisma.login.deleteMany();
   await prisma.semesterGroup.deleteMany();
   await prisma.fruit.deleteMany();
 
