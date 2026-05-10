@@ -93,7 +93,7 @@ async function addFaculty({ name, rank, unit, affiliations = null, user_role }) 
        VALUES (?, ?, ?, ?, ?)`,
       [name, rank, unit, affiliations, user_role]
     );
-    return { faculty_id: result.insertId };
+    return { faculty_id: Number(result.insertId) };
   } finally {
     if (conn) conn.release();
   }

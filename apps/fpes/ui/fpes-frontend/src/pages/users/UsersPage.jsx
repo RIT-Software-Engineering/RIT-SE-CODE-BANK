@@ -22,18 +22,39 @@ export default function CreateUserPage() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:3000/faculty_information", {
+      const res = await fetch("http://localhost:3000/faculty", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
+          body: JSON.stringify({
+            name: formData.fullName,
+            rank: formData.rank,
+            unit: formData.unit,
+            affiliations: formData.affiliations,
+            user_role: formData.role
+          })
         });
 
+        if (!res.ok) {
+          const errorText = await res.text();
+          console.error(`HTTP ${res.status}: ${errorText}`);
+          alert(`Error: ${res.status} ${res.statusText}`);
+          return;
+        }
+
         const data = await res.json();
-        alert(`User has been created. Id = ${data.user_id}`);
+        alert(`User has been created. Id = ${data.faculty_id}`);
+        setFormData({
+          fullName: "",
+          email: "",
+          rank: "",
+          unit: "",
+          affiliations: "",
+          role: "faculty"
+        });
         
       } catch (err) {
         console.error(err);
-        alert("Error creating user");
+        alert("Error creating user: " + err.message);
     }
   };
 
@@ -50,7 +71,7 @@ export default function CreateUserPage() {
             <TextField
               label="Full Name"
               name="fullName"
-              value={formData.firstName}
+              value={formData.fullName}
               onChange={handleChange}
               required
             />

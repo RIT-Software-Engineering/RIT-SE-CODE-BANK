@@ -75,8 +75,8 @@ async function saveParsedHighlights(data) {
         }
         
         const formResult = await conn.query(
-            'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data) VALUES (?, NOW(), ?)',
-            [data.faculty_id, pdfBuffer]
+            'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data, type) VALUES (?, NOW(), ?, ?)',
+            [data.faculty_id, pdfBuffer, 'Highlights']
         );
         const formId = Number(formResult.insertId);
         

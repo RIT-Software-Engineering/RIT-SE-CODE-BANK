@@ -123,6 +123,20 @@ router.put('/annual-eval/:facultyId', async (req, res) => {
   }
 });
 
+// DELETE remove stored annual evaluation
+router.delete('/annual-eval/:facultyId', async (req, res) => {
+  try {
+    await withConn(conn => conn.query(
+      'DELETE FROM form_summaries WHERE faculty_id = ? AND summary_type = ?',
+      [req.params.facultyId, 'annual']
+    ));
+    res.json({ success: true, message: 'Annual evaluation deleted' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete annual evaluation' });
+  }
+});
+
 // POST generate annual evaluation — skips AI if a stored summary already exists
 router.post('/annual-eval/:facultyId', async (req, res) => {
   try {
@@ -198,19 +212,18 @@ router.post('/annual-eval/:facultyId', async (req, res) => {
     const combine = (field) => highlights.map(h => h[field]).filter(Boolean).join('\n');
     const totalServiceHours = Number(serviceRows[0]?.total ?? 0);
 
-    // Fetch teaching eval summaries for all evals
+    // Fetch teaching eval summary from most recent eval only
     let teachingEvalText = 'No teaching evaluations available.';
     try {
       const evalForms = await withConn(conn => conn.query(
         `SELECT f.id FROM forms f JOIN teaching_evals te ON te.form_id = f.id
          WHERE f.faculty_information_id = ? ${yearFilter}
-         ORDER BY f.time_submitted DESC`,
+         ORDER BY f.time_submitted DESC LIMIT 1`,
         [facultyId]
       ));
       if (evalForms.length) {
         const refresh = req.query.refresh === 'true';
-        const evalSummaries = await Promise.all(evalForms.map(ef => getTeachingEvalSummary(ef.id, refresh).catch(() => null)));
-        teachingEvalText = evalSummaries.filter(Boolean).join('\n\n');
+        teachingEvalText = await getTeachingEvalSummary(evalForms[0].id, refresh).catch(() => 'No teaching evaluation data available.');
       }
     } catch (_) {}
 

@@ -12,6 +12,32 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Create a PII scrubbing function based on professor and course names
+ * @param {string} professor_name - The professor's name
+ * @param {string} course_name - The course name
+ * @returns {function} Function that scrubs PII from text
+ */
+function createPIIScrubber(professor_name, course_name) {
+    const nameParts = professor_name
+        ? professor_name.split(/[,\s]+/).map(p => p.trim()).filter(p => p.length > 1)
+        : [];
+    
+    return (text) => {
+        if (!text) return text;
+        let f = text;
+        if (professor_name) f = f.replace(new RegExp(escapeRegExp(professor_name), 'gi'), '[PROFESSOR]');
+        for (const part of nameParts) f = f.replace(new RegExp(`\\b${escapeRegExp(part)}\\b`, 'gi'), '[PROFESSOR]');
+        f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
+        f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
+        if (course_name) f = f.replace(new RegExp(escapeRegExp(course_name).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
+        f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
+        f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
+        f = f.replace(/\b\d{9}\b/g, '[ID]');
+        return f;
+    };
+}
+
 async function resetTeachingEvalsTables() {
     let connection;
     try {
@@ -49,8 +75,8 @@ async function saveParsedTeachingEval(data) {
         const pdfBuffer = data.pdf_data ? Buffer.from(data.pdf_data, 'base64') : null;
 
         const formResult = await conn.query(
-            'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data) VALUES (?, NOW(), ?)',
-            [data.faculty_id, pdfBuffer]
+            'INSERT INTO forms (faculty_information_id, time_submitted, pdf_data, type) VALUES (?, NOW(), ?, ?)',
+            [data.faculty_id, pdfBuffer, 'Teaching Evaluation']
         );
         const formId = Number(formResult.insertId);
 
@@ -295,23 +321,8 @@ async function summarizeTeachingEval(formId) {
 
         const { professor_name, course_name } = evalData[0];
 
-        // Build a list of all name parts to scrub (handles "Last, First" and "First Last" formats)
-        const nameParts = professor_name
-            ? professor_name.split(/[,\s]+/).map(p => p.trim()).filter(p => p.length > 1)
-            : [];
-        const filterPII = (text) => {
-            if (!text) return text;
-            let f = text;
-            if (professor_name) f = f.replace(new RegExp(escapeRegExp(professor_name), 'gi'), '[PROFESSOR]');
-            for (const part of nameParts) f = f.replace(new RegExp(`\\b${escapeRegExp(part)}\\b`, 'gi'), '[PROFESSOR]');
-            f = f.replace(/\b(professor|prof\.?|dr\.?|instructor)\s+[A-Z][a-z]+(?:\s+[A-Z][a-z]+)?\b/g, '$1 [PROFESSOR]');
-            f = f.replace(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g, '[NAME]');
-            if (course_name) f = f.replace(new RegExp(escapeRegExp(course_name).replace(/\s+/g, '\\s+'), 'gi'), '[COURSE]');
-            f = f.replace(/\b[A-Z]{2,5}[\s-]?\d{2,4}[A-Z]?\b/g, '[COURSE]');
-            f = f.replace(/[\w.-]+@[\w.-]+\.\w+/g, '[EMAIL]');
-            f = f.replace(/\b\d{9}\b/g, '[ID]');
-            return f;
-        };
+        // Create PII scrubber function
+        const filterPII = createPIIScrubber(professor_name, course_name);
 
         const questionLines = questions.map(q =>
             `- ${q.question}: avg=${q.avg}, dept_avg=${q.swen_avg}, top_two=${q.top_two}%`
@@ -349,11 +360,76 @@ Be factual and professional. Do not use any names.`;
     }
 }
 
+/**
+ * Get teaching evaluation data by form ID
+ * @param {number} formId - The form ID
+ * @returns {Object} Teaching evaluation data with questions and text responses
+ */
+async function getTeachingEvalByFormId(formId) {
+    const conn = await pool.getConnection();
+    try {
+        // Get the teaching eval record
+        const evalData = await conn.query(
+            'SELECT * FROM teaching_evals WHERE form_id = ?',
+            [formId]
+        );
+        
+        if (!evalData || evalData.length === 0) {
+            return null;
+        }
+
+        const evalId = evalData[0].id;
+        const { professor_name, course_name } = evalData[0];
+
+        // Create PII scrubber function
+        const filterPII = createPIIScrubber(professor_name, course_name);
+
+        // Get all questions for this eval
+        const questions = await conn.query(
+            'SELECT * FROM teaching_eval_questions WHERE teaching_eval_id = ? ORDER BY CAST(question_number AS UNSIGNED)',
+            [evalId]
+        );
+
+        // Get all text responses
+        const textResponses = await conn.query(
+            `SELECT q.question, r.response
+             FROM teaching_eval_text_questions q
+             LEFT JOIN teaching_eval_text_responses r ON q.id = r.question_id
+             WHERE r.teaching_eval_id = ?
+             ORDER BY q.id`,
+            [evalId]
+        );
+
+        // Group text responses by question and scrub PII
+        const groupedResponses = {};
+        for (const row of textResponses) {
+            if (!groupedResponses[row.question]) {
+                groupedResponses[row.question] = [];
+            }
+            if (row.response) {
+                groupedResponses[row.question].push(filterPII(row.response));
+            }
+        }
+
+        return {
+            ...evalData[0],
+            questions,
+            text_responses: Object.entries(groupedResponses).map(([question, responses]) => ({
+                question,
+                responses
+            }))
+        };
+    } finally {
+        conn.release();
+    }
+}
+
 module.exports = {
     resetTeachingEvalsTables,
     saveParsedTeachingEval,
     getFacultyTeachingEvalPercentiles,
     getFacultyPercentileById,
     calculateTeachingScore,
-    summarizeTeachingEval
+    summarizeTeachingEval,
+    getTeachingEvalByFormId
 }

@@ -64,8 +64,8 @@ export default function GettingStartedPage({ roles }) {
   const allDone = progress === 100;
 
   return (
-    <Box sx={{ maxWidth: 700, mx: "auto", mt: 4, px: 2 }}>
-      <Typography variant="h5" sx={{ mb: 0.5 }}>Getting Started</Typography>
+    <Box sx={{ maxWidth: 700, mx: "auto", mt: 4, px: 2 }} style={{background:"white"}}>
+      <Typography variant="h5" sx={{ mb: 0.5 }} color="black">Getting Started</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
         A quick checklist to help you get familiar with the system as a <strong>{activeRole}</strong>.
       </Typography>

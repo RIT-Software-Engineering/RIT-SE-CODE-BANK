@@ -62,6 +62,14 @@ async function rebuildTables(){
 
         await resetTeachingEvalsTables();
 
+        // Clear all stored evaluations (AI summaries) — safe even if table doesn't exist
+        try {
+            await connection.query('DELETE FROM form_summaries');
+        } catch (err) {
+            // Silently ignore if table doesn't exist — user can create it manually if needed
+            if (!err.message.includes('Unknown table')) throw err;
+        }
+
         console.log("All tables successfully rebuilt...");
 
         return;

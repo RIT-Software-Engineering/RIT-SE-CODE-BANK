@@ -89,6 +89,7 @@ function SummarySection({ label, data, showDisseminated, onUpdate, onReject, sec
 
 export default function AnnualEvalPage({ facultyId, roles }) {
   const isAdmin = roles?.has('Admin');
+  const isSupervisor = roles?.has('Supervisor');
   const [facultyList, setFacultyList] = useState([]);
   const [selectedFacultyId, setSelectedFacultyId] = useState('');
   const [summary, setSummary] = useState(null);
@@ -101,17 +102,25 @@ export default function AnnualEvalPage({ facultyId, roles }) {
   const [saved, setSaved] = useState(false);
   const [year, setYear] = useState(CURRENT_YEAR);
 
-  const targetFacultyId = isAdmin ? selectedFacultyId : facultyId;
+  const targetFacultyId = (isAdmin || isSupervisor) ? selectedFacultyId : facultyId;
 
-  // Load unique faculty list for admin dropdown
+  // Load unique faculty list for admin dropdown, or supervisee list for supervisor
   useEffect(() => {
-    if (!isAdmin) return;
-    axios.get(`${BASE}/highlights/all`)
-      .then(res => {
-        const seen = new Set();
-        setFacultyList(res.data.filter(r => seen.has(r.faculty_id) ? false : seen.add(r.faculty_id)));
-      }).catch(() => {});
-  }, [isAdmin]);
+    if (!isAdmin && !isSupervisor) return;
+    if (isAdmin) {
+      axios.get(`${BASE}/highlights/all`)
+        .then(res => {
+          const seen = new Set();
+          setFacultyList(res.data.filter(r => seen.has(r.faculty_id) ? false : seen.add(r.faculty_id)));
+        }).catch(() => {});
+    } else if (isSupervisor) {
+      // Load supervisees
+      axios.get(`${BASE}/faculty/supervised_by/${facultyId}`)
+        .then(res => {
+          setFacultyList(res.data);
+        }).catch(() => {});
+    }
+  }, [isAdmin, isSupervisor, facultyId]);
 
   // Load stored summary whenever selected faculty changes
   useEffect(() => {
@@ -176,6 +185,24 @@ export default function AnnualEvalPage({ facultyId, roles }) {
     }
   };
 
+  // Delete the stored annual evaluation
+  const handleDelete = async () => {
+    if (!targetFacultyId) return;
+    if (!window.confirm('Are you sure you want to delete this stored evaluation? This cannot be undone.')) return;
+    setSaving(true); setError(''); setSaved(false);
+    try {
+      await axios.delete(`${BASE}/highlights/annual-eval/${targetFacultyId}`);
+      setSummary(null);
+      setMeta(null);
+      setSaved(true);
+      setError('');
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to delete evaluation.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', p: 3, pt: 10 }} bgcolor="white">
       <Typography variant="h5" sx={{ mb: 0.5 }} color="black">Annual Evaluation</Typography>
@@ -184,11 +211,11 @@ export default function AnnualEvalPage({ facultyId, roles }) {
       </Typography>
 
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 3, flexWrap: 'wrap' }}>
-        {isAdmin && (
+        {(isAdmin || isSupervisor) && (
           <TextField select label="Faculty" size="small" value={selectedFacultyId}
             onChange={e => { setSelectedFacultyId(e.target.value); setSummary(null); setMeta(null); setSaved(false); }}
             sx={{ minWidth: 220 }}>
-            {facultyList.map(f => <MenuItem key={f.faculty_id} value={f.faculty_id}>{f.faculty_name}</MenuItem>)}
+            {facultyList.map(f => <MenuItem key={f.faculty_id} value={f.faculty_id}>{f.faculty_name || f.name}</MenuItem>)}
           </TextField>
         )}
         <TextField select label="Year" size="small" value={year}
@@ -196,12 +223,17 @@ export default function AnnualEvalPage({ facultyId, roles }) {
           {YEARS.map(y => <MenuItem key={y} value={y}>{y}</MenuItem>)}
         </TextField>
         <Button variant="contained" onClick={() => generate(false)}
-          disabled={loading || (isAdmin && !selectedFacultyId)}>
+          disabled={loading || ((isAdmin || isSupervisor) && !selectedFacultyId)}>
           {loading ? <><CircularProgress size={16} sx={{ mr: 1 }} />Generating...</> : summary ? 'Load / Refresh' : 'Generate'}
         </Button>
         {summary && (
           <Button variant="outlined" color="warning" onClick={() => generate(true)} disabled={loading}>
             Regenerate
+          </Button>
+        )}
+        {summary && (
+          <Button variant="outlined" color="error" onClick={handleDelete} disabled={saving}>
+            Delete Stored
           </Button>
         )}
       </Box>

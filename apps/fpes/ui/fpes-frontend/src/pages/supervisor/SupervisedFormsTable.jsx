@@ -28,16 +28,17 @@ export default function SupervisedFormsTable({facultyId}){
         {field : "name", headerName : "Faculty Name", flex:1},
         {field : "type", headerName : "Form Type", flex:.5},
         {field : "time_submitted", headerName : "Submitted On", flex:1},
-        {field : "Open", flex: .5, sortable: false, renderCell : (params) => {
+        {field : "id", headerName: "View", flex: .5, sortable: false, renderCell : (params) => {
             const onClick = () => {
                 axios.get("http://localhost:3000/forms/" + params.row.id + "/view_format")
                 .then( (response) => {
                     setViewModalForm(response.data);
-                    console.log(response.data);
                     setViewModalOpen(true);
-                    console.log(viewModalOpen);
+                })
+                .catch((err) => {
+                    console.error("Error fetching form:", err);
+                    alert("Failed to load form preview");
                 });
-                
             }
 
             return(

@@ -31,6 +31,7 @@ async function getFormById(id){
 // READ : get form of a specific id in preview format
 async function getFormByIdInViewFormat(id){
     const { getHighlightByFormId } = require("./highlights_api");
+    const { getTeachingEvalByFormId } = require("./teaching_eval_api");
 
     const formData = {}
 
@@ -42,33 +43,46 @@ async function getFormByIdInViewFormat(id){
     }
 
     const facultyId = formResponse[0].faculty_information_id;
-    const highlightsData = await getHighlightByFormId(id);
+    const formType = formResponse[0].type;
 
-    if (!highlightsData || highlightsData.length === 0) {
-        throw new Error('No highlights data found for this form');
+    // Get highlights data if form type is Highlights
+    if (formType === 'Highlights') {
+        const highlightsData = await getHighlightByFormId(id);
+        if (highlightsData && highlightsData.length > 0) {
+            const studentSupportId = highlightsData[0]?.student_support_id || null;
+            formData.highlights = highlightsData[0];
+
+            const courseSections = await getCourseSectionsOfForm(id);
+            formData.course_sections = courseSections;
+
+            const grants = await getGrantsOfForm(id);
+            formData.grants = grants;
+
+            const publications = await getPublicationsOfForm(id);
+            formData.publications = publications;
+
+            const services = await getServicesOfForm(id);
+            formData.services = services;
+
+            const studentSupport = studentSupportId ? await getStudentSupportById(studentSupportId) : null;
+            formData.student_support = studentSupport;
+        }
     }
 
-    const studentSupportId = highlightsData[0]?.student_support_id || null;
+    // Get teaching evaluation data if available
+    const teachingEvalData = await getTeachingEvalByFormId(id);
+    if (teachingEvalData) {
+        formData.teaching_eval = teachingEvalData;
+    }
 
-    formData.highlights = highlightsData[0];
-
+    // Get faculty information
     const facultyInformation = await getFacultyById(facultyId);
     formData.faculty_information = facultyInformation;
 
-    const courseSections = await getCourseSectionsOfForm(id);
-    formData.course_sections = courseSections;
-
-    const grants = await getGrantsOfForm(id);
-    formData.grants = grants;
-
-    const publications = await getPublicationsOfForm(id);
-    formData.publications = publications;
-
-    const services = await getServicesOfForm(id);
-    formData.services = services;
-
-    const studentSupport = studentSupportId ? await getStudentSupportById(studentSupportId) : null;
-    formData.student_support = studentSupport;
+    // Ensure we have at least some data
+    if (!formData.highlights && !formData.teaching_eval) {
+        throw new Error('No form data found for this submission');
+    }
 
     return formData;
 }
