@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts",
+    "start": "ts-node -r dotenv/config index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -13,6 +13,7 @@
     "@prisma/client": "^6.11.1",
     "@prisma/extension-accelerate": "^2.0.1",
     "cors": "^2.8.5",
+    "dotenv": "^18.0.0",
     "express": "^5.1.0"
   },
   "devDependencies": {
