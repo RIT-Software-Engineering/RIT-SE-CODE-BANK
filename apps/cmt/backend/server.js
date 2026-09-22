@@ -11,6 +11,7 @@ import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
+import holidayRoutes from './routes/holidays.js'; // add holiday route
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -177,9 +178,10 @@ app.get("/", (_req, res) => {
       events: "/api/cmt/events",
       courses: "/api/cmt/course",
       templates: "/api/cmt/template",
-      workflows: "/api/cmt/workflows",
+      workflows: "/api/cmt/workflow",
       teamBuilder: "/api/cmt/team-builder",
       session: "/api/cmt/session",
+      holidays: "/api/cmt/holidays",
     },
   });
 });
@@ -190,6 +192,7 @@ app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
+app.use("/api/cmt/holidays", holidayRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS

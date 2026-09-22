@@ -41,6 +41,7 @@ export function BuilderPageAdmin({isAdmin}){
     ["COURSE_SYLLABUS", "Syllabus"],
     ["COURSE_DAYS", "Course Days"],
     ["COURSE_START_DATE", "Start Date"],
+    ["CHECKMARK_HOLIDAYS", "Course Holidays"],
     ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
@@ -566,6 +567,12 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 type: "date",
                 isRequired: isRequired
             }];
+            break;
+        
+        case "CHECKMARK_HOLIDAYS": 
+            output = [{
+                isRequired: isRequired,
+            }]
             break;
 
         case "COURSE_SYLLABUS":

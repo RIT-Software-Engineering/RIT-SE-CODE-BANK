@@ -30,6 +30,7 @@ model Course {
   section         String?
   days            String?
   startDate       String?
+  holidays        Holiday[]
   active          Boolean        @default(true)
   professorId     String
   professors      Professor      @relation(fields: [professorId], references: [id])
@@ -139,6 +140,19 @@ model Resource {
 
   @@index([courseId])
   @@map("resources")
+}
+
+// store holidays
+model Holiday {
+  id       Int       @id @default(autoincrement())
+  name     String
+  date     DateTime
+  endDate  DateTime?
+  courseId Int
+  course   Course    @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("holidays")
 }
 
 enum tbteamset_status {

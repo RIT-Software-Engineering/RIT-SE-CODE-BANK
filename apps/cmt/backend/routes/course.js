@@ -423,7 +423,8 @@ router.put('/:id', async (req, res) => {
 
     const updatedCourse = await prisma.course.update({
         where: { id: Number(id) },
-        data: mappedData
+        data: mappedData,
+        include: {holidays: true}
     })
 
     console.log('Course updated successfully:', updatedCourse)
@@ -435,18 +436,25 @@ router.put('/:id', async (req, res) => {
         if (emptyDaySessions.length > 0){
             const courseDays = updatedCourse.days.split(", ");
             const courseStartDate = new Date(updatedCourse.startDate);
-            const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+            const allDays = ['Mo', 'Tu', 'We', 'Tr', 'Fr', 'Sa', 'Su'];
 
             // AI - generated code
             let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
 
             console.log(sessionDate)
 
+            const holidays = updatedCourse.holidays ?? [];
+
             emptyDaySessions.forEach(async session => {
                 sessionDate.setDate(sessionDate.getDate() + 1);
 
-                while (!courseDays.includes(allDays[sessionDate.getDay()]))
-                    sessionDate.setDate(sessionDate.getDate() + 1)
+                const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
+
+                // if date is a holiday or within a holiday period, skip it 
+                // until the next non-holiday course date
+                while (!courseDays.includes(allDays[sessionDate.getDay()]) || isHoliday(sessionDate)) {
+                    sessionDate.setDate(sessionDate.getDate() + 1);
+                }
 
                 await prisma.session.update({
                     where: {id: session.id},
