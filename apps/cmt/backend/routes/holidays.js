@@ -39,15 +39,15 @@ router.post("/", async (req, res) => {
     res.json({ holiday })
 });
 
-/** PUT /api/cmt/holiday/:holidayId
+/** PUT /api/cmt/holidays/:courseId/:holidayId
  * Updates holiday in the DB and returns it so we can use its id
  */ 
-router.put("/:holidayId", async (req, res) => {
-    const {holidayId} = req.params;
+router.put("/:courseId/:holidayId", async (req, res) => {
+    const {holidayId, courseId} = req.params;
     const {name, date, endDate} = req.body;
 
     const updatedHoliday = await prisma.holiday.update({
-        where: {id: Number(holidayId)},
+        where: {id: Number(holidayId), courseId: parseInt(courseId)},
         data: {
             name,
             date,
