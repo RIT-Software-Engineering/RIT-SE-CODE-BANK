@@ -31,6 +31,8 @@ function CMTDetermineCallbackFactory(courseId, userId) {
             return `resources/syllabus/${courseId}?uid=${userId}&asid=${asid}`
         } if (code === 'COURSE_START_DATE') {
             return `course/${courseId}?uid=${userId}&asid=${asid}`
+        } if (code === 'COURSE_HOLIDAYS') {
+            return `holidays/${courseId}?uid=${userId}&asid=${asid}`
         }
         
         throw Error('Unrecognized action metadata code ' + code)

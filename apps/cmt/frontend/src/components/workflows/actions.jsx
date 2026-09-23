@@ -1,5 +1,6 @@
 import { Accordion, Button, Card, Form } from "react-bootstrap"
 import { StatusCard, StatusIcon } from "./misc.jsx"
+import { Holidays } from "./holidays.jsx"
 
 /**
  * @import { ActionContainerProps, ActionEditFormProps, CancellableEditActionFormProps, EditableActionViewProps } from '@se-code-bank/workflows-ecosystem'
@@ -51,6 +52,8 @@ export function ComplexCardContainer(props) {
  */
 export function SimpleCardContainer(props) {
 	let possibleSessionAction = props.actionWithContexts.processedAction?.parsedMetadata?.code.startsWith("SESSION_");
+	let possibleHolidayAction = props.actionWithContexts.processedAction?.parsedMetadata?.code === "COURSE_HOLIDAYS";
+	
 	return (
 		<Card className={possibleSessionAction ? 'min-w-1/6 w-1/6' : ''}>
 			<Card.Body>
@@ -59,7 +62,7 @@ export function SimpleCardContainer(props) {
 						<p className='text-xl mb-0'>{props.actionWithContexts.processedAction.name}</p>
 						<p className='text-gray-600 mb-2'>{possibleSessionAction? '' : props.actionWithContexts.processedAction.description}</p>
 						<div className='pr-10'>
-							{!possibleSessionAction ? props.children : <></>}
+							{!possibleSessionAction ? possibleHolidayAction ? <Holidays /> : props.children : <></>}
 						</div>
 					</div>
 					<div>
