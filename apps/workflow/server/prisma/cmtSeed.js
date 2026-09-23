@@ -147,7 +147,7 @@ async function main() {
                     description: 'Add dates and/or ranges for holidays, breaks, and other days where the course will not meet! These dates will be skipped when generating session dates!',
                     actionType: 'simple',
                     metadata: {
-                        code: 'CHECKMARK_HOLIDAYS',
+                        code: 'COURSE_HOLIDAYS',
                         outputs: [{
                             isRequired: false,
                         }]
