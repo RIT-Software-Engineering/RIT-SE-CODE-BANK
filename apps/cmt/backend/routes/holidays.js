@@ -39,15 +39,15 @@ router.post("/", async (req, res) => {
     res.json({ holiday })
 });
 
-/** PUT /api/cmt/holidays/:courseId/:holidayId
+/** PUT /api/cmt/holidays/:holidayId
  * Updates holiday in the DB and returns it so we can use its id
  */ 
-router.put("/:courseId/:holidayId", async (req, res) => {
-    const {holidayId, courseId} = req.params;
+router.put("/:holidayId", async (req, res) => {
+    const {holidayId} = req.params;
     const {name, date, endDate} = req.body;
 
     const updatedHoliday = await prisma.holiday.update({
-        where: {id: Number(holidayId), courseId: parseInt(courseId)},
+        where: {id: Number(holidayId)},
         data: {
             name,
             date,
@@ -61,10 +61,10 @@ router.put("/:courseId/:holidayId", async (req, res) => {
 /** DELETE /api/cmt/holidays/:courseId/:holidayId
  * Deletes a holiday from the DB and returns it so we can update the UI
  */ 
-router.delete("/:courseId/:holidayId", async (req, res) => {
-    const {courseId, holidayId} = req.params;
+router.delete("/:holidayId", async (req, res) => {
+    const {holidayId} = req.params;
     const holiday = await prisma.holiday.delete({
-        where: {courseId: parseInt(courseId), id: parseInt(holidayId)}
+        where: {id: parseInt(holidayId)}
     });
 
     res.json({ holiday })
