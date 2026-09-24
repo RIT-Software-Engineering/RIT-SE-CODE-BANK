@@ -62,7 +62,7 @@ export function SimpleCardContainer(props) {
 						<p className='text-xl mb-0'>{props.actionWithContexts.processedAction.name}</p>
 						<p className='text-gray-600 mb-2'>{possibleSessionAction? '' : props.actionWithContexts.processedAction.description}</p>
 						<div className='pr-10'>
-							{!possibleSessionAction ? possibleHolidayAction ? <Holidays /> : props.children : <></>}
+							{!possibleSessionAction ? possibleHolidayAction ? <Holidays actionStateId={props.actionWithContexts.actionState.id} /> : props.children : <></>}
 						</div>
 					</div>
 					<div>

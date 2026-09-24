@@ -71,7 +71,7 @@ function HolidayCard({ holiday, onChange, onDelete }) {
 /**
  * Holiday component for managing course-level holiday information
  */
-export function Holidays() {
+export function Holidays({ actionStateId }) {
     const {id} = useParams()
     const [holidays, loading, loadHolidays, error] = useHolidays(parseInt(id))
 
@@ -79,6 +79,16 @@ export function Holidays() {
     const [holidayName, setHolidayName] = useState('')
     const [startDate, setDate] = useState('')
     const [endDate, setEndDate] = useState('')
+
+    // hook to update holiday action state to completed or not started (since it's treated as a checkmark)
+    useEffect(() => {
+        if (actionStateId){
+            CMTJsonFetch('PUT', 'holidays/state', {
+                actionStateId,
+                stateType: holidays.length > 0 ? 'completed' : 'notStarted'
+            })
+        } else return
+    }, [actionStateId, holidays.length, loading])
 
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
@@ -163,7 +173,7 @@ export function Holidays() {
 }
 
 /**
- * Hook to simplify calling holidays across a couple of components
+ * Hook to simplify calling holidays across other components
  * @param {Number} courseId 
  * @returns {[any[], boolean, () => Promise<void>, string | undefined]} [list of holidays, whether its loading, function to refresh holidays, error message if any]
  */

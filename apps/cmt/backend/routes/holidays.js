@@ -1,6 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
+import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
 
 const prisma = new PrismaClient();
 
@@ -38,6 +39,16 @@ router.post("/", async (req, res) => {
 
     res.json({ holiday })
 });
+
+/** PUT /api/cmt/holidays/state
+ * Updates the state of the holiday action
+ */
+router.put("/state", async (req, res) => {
+    const { actionStateId, stateType } = req.body;
+    const response = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType });
+
+    res.json({ response })
+})
 
 /** PUT /api/cmt/holidays/:holidayId
  * Updates holiday in the DB and returns it so we can use its id

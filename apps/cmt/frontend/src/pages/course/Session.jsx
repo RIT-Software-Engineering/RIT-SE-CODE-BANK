@@ -8,6 +8,8 @@ import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 
+import { useHolidays } from "../../components/workflows/holidays"
+
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  * @import { SetStateAction } from "react"
@@ -49,6 +51,12 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     // We only work with 1 session date at a time, and it gets reset regardless.
     // Probably not the best system and could be improved
     const [sessionDate, setSessionDate] = useState('');
+
+    const [holidays, , loadHolidays] = useHolidays(parseInt(courseId))
+    const isHoliday = sessionDate && holidays.some(holiday =>
+        new Date(sessionDate) >= new Date(holiday.date) && 
+        new Date(sessionDate) <= new Date(holiday.endDate ?? holiday.date)
+    )
 
     /**
      * Initial GET request upon loading the page
@@ -161,8 +169,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 </Card.Body>
                             </Card> : <></>
                             }
-
-                            {sessionDate ? 
+                            {
+                            sessionDate ? 
                             <Form className="flex max-w-[30%] gap-2 items-center"
                             onSubmit={(e) => {
                                 e.preventDefault();
@@ -178,14 +186,16 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 })
                             }}>
                                 <Form.Label>Date: </Form.Label>
+                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the session schedule.</Alert>}
                                 <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
                                 <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
-                                <Button type="submit" variant="success">Submit</Button>
+                                <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
                             </Form> :
                             <div className="flex gap-3 items-center">
                                 <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
                                 <Button variant="outline-secondary" onClick={() => {
                                     setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
+                                    loadHolidays()
                                     }} size="sm">Edit</Button>
                             </div>
                             }
