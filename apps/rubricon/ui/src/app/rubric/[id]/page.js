@@ -1,4 +1,5 @@
 import Rubric from "@/components/Rubric";
+import RubricDownloadButton from "@/components/RubricDownloadButton";
 import { server_url } from "@/consts";
 import Link from "next/link";
 
@@ -22,6 +23,7 @@ export default async function RubricPage({ params }) {
                     <h1 className="text-4xl mx-auto">Create a Rubric</h1>
                     <Link href={`/edit/${id}`} className="text-xl hover:text-black ml-auto">{"Edit"}</Link>
                 </div>
+            <RubricDownloadButton data={data}></RubricDownloadButton>
             <Rubric data={data} />
         </div>
     );
