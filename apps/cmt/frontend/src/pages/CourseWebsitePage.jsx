@@ -95,8 +95,8 @@ export default function CourseWebsitePage() {
     if (isWeeks && weeks)
       rows = await Promise.all(
         weeks
-          .map((week, index) =>
-            generateWeekRowHTML(week, visibleColumns, index)
+          .map((week) =>
+            generateWeekRowHTML(week, visibleColumns)
           )
       );
     else
@@ -560,12 +560,15 @@ async function generateHolidayRowHTML(holiday, holidayWidth) {
   `
 }
 
-async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
-  const materials = week.filter(row => row.type === "session").flatMap(session => session?.materials);
+async function generateWeekRowHTML(weekItem, visibleColumns) {
+  const weekIndex = weekItem[0];
+  const week = weekItem[1].filter(row => row.type === "session").map(row => row.data);
+  const weekHolidays = weekItem[1].filter(row => row.type === "holiday").map(row => row.data);
+  const materials = week.flatMap(session => session?.materials);
   const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
 
   const columnsHTML = await Promise.all(
-    grouped.map(async colItems => {
+    grouped.map(async (colItems, colIndex) => {
       const itemsHTML = await Promise.all(
         colItems.map(async item => {
           // If an item has a body rewrite any resource links in the body and encoded it.
@@ -589,9 +592,17 @@ async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
 
           return `<span>${rewrittenLabel}</span>`;
         })
+        
       );
+      const holidayHTML = (colIndex === 0 && weekHolidays.length > 0) 
+      ? weekHolidays.map(holiday => 
+          `<p class="mb-1"><strong>
+            ${holiday.name} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+          </strong></p>`
+        ).join("")
+      : "";
 
-      return `<td>${itemsHTML.join("")}</td>`;
+      return `<td>${itemsHTML.join("")}${holidayHTML}</td>`;
     })
   );
 
