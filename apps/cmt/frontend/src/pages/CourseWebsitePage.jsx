@@ -5,6 +5,8 @@ import { createErrorHandler } from "../utils/error.jsx";
 import JSZip from "jszip";
 import { Alert, Form } from "react-bootstrap";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import { useHolidays } from "../components/workflows/holidays"
+
 import logo from "../images/se_logo_new.png";
 
 export default function CourseWebsitePage() {
@@ -14,6 +16,7 @@ export default function CourseWebsitePage() {
   const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isWeeks, setIsWeeks] = useState(false);
+  const [holidays] = useHolidays(selectedCourse)
 
   // Fetch courses
   useEffect(() => 
@@ -63,7 +66,9 @@ export default function CourseWebsitePage() {
     fetchSessions();
   }, [selectedCourse, courses]);
 
-  const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName) => {
+  const courseRows = combineSessionsAndHolidays(sessions, holidays);
+
+  const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName, courseRows) => {
     let rows;
     if (isWeeks && weeks)
       rows = await Promise.all(
@@ -74,11 +79,17 @@ export default function CourseWebsitePage() {
       );
     else
       rows = await Promise.all(
-        sessions
-          .sort((a, b) => a.sessionNum - b.sessionNum)
-          .map(session =>
-            generateSessionRowHTML(session, visibleColumns)
-          )
+        // sessions
+        //   .sort((a, b) => a.sessionNum - b.sessionNum)
+        //   .map(session =>
+        //     generateSessionRowHTML(session, visibleColumns)
+        //   )
+        courseRows.map(
+          (row) => row.type === "session" ? 
+            generateSessionRowHTML(row.data, visibleColumns)
+          : generateHolidayRowHTML(row.data, visibleColumns.length)
+        )
+
       );
 
     return `
@@ -243,7 +254,7 @@ export default function CourseWebsitePage() {
     }));
 
     // Generate Index HTML
-    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks, syllabusName);
+    const html = await generateCourseHTML(selectedCourseObj, sessions, weeks, isWeeks, syllabusName, courseRows);
 
     // Add HTML file to course folder
     // Added to hard coded 00 folder for now. Change in future for specific course section.
@@ -341,8 +352,27 @@ export default function CourseWebsitePage() {
             </tr>
           </thead>
           <tbody>
-            {!isWeeks ? sessions
-              .map((session, index) => {
+            {/* display holidays on the course schedule */}
+            {!isWeeks ? courseRows
+              .map((row, index) => {
+                if (row.type === "holiday") {
+                  return (
+                    <tr key={`holiday-${row.data.id}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                      <td className="border border-blue-300 p-3 text-center">
+                        <p className="font-semibold">Break</p>
+                        <p>{row.data.date?.split('T')[0] ?? "TBD"}</p>
+                      </td>
+                      <td colSpan={visibleColumns.length} className="border border-blue-300 p-3 align-top">
+                        <p className="font-semibold">{row.data.name}</p>
+                        <p>
+                          {row.data.endDate ? `${row.data.date?.split('T')[0]} - ${row.data.endDate.split('T')[0]}` : ""}
+                        </p>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                const session = row.data;
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
                 return (
@@ -416,6 +446,16 @@ const MATERIAL_COLUMNS = [
   "Individual Assignment"
 ];
 
+// combines sessions and holidays into a single array so they can both be displayed on the course website.
+function combineSessionsAndHolidays(sessions, holidays){
+  // 'type' will be used to determine how they're rendered in generateCourseHTML
+  return [
+    ...sessions.map(session => ({type: 'session', date: new Date (session.date), data: session})),
+    // note: if we later need to show holiday dates as separate rows instead of one row per holiday, do map => flatMap and make it an array for each holiday
+    ...holidays.map(holiday => ({type: 'holiday', date: new Date(holiday.date), endDate: holiday.endDate, data: holiday}))
+  ].sort((a, b) => a.date - b.date)
+}
+
 // Generates the sessions rows for the downloaded site
 async function generateSessionRowHTML(session, visibleColumns) {
   const materials = session.materials || [];
@@ -464,6 +504,22 @@ async function generateSessionRowHTML(session, visibleColumns) {
       ${columnsHTML.join("")}
     </tr>
   `;
+}
+
+// Generates the holiday rows for the downloaded site
+async function generateHolidayRowHTML(holiday, holidayWidth) {
+  return `
+    <tr>
+      <td>
+        <p><strong>No Session</strong></p>
+        <p>${holiday?.date ?? "TBD"}</p>
+      </td>
+      <td colspan=${holidayWidth}>
+        <p><strong>${holiday.name}</strong></p>
+        <p>${(holiday.date).split('T')[0]}${holiday.endDate ? ` - ${(holiday.endDate).split('T')[0]}` : ""}</p>
+      </td>
+    </tr>
+  `
 }
 
 async function generateWeekRowHTML(week, visibleColumns, weekIndex) {

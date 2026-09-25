@@ -141,7 +141,7 @@ async function main() {
                         ],
                     },
                 },  
-                // new action placeholder for holidays
+                // new action placeholder for holidays - refactor to be a proper action and save me some pain
                 {
                     name: 'Course Holidays',
                     description: 'Add dates and/or ranges for holidays, breaks, and other days where the course will not meet! These dates will be skipped when generating session dates!',

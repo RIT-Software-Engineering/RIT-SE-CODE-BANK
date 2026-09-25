@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Row, Col, Spinner, Button, Card } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
@@ -81,14 +81,30 @@ export function Holidays({ actionStateId }) {
     const [endDate, setEndDate] = useState('')
 
     // hook to update holiday action state to completed or not started (since it's treated as a checkmark)
+    /**
+     * due to race conditions from multiple identical requests being sent on the same action state row in the db,
+     * i added this const to remember the last state type sent and prevent an identical request; so an update 
+     * request is only sent if stateType changes.
+     * useState would trigger a re-render, useRef offers the same persistence without re-rendering
+     */
+    const lastSentStateType = useRef(null) 
     useEffect(() => {
-        if (actionStateId){
-            CMTJsonFetch('PUT', 'holidays/state', {
-                actionStateId,
-                stateType: holidays.length > 0 ? 'completed' : 'notStarted'
-            })
+        if (actionStateId && !loading){
+            const stateType = holidays.length > 0 ? 'completed' : 'notStarted'
+            if (lastSentStateType.current !== stateType){
+                lastSentStateType.current = stateType
+                CMTJsonFetch('PUT', 'holidays/state', {actionStateId, stateType})
+            } else return
         } else return
     }, [actionStateId, holidays.length, loading])
+
+    // useEffect(() => {
+    //     if (!actionStateId || loading) return
+    //     const stateType = holidays.length > 0 ? 'completed' : 'notStarted'
+    //     if (lastSentStateType.current === stateType) return
+    //     lastSentStateType.current = stateType
+    //     CMTJsonFetch('PUT', 'holidays/state', { actionStateId, stateType })
+    // }, [actionStateId, holidays.length, loading])
 
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
