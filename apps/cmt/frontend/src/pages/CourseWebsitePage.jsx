@@ -13,7 +13,6 @@ export default function CourseWebsitePage() {
   const [courses, setCourses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [sessions, setSessions] = useState([]);
-  const [weeks, setWeeks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isWeeks, setIsWeeks] = useState(false);
   const [holidays] = useHolidays(selectedCourse)
@@ -46,16 +45,16 @@ export default function CourseWebsitePage() {
         })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
 
-        // AI-generated code
-        if (courses.find(c => c.id === selectedCourse)?.days)
-          setWeeks(combined.reduce((acc, item, index) => {
-            const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
-            if (!acc[group]) acc[group] = [];
-            acc[group].push(item);
-            return acc;
-          }, []));
-        else
-          setWeeks(null);
+        // // AI-generated code
+        // if (courses.find(c => c.id === selectedCourse)?.days)
+        //   setWeeks(combined.reduce((acc, item, index) => {
+        //     const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
+        //     if (!acc[group]) acc[group] = [];
+        //     acc[group].push(item);
+        //     return acc;
+        //   }, []));
+        // else
+        //   setWeeks(null);
 
       }).catch(async error => {
         console.error("Error fetching sessions:", error);
@@ -67,6 +66,29 @@ export default function CourseWebsitePage() {
   }, [selectedCourse, courses]);
 
   const courseRows = combineSessionsAndHolidays(sessions, holidays);
+
+  const weeks = useMemo(() => {    
+    if (!selectedCourseObj?.days || sessions.length === 0) return null;
+    const courseWeeks = new Map();
+
+    courseRows.forEach((row) => {
+      const weekIndex = getWeekIndexForGivenDate(row.date, new Date(selectedCourseObj.startDate));
+      // uncomment if there is a holiday tht spans multiple weeks
+      // if (row.type === "holiday"){
+      //   const endIndex = row.endDate ? getWeekIndexForGivenDate(row.endDate, new Date(selectedCourseObj.startDate)) : weekIndex;
+        // for (let i = weekIndex; i <= endIndex; i++) {
+        //   if (!courseWeeks.has(i)) courseWeeks.set(i, []);
+        //   courseWeeks.get(i).push(row);
+        // }
+      // } else{
+        if (!courseWeeks.has(weekIndex)) courseWeeks.set(weekIndex, []);
+        courseWeeks.get(weekIndex).push(row);
+      // }
+    })
+
+    return [...courseWeeks.entries()].sort((a, b) => a[0] - b[0]);
+  }, [sessions, holidays, selectedCourseObj])
+  
 
   const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName, courseRows) => {
     let rows;
@@ -396,7 +418,10 @@ export default function CourseWebsitePage() {
                 );
               }) : 
 
-              (weeks? weeks.map((week, index) => {
+              (weeks? weeks.flatMap(([, items], index) => {
+                const week = items.filter(item => item.type === "session").map(item => item.data);
+                const weekHolidays = items.filter(item => item.type === "holiday").map(item => item.data);
+                
                 const materials = week.flatMap(session => session?.materials);
                 const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
 
@@ -410,13 +435,18 @@ export default function CourseWebsitePage() {
                     </small>
                   </td>
 
-                    {grouped.map(colItems => (
-                        <td key={colItems} className="border border-blue-300 p-3 align-top">
+                    {grouped.map((colItems, colIndex) => (
+                        <td key={colIndex} className="border border-blue-300 p-3 align-top">
                           {colItems.map(item => (
                           <div key={item.id} className="mb-1">
                             <ReadOnlyEditor value={item.label} />
                           </div>
                         ))}
+                        {colIndex === 0 &&weekHolidays.length > 0 && (weekHolidays.map(holiday => (
+                          <p key={holiday.id} className="mb-1 font-bold">
+                            {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+                          </p>
+                        )))}
                         </td>
                     ))}
 
@@ -445,6 +475,14 @@ const MATERIAL_COLUMNS = [
   "Group Assignment",
   "Individual Assignment"
 ];
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function getWeekIndexForGivenDate(date, startDate){
+  const days = Math.floor((date - startDate)/MS_PER_DAY);
+  return Math.floor(days/7);
+}
+
 
 // combines sessions and holidays into a single array so they can both be displayed on the course website.
 function combineSessionsAndHolidays(sessions, holidays){
@@ -523,7 +561,7 @@ async function generateHolidayRowHTML(holiday, holidayWidth) {
 }
 
 async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
-  const materials = week.flatMap(session => session?.materials);
+  const materials = week.filter(row => row.type === "session").flatMap(session => session?.materials);
   const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
 
   const columnsHTML = await Promise.all(

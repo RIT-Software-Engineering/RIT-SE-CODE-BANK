@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     if (isActive)
         where.active = Boolean(isActive)
     const courses = await prisma.course.findMany({
-        include: { professors: true },
+        include: { professors: true, holidays: true},
         where: where,
         orderBy: {id: "desc"}
     })
@@ -46,7 +46,7 @@ router.get('/templates', async (_, res) => {
     const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
             where: {workflowId: workflow.id, active: true},
-            include: {professors: true},
+            include: {professors: true, holidays: true},
         })
     )));
     res.status(200).json(await availTemplates)
@@ -75,7 +75,7 @@ router.get('/:id', async (req, res) => {
     // TODO: check perms/if prof owns course
     const course = await prisma.course.findUnique({
         where: { id: parseInt(req.params.id), professorId: req.user.uid },
-        include: {sessions: true}
+        include: {sessions: true, holidays: true}
     })
 
     if (!course) 
@@ -161,6 +161,7 @@ router.post('/', async (req, res) => {
                     color: color,
                     season: season ?? null,
                     professors: { connect: { id: professorId } },
+                    holidays: {},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: isTemplate,
@@ -252,7 +253,8 @@ router.post('/:templateId', async (req, res) => {
                         material: true
                     }
                 },
-                Resource: true
+                Resource: true,
+                holidays: true
             }
         });
 
@@ -281,6 +283,11 @@ router.post('/:templateId', async (req, res) => {
                     students: toBeTemplate ? null : course.students,
                     section: toBeTemplate ? null : course.section,
                     professors: { connect: { id: professorId } },
+                    holidays: {create: (course.holidays ?? []).map(holiday => ({
+                        name: holiday.name,
+                        date: holiday.date,
+                        endDate: holiday.endDate
+                    }))},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: toBeTemplate ?? false,
@@ -418,7 +425,9 @@ router.put('/:id', async (req, res) => {
         ),
         ...(updateData.active !== undefined
             && {active: updateData.active}
-        )
+        ), ...(updateData.holidays !== undefined
+            && {holidays: updateData.holidays}
+        ),
     }
 
     const updatedCourse = await prisma.course.update({
