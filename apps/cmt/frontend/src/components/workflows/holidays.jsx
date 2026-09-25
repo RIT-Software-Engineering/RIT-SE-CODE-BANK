@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Row, Col, Spinner, Button, Card } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
@@ -71,7 +71,7 @@ function HolidayCard({ holiday, onChange, onDelete }) {
 /**
  * Holiday component for managing course-level holiday information
  */
-export function Holidays({ actionStateId }) {
+export function Holidays() {
     const {id} = useParams()
     const [holidays, loading, loadHolidays, error] = useHolidays(parseInt(id))
 
@@ -79,32 +79,6 @@ export function Holidays({ actionStateId }) {
     const [holidayName, setHolidayName] = useState('')
     const [startDate, setDate] = useState('')
     const [endDate, setEndDate] = useState('')
-
-    // hook to update holiday action state to completed or not started (since it's treated as a checkmark)
-    /**
-     * due to race conditions from multiple identical requests being sent on the same action state row in the db,
-     * i added this const to remember the last state type sent and prevent an identical request; so an update 
-     * request is only sent if stateType changes.
-     * useState would trigger a re-render, useRef offers the same persistence without re-rendering
-     */
-    const lastSentStateType = useRef(null) 
-    useEffect(() => {
-        if (actionStateId && !loading){
-            const stateType = holidays.length > 0 ? 'completed' : 'notStarted'
-            if (lastSentStateType.current !== stateType){
-                lastSentStateType.current = stateType
-                CMTJsonFetch('PUT', 'holidays/state', {actionStateId, stateType})
-            } else return
-        } else return
-    }, [actionStateId, holidays.length, loading])
-
-    // useEffect(() => {
-    //     if (!actionStateId || loading) return
-    //     const stateType = holidays.length > 0 ? 'completed' : 'notStarted'
-    //     if (lastSentStateType.current === stateType) return
-    //     lastSentStateType.current = stateType
-    //     CMTJsonFetch('PUT', 'holidays/state', { actionStateId, stateType })
-    // }, [actionStateId, holidays.length, loading])
 
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
@@ -159,13 +133,13 @@ export function Holidays({ actionStateId }) {
                     className="form-control" 
                     placeholder="e.g. Thanksgiving" />
 
-                    <p>Enter (start) date: </p>
+                    <p>Start Date:</p>
                     <input type="date" 
                     value = {startDate}
                     onChange = {(e) => setDate(e.target.value)} 
                     className="form-control" />
 
-                    <p>Enter end date (optional): </p>
+                    <p>End Date (optional): </p>
                     <input type="date" 
                     value = {endDate}
                     onChange = {(e) => setEndDate(e.target.value)} 

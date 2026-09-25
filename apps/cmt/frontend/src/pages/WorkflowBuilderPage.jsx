@@ -571,7 +571,22 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
         
         case "COURSE_HOLIDAYS": 
             output = [{
-                isRequired: isRequired,
+                name: "Holiday Name",
+                key: "holidayName",
+                type: "text",
+                isRequired: isRequired
+            },
+            {
+                name: "Start Date",
+                key: "date",
+                type: "date",
+                isRequired: isRequired
+            },
+            {
+                name: "End Date (optional)",
+                key: "endDate",
+                type: "date",
+                isRequired: false
             }]
             break;
 

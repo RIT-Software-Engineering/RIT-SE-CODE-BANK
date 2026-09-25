@@ -28,26 +28,43 @@ router.get("/:courseId", async(req, res) => {
  * Makes a new holiday in the DB and returns it so we can use its id
  */
 router.post("/", async (req, res) => {
+    const { name, date, endDate, id } = req.body;
     const holiday = await prisma.holiday.create({
         data: {
-            name: req.body.name,
-            date: req.body.date,
-            endDate: req.body.endDate,
-            course: {connect: {id: Number(req.body.id)}}
+            name: name,
+            date: new Date(date),
+            endDate: endDate ? new Date(endDate) : null,
+            course: {connect: {id: parseInt(id)}}
         }
     });
 
     res.json({ holiday })
 });
 
-/** PUT /api/cmt/holidays/state
- * Updates the state of the holiday action
+/**
+ * PUT /api/cmt/holidays/course/:courseId
+ * Creates a new holiday for a course through the holiday action
  */
-router.put("/state", async (req, res) => {
-    const { actionStateId, stateType } = req.body;
-    const response = await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType });
+router.put("/course/:courseId", async (req, res) => {
+    const { courseId } = req.params;
+    const { holidayName, date, endDate } = req.body;
+    const { asid: actionStateId } = req.query;
 
-    res.json({ response })
+    console.log(date)
+    await prisma.holiday.create({
+        data: {
+            name: holidayName, 
+            date: new Date(date),
+            endDate: endDate ? new Date(endDate) : null, 
+            course: {connect: {id: parseInt(courseId)}}
+        }
+    })
+
+    if (actionStateId){
+        await workflowsFetch('POST', '/states/handleSubmit', {actionStateId, stateType: 'completed'})
+    }
+
+    res.sendStatus(200)
 })
 
 /** PUT /api/cmt/holidays/:holidayId
@@ -60,9 +77,9 @@ router.put("/:holidayId", async (req, res) => {
     const updatedHoliday = await prisma.holiday.update({
         where: {id: Number(holidayId)},
         data: {
-            name,
-            date,
-            endDate
+            name: name,
+            date: date ? new Date(date) : null,
+            endDate: endDate ? new Date(endDate) : null
         }
     });
     
