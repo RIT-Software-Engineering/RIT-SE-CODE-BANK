@@ -282,34 +282,34 @@ router.get("/:id", async (req, res) => {
       entries = entries.concat(dinatorEntries);
     }
     else if(user.type == "scoopervisor"){
-      const scoopervisorTeams = await prisma.teams.findMany({
-        where: {
-          scoopervisorId: user.id,
-        },
-        include: { 
-          members: true,
-        } 
-        });
+      // const scoopervisorTeams = await prisma.teams.findMany({
+      //   where: {
+      //     scoopervisorId: user.id,
+      //   },
+      //   include: { 
+      //     members: true,
+      //   } 
+      //   });
 
-        const memberSet = new Set();
+      //   const memberSet = new Set();
 
-        for (const team of scoopervisorTeams) {
-          for (const member of team.members) {
-              memberSet.add(member.id)
-            }
-          }
-        const memberArray = Array.from(memberSet);
+      //   for (const team of scoopervisorTeams) {
+      //     for (const member of team.members) {
+      //         memberSet.add(member.id)
+      //       }
+      //     }
+      //   const memberArray = Array.from(memberSet);
         //this currently allows Scoopervisors to see entries in which they are the topic 
         const scoopervisorEntries = await prisma.journalEntry.findMany({
             where: {
-              OR: memberArray.flatMap(memberId => [
-                { sender_id: memberId },
-                { recipients: {
-                    some: {
-                      id: memberId,
-                },},},
-                { topic_id: memberId },
-                ]),
+        //       // OR: memberArray.flatMap(memberId => [
+        //       //   { sender_id: memberId },
+        //       //   { recipients: {
+        //       //       some: {
+        //       //         id: memberId,
+        //       //   },},},
+        //       //   { topic_id: memberId },
+        //       //   ]),
               privacy_level: "PUBLIC",
               visibility_level: {
                   lt: 4
