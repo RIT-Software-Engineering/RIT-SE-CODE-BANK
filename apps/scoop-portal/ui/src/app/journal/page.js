@@ -310,6 +310,7 @@ export default function Journal() {
 
     const fullArray = Array.from(journalEntries).sort((a, b) => new Date(b.date) - new Date(a.date));
     setFilteredJournalEntries(fullArray);
+    notify.success("Filters cleared!");
   }
 
   function EntriesList({entries, commentView = false} ){
@@ -573,7 +574,7 @@ export default function Journal() {
         open={filterDialogOpen}
         title="Filter Journal Entries"
         onCancel={() => setFilterDialogOpen(false)}
-        onSubmit={() => handleApplyFilter()}
+        onSubmit={() => notify.promise( handleApplyFilter(), {loading: "Applying filters...", success: "Filters applied!"})}
         actionLabel="Apply Filter"
         actionButtonProps={{ variant: "solid-orange", sx: { textTransform: 'none' } }}
         actionsSx={{ justifyContent: 'flex-end', gap: 1 }}
