@@ -1,7 +1,7 @@
 'use client';
-import UserPage from "./admin";
+import UserPage from "../library/admin";
 import Navbar from "../navbar/Navbar";
-import AdminPage from "./admin";
+import AdminPage from "../library/admin";
 
 function MyApp({ Component, pageProps }) {
   return (

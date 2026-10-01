@@ -1,7 +1,7 @@
 //This is very big, I know. This should probly be broken up into smaller components to make it more manageable.
 'use client';
 import { useEffect, useState } from "react";
-import "./user.css";
+import "../user/user.css";
 
 export default function UserPage() {
     const [username, setUsername] = useState("");

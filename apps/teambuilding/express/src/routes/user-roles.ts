@@ -102,6 +102,7 @@ router.get('/users/user-role', async (req: Request, res: Response) => {
     });
     res.json({ users });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error.' });
   }
 });

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from "react";
-import "./admin.css";
+import "../admin/admin.css";
 
 export default function AdminPage() {
     const [username, setUsername] = useState("");

@@ -2,7 +2,7 @@
 
 'use client';
 import { useState, useEffect } from "react";
-import "./manager.css";
+import "../manager/manager.css";
 import React from "react";
 import ThemeRegistry from "../../../styles/ThemeRegistry";
 import { useTheme } from "@mui/material/styles";

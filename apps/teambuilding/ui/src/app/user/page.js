@@ -1,5 +1,5 @@
 'use client';
-import UserPage from "./user";
+import UserPage from "../library/user";
 import Navbar from "../navbar/Navbar";
 
 function MyApp({ Component, pageProps }) {
