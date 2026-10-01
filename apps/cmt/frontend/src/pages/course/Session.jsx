@@ -171,26 +171,28 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                             }
                             {
                             sessionDate ? 
-                            <Form className="flex max-w-[30%] gap-2 items-center"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                console.log(sessionDate)
-                                CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
-                                    const sessionsCopy = sessions.map(session => {
-                                        if (session.sessionNum === i+1) 
-                                            return {...session, date: sessionDate}
-                                        return session
-                                    });
-                                    setSessions(sessionsCopy);
-                                    setSessionDate('');
-                                })
-                            }}>
-                                <Form.Label>Date: </Form.Label>
-                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the session schedule.</Alert>}
-                                <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
-                                <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
-                                <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
-                            </Form> :
+                            <>
+                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the schedule.</Alert>}
+                                <Form className="flex max-w-[30%] gap-2 items-center"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    console.log(sessionDate)
+                                    CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
+                                        const sessionsCopy = sessions.map(session => {
+                                            if (session.sessionNum === i+1) 
+                                                return {...session, date: sessionDate}
+                                            return session
+                                        });
+                                        setSessions(sessionsCopy);
+                                        setSessionDate('');
+                                    })
+                                }}>
+                                    <Form.Label>Date: </Form.Label>
+                                    <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
+                                    <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
+                                    <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
+                                </Form>
+                            </> :
                             <div className="flex gap-3 items-center">
                                 <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
                                 <Button variant="outline-secondary" onClick={() => {

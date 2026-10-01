@@ -163,6 +163,11 @@ export default function CourseWebsitePage() {
           vertical-align: middle;
         }
 
+        th:first-child, td:first-child {
+          width: 140px;
+          white-space: nowrap;
+        }
+
         td {
           border: 1px solid #e5e7eb;
           padding: 10px;
@@ -171,6 +176,24 @@ export default function CourseWebsitePage() {
 
         tr:nth-child(even) {
           background-color: #f3f4f6;
+        }
+
+        .bg-orange {
+          background-color: #ffedd5;
+        }
+
+        .border-orange td {
+          border: 1px solid #fdba74;
+        }
+
+        .bg-orange p{
+          font-size: 1.15em;
+        }
+
+        .no-class {
+          text-align: center;
+          font-weight: bold;
+          font-size: 1.15em;
         }
       </style>
     </head>
@@ -365,7 +388,7 @@ export default function CourseWebsitePage() {
         <table className="mx-auto w-full border-collapse">
           <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
-              <th className="border border-blue-300 p-3 text-center">{isWeeks ? 'Week' : 'Session'}</th>
+              <th className="border border-blue-300 p-3 text-center w-[140px]">{isWeeks ? 'Week' : 'Session'}</th>
                 {visibleColumns.map(col => (
                   <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
@@ -379,16 +402,17 @@ export default function CourseWebsitePage() {
               .map((row, index) => {
                 if (row.type === "holiday") {
                   return (
-                    <tr key={`holiday-${row.data.id}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
-                      <td className="border border-blue-300 p-3 text-center">
-                        <p className="font-semibold">Break</p>
-                        <p>{row.data.date?.split('T')[0] ?? "TBD"}</p>
+                    <tr key={`holiday-${row.data.id}`} className={index % 2 === 0 ? "bg-orange-100" : "bg-orange-100"}>
+                      <td className="border border-orange-300 p-3 text-center text-lg">
+                        <p className="font-bold">Break</p>
+                        <p className="font-bold">{row.data.date?.split('T')[0] ?? "TBD"}</p>
                       </td>
-                      <td colSpan={visibleColumns.length} className="border border-blue-300 p-3 align-top">
-                        <p className="font-semibold">{row.data.name}</p>
-                        <p>
-                          {row.data.endDate ? `${row.data.date?.split('T')[0]} - ${row.data.endDate.split('T')[0]}` : ""}
+                      <td colSpan={visibleColumns.length} className="border border-orange-300 p-3 align-top text-lg">
+                        <p className="font-bold text-center text-3xl">{row.data.name}</p>
+                        <p className="font-bold text-center text-xl">
+                          {row.data.endDate ? `${(row.data.date?.split('T')[0]).replaceAll('-', '/')} - ${row.data.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
                         </p>
+                        <p className="text-center text-medium">No class meeting</p>
                       </td>
                     </tr>
                   );
@@ -424,33 +448,42 @@ export default function CourseWebsitePage() {
                 
                 const materials = week.flatMap(session => session?.materials);
                 const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
-
+                console.log(materials.length);
                 return (<>
                 <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
-                  <td className="border border-blue-300 p-3 text-center">
-                    <p className="font-semibold">{index+1}</p>
+                  <td rowSpan={(weekHolidays.length > 0) ? 2 : 1} className="border border-orange-300 p-3 text-center text-lg">
+                    <p className="font-semibold p">{index+1}</p>
                     <small>
-                      <span>{week[0]?.date ?? "TBD"} -</span>
+                      <span>{week[0]?.date ?? "TBD"} <br/> - </span>
                       <p>{week[week.length-1]?.date ?? "TBD"}</p>
                     </small>
                   </td>
-
-                    {grouped.map((colItems, colIndex) => (
-                        <td key={colIndex} className="border border-blue-300 p-3 align-top">
-                          {colItems.map(item => (
-                          <div key={item.id} className="mb-1">
-                            <ReadOnlyEditor value={item.label} />
-                          </div>
-                        ))}
-                        {colIndex === 0 &&weekHolidays.length > 0 && (weekHolidays.map(holiday => (
-                          <p key={holiday.id} className="mb-1 font-bold">
-                            {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
-                          </p>
-                        )))}
+                    {materials.length > 0 ?
+                      grouped.map((colItems, colIndex) => (
+                          <td key={colIndex} className="border border-orange-300 p-3 align-top text-lg">
+                            {colItems.map(item => (
+                            <div key={item.id} className="mb-1">
+                              <ReadOnlyEditor value={item.label} />
+                            </div>
+                          ))}
+                          </td>
+                      )) :
+                      <td colSpan={visibleColumns.length}>
+                        <p className="text-center text-lg font-semibold">No class meeting this week</p>
                         </td>
-                    ))}
-
+                    }
                 </tr>
+                {weekHolidays.length > 0 && (
+                  <tr key={`week-${index}-holiday`} className="bg-orange-100">
+                    <td colSpan={visibleColumns.length} className="border border-orange-300 p-3 text-center">
+                      {weekHolidays.map(holiday => (
+                        <p key={holiday.id} className="mb-1 text-lg font-bold">
+                          {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+                        </p>
+                      ))}
+                    </td>
+                  </tr>
+                )}
                 </>)
               }) :
               <Alert variant="danger">
@@ -547,12 +580,12 @@ async function generateSessionRowHTML(session, visibleColumns) {
 // Generates the holiday rows for the downloaded site
 async function generateHolidayRowHTML(holiday, holidayWidth) {
   return `
-    <tr>
-      <td>
+    <tr class="border-orange">
+      <td class="bg-orange">
         <p><strong>No Session</strong></p>
         <p>${holiday?.date ?? "TBD"}</p>
       </td>
-      <td colspan=${holidayWidth}>
+      <td class="bg-orange" colspan=${holidayWidth}>
         <p><strong>${holiday.name}</strong></p>
         <p>${(holiday.date).split('T')[0]}${holiday.endDate ? ` - ${(holiday.endDate).split('T')[0]}` : ""}</p>
       </td>
@@ -567,48 +600,57 @@ async function generateWeekRowHTML(weekItem, visibleColumns) {
   const materials = week.flatMap(session => session?.materials);
   const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
 
-  const columnsHTML = await Promise.all(
-    grouped.map(async (colItems, colIndex) => {
-      const itemsHTML = await Promise.all(
-        colItems.map(async item => {
-          // If an item has a body rewrite any resource links in the body and encoded it.
-          // Then whenever the title is clicked open a new page with the body content
-          if (item.body) {
-            const rewrittenBody = await rewriteResourceLinks(item.body);
-            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
-            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+  let columnsHTML;
+  if (materials.length === 0){ 
+    columnsHTML = [`<td colSpan=${visibleColumns.length}><p class="no-class">No class meeting this week</p></td>`];
+  } else
+    columnsHTML = await Promise.all(
+      grouped.map(async (colItems, colIndex) => {
+        const itemsHTML = await Promise.all(
+          colItems.map(async item => {
+            // If an item has a body rewrite any resource links in the body and encoded it.
+            // Then whenever the title is clicked open a new page with the body content
+            if (item.body) {
+              const rewrittenBody = await rewriteResourceLinks(item.body);
+              const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+              const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
 
-            return `<a href="#" onclick="openItem('${encoded}'); return false;">
-              ${item.label}
-            </a>`;
-          }
+              return `<a href="#" onclick="openItem('${encoded}'); return false;">
+                ${item.label}
+              </a>`;
+            }
 
-          // Rewrite resource links in title
-          const rewrittenLabel = await rewriteResourceLinks(item.label);
+            // Rewrite resource links in title
+            const rewrittenLabel = await rewriteResourceLinks(item.label);
 
-          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
-            return `<span>${item.label}</span>`;
-          }
+            if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+              return `<span>${item.label}</span>`;
+            }
 
-          return `<span>${rewrittenLabel}</span>`;
-        })
-        
-      );
-      const holidayHTML = (colIndex === 0 && weekHolidays.length > 0) 
-      ? weekHolidays.map(holiday => 
-          `<p class="mb-1"><strong>
-            ${holiday.name} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
-          </strong></p>`
-        ).join("")
-      : "";
+            return `<span>${rewrittenLabel}</span>`;
+          })
+          
+        );
+        return `<td>${itemsHTML.join("")}</td>`
+      })
+    );
 
-      return `<td>${itemsHTML.join("")}${holidayHTML}</td>`;
-    })
-  );
+  const holidayHTML = weekHolidays.length > 0
+    ? `
+      <tr class="border-orange">
+        <td class="bg-orange" colSpan=${visibleColumns.length}>
+          ${weekHolidays.map(holiday => 
+            `<p><strong>
+              ${holiday.name} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+            </strong></p>`
+          ).join("")}
+        </td>
+      </tr>`
+    : "";
 
   return `
     <tr>
-      <td>
+      <td rowSpan=${weekHolidays.length > 0 ? 2 : 1}>
       <p><strong>${weekIndex+1}</strong></p>
       <small>
       <span>${week[0]?.date ?? "TBD"} - </span>
@@ -617,6 +659,7 @@ async function generateWeekRowHTML(weekItem, visibleColumns) {
       </td>
       ${columnsHTML.join("")}
     </tr>
+    ${holidayHTML}
   `;
 }
 

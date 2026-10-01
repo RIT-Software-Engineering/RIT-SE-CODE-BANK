@@ -23,38 +23,45 @@ function HolidayCard({ holiday, onChange, onDelete }) {
     const [isUpdated, setIsUpdated] = useState(false)
 
     return (
-        <Col md={5} lg={3} key={holiday.id} className='mb-3'>
+        <Col md={12} key={holiday.id} className='mb-3'>
             <Card>
                 <Card.Body>
                     <Card.Title>{holiday.name}</Card.Title>
-                    <Card.Text>
-                        <p>Holiday Name:</p>
-                        <input type="text" 
-                        value = {name}
-                        onChange = {(e) => {
-                            setName(e.target.value)
-                            setIsUpdated(true)
-                        }} 
-                        className="form-control" 
-                        placeholder="e.g. Thanksgiving" />
+                    <Card.Text className='flex flex-row items-end gap-4 flex-wrap'>
+                        <div className='flex flex-col'>
+                            <p className='mb-1'>Holiday Name:</p>
+                            <input type="text" 
+                            value = {name}
+                            onChange = {(e) => {
+                                setName(e.target.value)
+                                setIsUpdated(true)
+                            }} 
+                            className="form-control" 
+                            placeholder="e.g. Thanksgiving" />
+                        </div>
                         
-                        <p>Start Date:</p>
-                        <input type="date" 
-                        value={date}
-                        onChange = {(e) => {
-                            setDate(e.target.value)
-                            setIsUpdated(true)
-                        }} 
-                        className="form-control" />
+                        
+                        <div className='flex flex-col'>
+                            <p className='mb-1'>Start Date:</p>
+                            <input type="date" 
+                            value={date}
+                            onChange = {(e) => {
+                                setDate(e.target.value)
+                                setIsUpdated(true)
+                            }} 
+                            className="form-control" />
+                        </div>
 
-                        <p>End Date:</p>
-                        <input type="date" 
-                        className="form-control" 
-                        value={endDate}
-                        onChange = {(e) => {
-                            setEndDate(e.target.value)
+                        <div className='flex flex-col'>
+                            <p className='mb-1'>End Date:</p>
+                            <input type="date" 
+                            className="form-control" 
+                            value={endDate}
+                            onChange = {(e) => {
+                                setEndDate(e.target.value)
                             setIsUpdated(true)
-                        }} />
+                            }} />
+                        </div>
 
                         <Button disabled={!isUpdated} onClick = {() => onChange(holiday.id, {name, date, endDate})}>
                             Edit Holiday</Button>
@@ -125,25 +132,35 @@ export function Holidays() {
             ) : error ? (
                 <CMTDangerAlert error={error} />
             ) : (
-                <div className='text-center text-muted'>
-                    <p>Holiday Name:</p>
-                    <input type="text" 
-                    value = {holidayName}
-                    onChange = {(e) => setHolidayName(e.target.value)} 
-                    className="form-control" 
-                    placeholder="e.g. Thanksgiving" />
-
-                    <p>Start Date:</p>
-                    <input type="date" 
-                    value = {startDate}
-                    onChange = {(e) => setDate(e.target.value)} 
-                    className="form-control" />
-
-                    <p>End Date (optional): </p>
-                    <input type="date" 
-                    value = {endDate}
-                    onChange = {(e) => setEndDate(e.target.value)} 
-                    className="form-control" />
+                <div className='flex flex-col gap-2 w-4/5 flex-wrap'>
+                    <div className="flex flex-row items-center">
+                        <p className='mb-1 w-1/5 form-label'>Holiday Name:</p>
+                        {/* <div className='w-4/5'> */}
+                            <input type="text" 
+                            value = {holidayName}
+                            onChange = {(e) => setHolidayName(e.target.value)} 
+                            className="form-control" 
+                            placeholder="e.g. Thanksgiving" />
+                        {/* </div> */}
+                    </div>
+                    
+                    <div className='flex flex-row gap-4 items-center'>
+                        <div className='flex flex-row w-1/2'>
+                            <p className='mb-1 w-1/2 form-label'>Start Date:</p>
+                            <input type="date" 
+                            value = {startDate}
+                            onChange = {(e) => setDate(e.target.value)} 
+                            className="form-control" />
+                        </div>
+                        
+                        <div className='flex flex-row w-2/3'>
+                            <p className='mb-1 w-2/3 form-label'>End Date (optional): </p>
+                            <input type="date" 
+                            value = {endDate}
+                            onChange = {(e) => setEndDate(e.target.value)} 
+                            className="form-control" />
+                        </div>
+                    </div>
                     
                     <Button disabled={!holidayName || !startDate} onClick = {() => onSubmit()}>Add Holiday</Button>
 
