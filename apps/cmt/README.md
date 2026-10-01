@@ -12,7 +12,7 @@ Back to [RIT-SE-CODE-BANK overview](../../README.md)
 > 
 > If installation was successful but your OS doesn't recognize the command, try to create a new terminal and try again. If the issue persists, manually check your OS environment variables. In Windows, the variable is likely `NODE_HOME`. Ensure it points to the installed version of Node.
 
-### 3. Install MariaDB
+### 2. Install MariaDB
 
 Two options: native or containerized. If you have Docker Desktop already setup or are familiar with containers, I recommend containerized.
     
@@ -28,11 +28,11 @@ Two options: native or containerized. If you have Docker Desktop already setup o
 > The password is important for obvious reasons (it should be the same as in your .env)
 > The name only matters when sending requests from containers to other containers. In that case, youll want docker "networks".
 
-### 4. Setup Environment Variables
+### 3. Setup Environment Variables
 #### CMT
 1. Navigate to `apps/cmt`
-2. Copy `.env.sample` (or `.env.staging`, if it exists, is probably better) and rename it `.env`
-3. Fill out values, especially your connection string. If copying the staging file, any "https://apps-staging.se.rit.edu" should turn into "http://localhost:(port_number)" where port_number is probably 3306 (but not always, use your own judgement).
+2. Copy `.env.sample` (or `.env.staging`, if you're pushing to prod) and rename it `.env`
+3. Fill out values, especially your connection string. If copying the staging file, any "https://apps-staging.se.rit.edu" should turn into "http://localhost:(port_number)" (use your own judgement for the port numbers).
 #### Workflows
 1. Navigate to `apps/workflows/server` and repeat steps 2 & 3 above
 
