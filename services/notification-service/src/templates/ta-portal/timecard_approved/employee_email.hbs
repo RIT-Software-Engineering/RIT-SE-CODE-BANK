@@ -1,0 +1,82 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        ✅ Timecard Approved
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if recipient.name}}
+          Hi {{recipient.name}},
+        {{else}}
+          Hi,
+        {{/if}}
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        Your timecard has been approved by <strong>{{employer.name}}</strong>.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;background-color:#d4edda;border:1px solid #c3e6cb;">
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;font-weight:600;">
+            Position
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;">
+            {{job.title}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;font-weight:600;">
+            Week
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;">
+            {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;font-weight:600;">
+            Approved Hours
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #c3e6cb;font-size:14px;">
+            {{timecard.totalHours}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;font-size:14px;font-weight:600;">
+            Status
+          </td>
+          <td style="padding:12px;font-size:14px;">
+            <span style="color:#155724;font-weight:600;">✓ Approved</span>
+          </td>
+        </tr>
+      </table>
+
+      {{#if employer.comments}}
+      <div style="background:#f8f9fa;border-left:4px solid #F76902;padding:12px;margin:20px 0;">
+        <strong>Supervisor Comments:</strong><br>
+        <span style="color:#666;font-size:14px;">{{employer.comments}}</span>
+      </div>
+      {{/if}}
+
+      <p style="font-size:14px;line-height:20px;color:#6c757d;margin-top:24px;">
+        Your approved hours will be processed for payment. Thank you for your work!
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}

@@ -1,0 +1,15 @@
+✅ *Timecard Submitted Successfully*
+
+{{#if recipient.name}}Hi {{recipient.name}},{{else}}Hi,{{/if}}
+
+Your timecard has been submitted for _{{job.title}}_ ({{job.courseCode}}-{{job.sectionNumber}})
+
+*Week*: {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+*Hours*: {{timecard.totalHours}}
+*Status*: ⏳ Pending Review
+
+{{#if flags.overHours}}
+⚠️ _Note: Your submitted hours exceed the 10-hour weekly limit. Your supervisor will review this._
+{{/if}}
+
+_You'll be notified once your timecard has been reviewed. Thanks for submitting on time!_

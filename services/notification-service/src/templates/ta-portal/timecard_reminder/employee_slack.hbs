@@ -1,0 +1,14 @@
+⏰ *Timecard Reminder*
+
+{{#if recipient.name}}Hi {{recipient.name}},{{else}}Hi,{{/if}}
+
+Please remember to submit your timecard for _{{job.title}}_ ({{job.courseCode}}-{{job.sectionNumber}})
+
+*Week*: {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+{{#if timecard.daysOverdue}}⚠️ _This timecard is {{timecard.daysOverdue}} day(s) overdue_{{/if}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Submit Now in Portal>
+{{/if}}
+
+_Timely submission helps ensure accurate and prompt processing._

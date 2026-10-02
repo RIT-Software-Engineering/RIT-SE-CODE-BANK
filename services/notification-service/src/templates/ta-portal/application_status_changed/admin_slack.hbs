@@ -1,0 +1,15 @@
+ *Administrative Update*  
+
+Candidate *{{recipient.name}}* is now at status *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
+
+{{#if item.ownerName}}
+Instructor: *{{item.ownerName}}*
+{{/if}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Open in Portal>
+{{/if}}

@@ -1,0 +1,82 @@
+{{> header}}
+
+<table width="100%" cellpadding="24"
+  style="font-family:'Helvetica Neue','Helvetica','Roboto','Arial',sans-serif;
+         color:#000000;
+         background-color:#FFFFFF;
+         line-height:1.5;
+         max-width:600px;
+         margin:0 auto;">
+  <tr>
+    <td>
+      <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
+        Timecard Submission Reminder
+      </h2>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        {{#if recipient.name}}
+          Hi {{recipient.name}},
+        {{else}}
+          Hi,
+        {{/if}}
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
+        This is a friendly reminder to submit your timecard for the week ending <strong>{{timecard.weekEndDate}}</strong>.
+      </p>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;border-collapse:collapse;background-color:#f8f9fa;">
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Position
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{job.title}}
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;font-weight:600;">
+            Week
+          </td>
+          <td style="padding:12px;border-bottom:1px solid #dee2e6;font-size:14px;">
+            {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+          </td>
+        </tr>
+        {{#if timecard.daysOverdue}}
+        <tr style="background-color:#fff3cd;">
+          <td colspan="2" style="padding:12px;font-size:14px;color:#856404;">
+            <strong>⚠️ Notice:</strong> This timecard is {{timecard.daysOverdue}} day(s) overdue
+          </td>
+        </tr>
+        {{/if}}
+      </table>
+
+      {{#if cta.url}}
+      <p style="margin-top:24px;margin-bottom:24px;">
+        <a href="{{cta.url}}"
+           style="display:inline-block;
+                  background-color:#F76902;
+                  color:#FFFFFF;
+                  padding:12px 20px;
+                  border-radius:4px;
+                  text-decoration:none;
+                  font-size:16px;
+                  font-weight:500;">
+          Submit Timecard Now
+        </a>
+      </p>
+      {{/if}}
+
+      <p style="font-size:14px;line-height:20px;color:#6c757d;margin-top:24px;">
+        Please submit your timecard as soon as possible to ensure timely processing. If you have any questions or issues, please contact your supervisor.
+      </p>
+
+      <p style="font-size:16px;line-height:24px;margin-top:24px;">
+        Thanks,<br>
+        <strong>RIT Software Engineering Department</strong>
+      </p>
+    </td>
+  </tr>
+</table>
+
+{{> footer}}

@@ -1,0 +1,13 @@
+🟧 *Timecard Submitted*
+
+*{{employee.name}}* submitted their timecard for _{{job.courseCode}}-{{job.sectionNumber}}_ ({{job.title}})
+
+*Week*: {{timecard.weekStartDate}} to {{timecard.weekEndDate}}
+*Hours*: {{timecard.totalHours}}{{#if flags.overHours}} ⚠️ (exceeds 10-hour limit){{/if}}
+{{#if flags.hasNotes}}📝 _Includes work notes_{{/if}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Review in Portal>
+{{/if}}
+
+_Please review this timecard at your earliest convenience._
