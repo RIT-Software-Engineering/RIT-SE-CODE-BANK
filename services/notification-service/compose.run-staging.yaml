@@ -41,7 +41,10 @@ services:
     ports:
       - ${DEV_UI_PORT}:80 #80 is the universal HTTP port
       - ${DEV_SMTP_PORT}:25 #25 is the universal SMTP port
+    volumes:
+      - smtp4dev_data:/smtp4dev
 
 volumes:
   notification_data: {}
+  smtp4dev_data: {} #Added so restarting/recreating the container wont wipe the smtp4dev inbox.
 

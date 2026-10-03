@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { PrismaClient } from "@prisma/client";
 import { createReadStream } from "fs";
+import { dispatchNotification } from "../utils/notifications";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -64,23 +65,49 @@ router.post("/", async (req, res) => {
     }
 
     const project = await prisma.project.create({
-        data: {
-            name,
-            description,
-            overseer: {
-                connect: {
-                    id: uid,
-                },
-            },
-            peers: {
-                connect: peerEmails.map((e) => ({
-                    email: e,
-                })),
+    data: {
+        name,
+        description,
+        overseer: {
+            connect: {
+                id: uid,
             },
         },
-    });
+        peers: {
+            connect: peerEmails.map((e) => ({
+                email: e,
+            })),
+        },
+    },
+});
 
-    res.status(201).json(project);
+// Send notification emails to the peers that were added.
+for (const peerEmail of peerEmails) {
+    try {
+        await dispatchNotification(null, {
+            userEmail: peerEmail,
+            subject: `You have been added to PeerEval project: ${name}`,
+            message: `You have been added as a peer to the PeerEval project "${name}".
+
+Project description:
+${description}
+
+You can now access this project through PeerEval.`,
+        });
+
+        console.log(
+            `[notifications] Sent project notification to ${peerEmail}`
+        );
+    } catch (err) {
+        // Notification failure should not undo a successfully created project.
+        console.error(
+            `[notifications] Failed to notify ${peerEmail}:`,
+            err
+        );
+    }
+}
+
+res.status(201).json(project);
 });
 
 // Get project as peer
@@ -316,6 +343,26 @@ router.post("/:id/assignAssessment", async (req, res) => {
         });
         return createdAssessment;
     });
+
+    for (const responderEmail of responders) {
+        try {
+            await dispatchNotification(null, {
+                subject: `New Peer Evaluation Assigned: ${name}`,
+                message:
+                    `You have been assigned a new peer evaluation.\n\n` +
+                    `Assessment: ${name}\n` +
+                    `Project: ${id}\n` +
+                    `Due Date: ${dueDate}\n\n` +
+                    `Please log in to PeerEval to complete your evaluation.`,
+                userEmail: responderEmail,
+            });
+        } catch (err) {
+            console.error(
+                `Failed to send assessment notification to ${responderEmail}:`,
+                err
+            );
+        }
+    }
 
     res.status(201).json(a);
 });

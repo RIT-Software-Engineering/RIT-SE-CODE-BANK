@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { $Enums, PrismaClient } from "@prisma/client";
-import { connect } from "http2";
+import { dispatchNotification } from "../utils/notifications";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -177,6 +177,48 @@ router.post(
                 })
             )
         );
+
+        // Get assessment and user information for notification
+        try {
+            const assessment = await prisma.assessment.findUnique({
+                where: { id: assessmentId },
+                include: {
+                    project: true,
+                    responders: {
+                        where: { id: responderId },
+                    },
+                    receivers: {
+                        where: { id: respondeeId },
+                    },
+                },
+            });
+
+            const responder = assessment?.responders[0];
+            const respondee = assessment?.receivers[0];
+
+            if (assessment && responder && respondee) {
+                await dispatchNotification(null, {
+                    userEmail: respondee.email,
+                    subject: `PeerEval Feedback Updated: ${assessment.name}`,
+                    message:
+                        `You have received new peer evaluation feedback.\n\n` +
+                        `Assessment: ${assessment.name}\n` +
+                        `Project: ${assessment.project.name}\n` +
+                        `Feedback submitted by: ${responder.name}\n\n` +
+                        `Log in to PeerEval to view your feedback.`,
+                });
+
+                console.log(
+                    `[notifications] Sent feedback notification to ${respondee.email} for assessment ${assessment.name}`
+                );
+            }
+        } catch (err) {
+            // Notification failure should not undo a successfully saved response.
+            console.error(
+                `[notifications] Failed to send feedback notification:`,
+                err
+            );
+        }
 
         res.status(201).json(inqRess);
     }
