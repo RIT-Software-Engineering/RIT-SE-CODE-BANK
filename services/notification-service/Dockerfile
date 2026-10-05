@@ -2,31 +2,32 @@ FROM node:18
 
 WORKDIR /app
 
-# Copy package files over to container
-## Root Package
-COPY package.json ./
-## Root Package-lock.json
-COPY package-lock.json ./
-## Notify package
+# Copy the notification service package definition
 COPY services/notification-service/package.json ./services/notification-service/package.json
 
-# Copy prisma schema to container
+# Copy Prisma schema and migrations
 COPY services/notification-service/prisma ./services/notification-service/prisma/
 
-# Run clean install of dependencies for only the notification service
-RUN npm ci --workspace=notification-service
+# Install dependencies for the notification service
+WORKDIR /app/services/notification-service
+RUN npm install
 
+# Placeholder used only while generating the Prisma client
 ENV DATABASE_URL="mysql://placeholder"
-RUN npx prisma generate --schema=./services/notification-service/prisma/schema.prisma
 
-COPY services/notification-service ./services/notification-service
+RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Copy the application source, including templates
+WORKDIR /app
+COPY services/notification-service/src ./services/notification-service/src
+
+# Copy the entrypoint
+COPY services/notification-service/entrypoint.sh ./services/notification-service/entrypoint.sh
 
 WORKDIR /app/services/notification-service
 
-COPY services/notification-service/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x ./entrypoint.sh
 
 EXPOSE 4000
 
-ENTRYPOINT sh /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["sh", "./entrypoint.sh"]
