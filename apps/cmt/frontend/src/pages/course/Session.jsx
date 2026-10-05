@@ -44,6 +44,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [curMaterialId, setCurMaterialId] = useState(0);
     const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
+    const [sessionToCancel, setSessionToCancel] = useState(null);
     const [error, setError] = useState(null)
 
     // We only work with 1 session date at a time, and it gets reset regardless.
@@ -66,6 +67,17 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     }, [courseId, setSessionCount])
     useEffect(() => void update(), [courseId, update])
 
+    const setCanceled = useCallback((session, canceled) => {
+        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled})
+            .then(json => {
+                setSessions(sessions.map(currentSession =>
+                    currentSession.id === session.id ? json.session : currentSession
+                ));
+                setSessionToCancel(null);
+            })
+            .catch(createErrorHandler("Failed to update session cancellation.", setError));
+    }, [sessions, setSessions]);
+
     if (error) return <CMTDangerAlert error={error} />
 
     return (
@@ -78,10 +90,19 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
+        <CancelSessionModal
+            session={sessionToCancel}
+            onClose={() => setSessionToCancel(null)}
+            onConfirm={(notificationOption) => {
+                void notificationOption;
+                return setCanceled(sessionToCancel, true);
+            }}
+        />
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
                 let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
+                const currentSession = sessions.find(session => session.sessionNum === i+1);
 
                 return (
                     <Accordion.Item eventKey={`${i}`} key={sessionAction} onClick={()=>setSessionNum(i)}>
@@ -89,7 +110,16 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
                                 Currently the one type that's tracked are the additional sessions. */}
-                                {sessionAction ? (
+                                {currentSession?.canceled ? (
+                                    <Button
+                                        size="sm"
+                                        variant="danger"
+                                        disabled
+                                        style={{opacity: 1}}
+                                    >
+                                        Canceled
+                                    </Button>
+                                ) : sessionAction ? (
                                     <CheckmarkAction
                                         actionWithContexts={sessionAction}
                                         refresh={updateWorkflow}
@@ -194,6 +224,10 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     <Button variant='outline-danger' onClick={()=>setIsDeleteOpen(true)}>Delete All Material</Button>
                                 </div>
                                 <div className="justify-end">
+                                    {currentSession?.canceled ?
+                                        <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false)}>Restore session</Button> :
+                                        <Button className="mr-2" variant="outline-danger" onClick={() => setSessionToCancel(currentSession)}>Cancel session</Button>
+                                    }
                                     <Button onClick={() => setIsOpen(true)}>Add Material</Button>
                                 </div>
                             </div>
@@ -204,6 +238,50 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         }
       </Accordion>
   );
+}
+
+function CancelSessionModal({session, onClose, onConfirm}) {
+    const [notificationOption, setNotificationOption] = useState('none');
+    const [submitting, setSubmitting] = useState(false);
+    const isFutureSession = Boolean(session?.date && session.date > new Date().toISOString().split('T')[0]);
+
+    function close() {
+        setNotificationOption('none');
+        setSubmitting(false);
+        onClose();
+    }
+
+    async function confirmCancellation() {
+        setSubmitting(true);
+        await onConfirm(notificationOption);
+        setNotificationOption('none');
+        setSubmitting(false);
+    }
+
+    return (
+        <Modal show={Boolean(session)} onHide={close} centered>
+            <Modal.Header closeButton>
+                <Modal.Title>Cancel session {session?.sessionNum}</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>This session will remain on the schedule and be marked as canceled.</p>
+                <Form.Group>
+                    <Form.Label>Student notification</Form.Label>
+                    <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                        <option value="none">Do not send a notification</option>
+                        <option value="now">Send a notification now</option>
+                        {isFutureSession && <option value="scheduled">Schedule a notification</option>}
+                    </Form.Select>
+                </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" onClick={close} disabled={submitting}>Keep session</Button>
+                <Button variant="danger" onClick={confirmCancellation} disabled={submitting}>
+                    {submitting ? 'Canceling...' : 'Cancel session'}
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
 }
 
 const sessionCheckmarkRenderers = {

@@ -139,6 +139,15 @@ export default function CourseWebsitePage() {
         tr:nth-child(even) {
           background-color: #f3f4f6;
         }
+
+        tr.canceled {
+          background-color: #fef2f2;
+          color: #991b1b;
+        }
+
+        .canceled-label {
+          font-weight: bold;
+        }
       </style>
     </head>
     <body>
@@ -346,11 +355,12 @@ export default function CourseWebsitePage() {
                 const materials = session.materials || [];
                 const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
                 return (
-                  <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
+                  <tr key={session.id} className={session.canceled ? "bg-red-50 text-red-800" : index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
 
                     <td className="border border-blue-300 p-3 text-center">
                       <p className="font-semibold">{session.sessionNum}</p>
                       <p>{session?.date ?? "TBD"}</p>
+                      {session.canceled && <p className="font-semibold">Canceled - No class</p>}
                     </td>
 
                     {grouped.map((colItems, colIndex) => (
@@ -369,6 +379,7 @@ export default function CourseWebsitePage() {
               (weeks? weeks.map((week, index) => {
                 const materials = week.flatMap(session => session?.materials);
                 const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+                const canceledSessions = week.filter(session => session?.canceled);
 
                 return (<>
                 <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
@@ -378,6 +389,11 @@ export default function CourseWebsitePage() {
                       <span>{week[0]?.date ?? "TBD"} -</span>
                       <p>{week[week.length-1]?.date ?? "TBD"}</p>
                     </small>
+                    {canceledSessions.map(session =>
+                      <p key={session.id} className="font-semibold text-red-800">
+                        Session {session.sessionNum}: Canceled - No class
+                      </p>
+                    )}
                   </td>
 
                     {grouped.map(colItems => (
@@ -456,10 +472,11 @@ async function generateSessionRowHTML(session, visibleColumns) {
   );
 
   return `
-    <tr>
+    <tr${session.canceled ? ' class="canceled"' : ''}>
       <td>
       <p><strong>${session.sessionNum}</strong></p>
       <p>${session?.date ?? "TBD"}</p>
+      ${session.canceled ? '<p class="canceled-label">Canceled - No class</p>' : ''}
       </td>
       ${columnsHTML.join("")}
     </tr>
@@ -469,6 +486,7 @@ async function generateSessionRowHTML(session, visibleColumns) {
 async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
   const materials = week.flatMap(session => session?.materials);
   const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+  const canceledSessions = week.filter(session => session?.canceled);
 
   const columnsHTML = await Promise.all(
     grouped.map(async colItems => {
@@ -509,6 +527,9 @@ async function generateWeekRowHTML(week, visibleColumns, weekIndex) {
       <span>${week[0]?.date ?? "TBD"} - </span>
       <p>${week[week.length-1]?.date ?? "TBD"}</p>
       </small>
+      ${canceledSessions.map(session =>
+        `<p class="canceled-label">Session ${session.sessionNum}: Canceled - No class</p>`
+      ).join("")}
       </td>
       ${columnsHTML.join("")}
     </tr>

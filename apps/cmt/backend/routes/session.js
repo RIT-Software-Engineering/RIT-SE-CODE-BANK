@@ -107,6 +107,36 @@ router.put("/:sessionId", async (req, res) => {
     res.sendStatus(200)
 })
 
+/** PATCH /api/cmt/session/:sessionId/cancellation
+ * Marks a session as canceled or restores it without changing its date,
+ * completion state, or materials.
+ */
+router.patch("/:sessionId/cancellation", async (req, res) => {
+    const {sessionId} = req.params;
+    const {canceled} = req.body;
+
+    if (!req.user) return res.status(401).json({error: "Not authenticated"});
+    if (typeof canceled !== "boolean") return res.status(400).json({error: "canceled must be a boolean"});
+
+    const existingSession = await prisma.session.findFirst({
+        where: {
+            id: Number(sessionId),
+            course: {professorId: req.user.uid}
+        }
+    });
+    if (!existingSession) return res.status(404).json({error: "Session not found for this instructor"});
+
+    const session = await prisma.session.update({
+        where: {id: Number(sessionId)},
+        data: {
+            canceled,
+            canceledAt: canceled ? new Date() : null
+        }
+    });
+
+    res.json({session})
+})
+
 /** DELETE /api/cmt/session/material/:materialId
  * Sets a specific session material to inactive. Upon success returns the session material to be updated
  * Not a true delete, but users cannot see inactive items so basically functions like one
