@@ -1,5 +1,5 @@
 'use client';
-import ManagerPage from "../library/manager";
+import ManagerPage from "./Manager";
 import Navbar from "../navbar/Navbar";
 function MyApp({ Component, pageProps }) {
   return (
