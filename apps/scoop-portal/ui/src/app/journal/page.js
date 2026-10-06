@@ -100,6 +100,12 @@ export default function Journal() {
   const [editValue, setEditValue] = useState("");
   const [replyEntry, setReplyEntry] = useState(null);
 
+  
+  // Variables for an incomplete implementation of a confirmation dialog before deleting an entry
+  // const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  // const [deletingEntry, setDeletingEntry] = useState(false);
+  // const [selectedEntry, setSelectedEntry] = useState(null);
+
   const { user } = useUser();
   
   useEffect(() => {
@@ -194,6 +200,45 @@ export default function Journal() {
     setEditValue(entry.notes);
   };
   const handleCancelEdit = () => setEditingEntry(null);
+
+  // Functions for an incomplete implementation of a confirmation dialog before deleting an entry
+  // const handleDeleteClick = (entry) => {
+  //   setSelectedEntry(entry);
+  //   setConfirmDeleteOpen(true);
+  // }
+
+  const handleDeleteEntry = (entry) => {
+    notify.promise(deleteEntry(entry), {
+      loading: "Deleting…",
+      success: "Successfully deleted entry!",
+      error: "Failed to delete entry",
+    });
+    // setConfirmDeleteOpen(false);
+  };
+
+  const deleteEntry = async (entry) => {
+    // setDeletingEntry(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal/${entry.id}`, {
+        method: "DELETE"
+      } 
+    );
+    console.log(entry);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      const serverMsg = errorData?.error || errorData?.message || `HTTP ${res.status}`;
+      throw new Error(serverMsg);
+    }
+    return {message: "Entry successfully deleted"}
+    }
+    catch (error) {
+      console.error("Failed to delete entry:", error);
+      throw error;
+    }
+    // finally {
+    //   setDeletingEntry(false);
+    // }
+  };
   
   const saveEntryNotes = async (entry) => {
     try {
@@ -405,9 +450,14 @@ export default function Journal() {
                     </Box>
                     
                     {isSender && (
-                      <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
-                        Edit
-                      </IconButton>
+                      <span>
+                        <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
+                          Edit
+                        </IconButton>
+                        <IconButton size="small" onClick={() => handleDeleteEntry(entry)} sx={{ color: '#FF6A00' }}>
+                          Delete
+                        </IconButton>
+                      </span>
                     )}
                   </Box>
 
@@ -648,6 +698,24 @@ export default function Journal() {
           </>
         )}
       </Dialog>
+
+      {/* Confirm Delete Dialog
+      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)}>
+        <DialogTitle sx={{ fontWeight: 600 }}>Delete Semester Group</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to delete this entry? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 2, py: 1.5, gap: 0.5 }}>
+          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined" color="inherit" disabled={deletingEntry}>
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteEntry(selectedEntry)} variant="contained" color="error" disabled={deletingEntry}>
+            {deletingEntry ? "Deleting..." : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog> */}
 
       <Dialog open={replyEntry != null} onClose={() => setReplyEntry(null)} maxWidth="md" fullWidth>
         {replyEntry && (

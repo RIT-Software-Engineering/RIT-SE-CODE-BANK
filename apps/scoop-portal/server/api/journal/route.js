@@ -120,6 +120,25 @@ router.put("/:id", async (req, res) => {
 });
 
 /**
+ * Delete an existing journal entry
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ */
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.journalEntry.delete({
+      where: { id: Number(id) },
+    });
+    res.status(200).json({message: "Journal Entry Deleted."});
+  }
+  catch (error) {
+    console.error("Error deleting journal entry:", error);
+    res.status(500).json({message: "Error deleting journal entry.", error: error.message});
+  }
+});
+
+/**
  * GET journal entries for scoopdinator
  */
 router.get("/scoopdinator", async (req, res) => {
