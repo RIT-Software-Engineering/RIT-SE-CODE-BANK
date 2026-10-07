@@ -180,7 +180,7 @@ export default function Bubbled(){
   useEffect(() => {
     let cancelled = false;
     async function getActions() {
-      if(user == null || user.id == null){
+      if(user == null || user.id == null){ 
         if (!cancelled) {
           setWorkflowStates([]);
           setIsLoading(false);

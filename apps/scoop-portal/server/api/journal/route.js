@@ -120,6 +120,25 @@ router.put("/:id", async (req, res) => {
 });
 
 /**
+ * Delete an existing journal entry
+ * @param {Object} req - The request object
+ * @param {Object} res - The response object
+ */
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.journalEntry.delete({
+      where: { id: Number(id) },
+    });
+    res.status(200).json({message: "Journal Entry Deleted."});
+  }
+  catch (error) {
+    console.error("Error deleting journal entry:", error);
+    res.status(500).json({message: "Error deleting journal entry.", error: error.message});
+  }
+});
+
+/**
  * GET journal entries for scoopdinator
  */
 router.get("/scoopdinator", async (req, res) => {
@@ -282,34 +301,34 @@ router.get("/:id", async (req, res) => {
       entries = entries.concat(dinatorEntries);
     }
     else if(user.type == "scoopervisor"){
-      const scoopervisorTeams = await prisma.teams.findMany({
-        where: {
-          scoopervisorId: user.id,
-        },
-        include: { 
-          members: true,
-        } 
-        });
+      // const scoopervisorTeams = await prisma.teams.findMany({
+      //   where: {
+      //     scoopervisorId: user.id,
+      //   },
+      //   include: { 
+      //     members: true,
+      //   } 
+      //   });
 
-        const memberSet = new Set();
+      //   const memberSet = new Set();
 
-        for (const team of scoopervisorTeams) {
-          for (const member of team.members) {
-              memberSet.add(member.id)
-            }
-          }
-        const memberArray = Array.from(memberSet);
+      //   for (const team of scoopervisorTeams) {
+      //     for (const member of team.members) {
+      //         memberSet.add(member.id)
+      //       }
+      //     }
+      //   const memberArray = Array.from(memberSet);
         //this currently allows Scoopervisors to see entries in which they are the topic 
         const scoopervisorEntries = await prisma.journalEntry.findMany({
             where: {
-              OR: memberArray.flatMap(memberId => [
-                { sender_id: memberId },
-                { recipients: {
-                    some: {
-                      id: memberId,
-                },},},
-                { topic_id: memberId },
-                ]),
+        //       // OR: memberArray.flatMap(memberId => [
+        //       //   { sender_id: memberId },
+        //       //   { recipients: {
+        //       //       some: {
+        //       //         id: memberId,
+        //       //   },},},
+        //       //   { topic_id: memberId },
+        //       //   ]),
               privacy_level: "PUBLIC",
               visibility_level: {
                   lt: 4
