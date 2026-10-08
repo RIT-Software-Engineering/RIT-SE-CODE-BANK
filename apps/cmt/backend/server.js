@@ -12,6 +12,7 @@ import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
 import holidayRoutes from './routes/holidays.js'; // add holiday route
+import notificationRoutes from "./routes/notifications.js"
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -193,6 +194,7 @@ app.use("/api/cmt/workflow", workflowRoutes)
 app.use("/api/cmt/session", sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
 app.use("/api/cmt/holidays", holidayRoutes);
+app.use("/api/cmt/notifications", notificationRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS
