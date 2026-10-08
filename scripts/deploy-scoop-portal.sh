@@ -7,7 +7,7 @@ PORTAL_UI_DIR="$APP_DIR/apps/scoop-portal/ui"
 WORKFLOW_SERVER_DIR="$APP_DIR/apps/workflow/server"
 NOTIFICATIONS_SERVER_DIR="$APP_DIR/services/notification-service"
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
-VM_USER="${SCOOP_PORTAL_DEPLOY_USER:-zim1902}"
+VM_USER="${SCOOP_PORTAL_DEPLOY_USER:-jtd4400}"
 
 echo "Deploying Scoop Portal application..."
 
