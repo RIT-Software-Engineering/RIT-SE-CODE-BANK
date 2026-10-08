@@ -1,3 +1,6 @@
+body{
+  margin:0;
+}
 .user-communities-container {
     display: flex;
     flex-wrap: wrap;

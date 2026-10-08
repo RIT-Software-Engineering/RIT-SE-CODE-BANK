@@ -11,7 +11,8 @@ export default function CreateCommunityForm({
   const bulkImport = useBulkCommunityImport({ managerId, reloadCommunities });
 
   const handleCreateCommunity = async () => {
-    if (!newCommunity.trim() || !managerId) return;
+    console.log("Creating Community");
+    if (!newCommunity.trim() || !managerId) {console.log(managerId);return;}
     try {
       const res = await createCommunity(newCommunity, managerId);
       const data = await res.json();

@@ -1,3 +1,6 @@
+body{
+  margin:0;
+}
 .admin-page-root {
     max-width: 500px;
     margin: 40px auto;

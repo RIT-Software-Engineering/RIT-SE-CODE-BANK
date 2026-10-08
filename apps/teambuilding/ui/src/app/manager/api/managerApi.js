@@ -19,7 +19,7 @@ export const getUser = (username) =>
 export const getAllUsers = () => fetch(`${API_BASE}/users/user-role`);
 
 export const createUser = (username, role = "USER") =>
-  sendJson("/create-user", { username, role });
+  {sendJson("/create-user", { username, role });console.log("createUser")}
 
 // ---- Communities ----
 export const getCommunities = (managerId) =>

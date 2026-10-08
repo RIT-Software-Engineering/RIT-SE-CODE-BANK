@@ -2,17 +2,21 @@
 // and doesn't show admin or manager page to user
 'use client';
 import React from "react";
+
 import { useRouter } from "next/navigation";
+import { useEffect,useState } from "react";
 import "./navbar.css"; // Import the CSS file
 
 export default function Navbar() {
   const router = useRouter();
-  let role = "";
-  if (typeof window !== "undefined") {
-    role = localStorage.getItem("role") || "";
-  }
+  const [role, setRole] = useState(null);
 
-  if (role === "GUEST") {
+  useEffect(() => {
+    const storedRole = localStorage.getItem("role") || "GUEST";
+    setRole(storedRole);
+  })
+  
+  if(role == null || role == "GUEST"){
     return null;
   }
 

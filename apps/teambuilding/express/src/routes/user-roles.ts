@@ -31,13 +31,16 @@ router.get('/user-role', async (req: Request, res: Response) => {
 // Endpoint to create a new user given a username and role
 router.post('/create-user', async (req: Request, res: Response) => {
   const { username, role, firstName, lastName, email } = req.body;
+  console.log("creating user");
 
   if (!username || typeof username !== 'string') {
     res.status(400).json({ error: 'Username is required.' });
+    console.log("Username Error");
     return;
   }
   if (!role || !["ADMIN", "MANAGER", "USER"].includes(role)) {
     res.status(400).json({ error: 'Role must be ADMIN, MANAGER, or USER.' });
+    console.log("Role Error");
     return;
   }
 
@@ -56,18 +59,28 @@ router.post('/create-user', async (req: Request, res: Response) => {
     if (email && typeof email === 'string') {
       userData.email = email.trim().toLowerCase();
     }
-    res.status(201).json({ message: 'User created.', userData });
+
+    const user = await prisma.user.create({
+      data: userData,
+    });
+
+    res.status(201).json({ message: 'User created.', user });
+    console.log("success");
   } catch (error: any) {
     if (error.code === 'P2002') { // Unique constraint failed
       if (error.meta?.target?.includes('username')) {
         res.status(409).json({ error: 'Username already exists.' });
+        console.log("username already exists");
       } else if (error.meta?.target?.includes('email')) {
         res.status(409).json({ error: 'Email already exists.' });
+        console.log("email already exists");
       } else {
         res.status(409).json({ error: 'Unique constraint violation.' });
+        console.log("Unique constraint violation");
       }
     } else {
       res.status(500).json({ error: 'Server error.' });
+      console.log("Server error");
     }
   }
 });
@@ -166,7 +179,7 @@ router.get('/user/:username/details', async (req: Request, res: Response) => {
 // Endpoint to update user details (firstName, lastName, email) by username
 router.put('/user/:username', async (req: Request, res: Response) => {
   const { username } = req.params;
-  const { firstName, lastName, email } = req.query;
+  const { firstName, lastName, email } = req.body;
   
   if (!username || typeof username !== 'string') {
     res.status(400).json({ error: 'Username is required.' });
@@ -201,6 +214,9 @@ router.put('/user/:username', async (req: Request, res: Response) => {
       data: updateData
     });
 
+    console.log("updated user info.");
+    console.log(updateData);
+
     res.json({ 
       message: 'User updated successfully.', 
       user: updatedUser 
@@ -208,7 +224,7 @@ router.put('/user/:username', async (req: Request, res: Response) => {
   } catch (error: any) {
     
       res.status(500).json({ error: 'Server error.' });
-    
+      console.log("Error updating info");
   }
 });
 

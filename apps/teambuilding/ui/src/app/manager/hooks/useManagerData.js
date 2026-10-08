@@ -36,7 +36,7 @@ export default function useManagerData() {
     getUserRole(username)
       .then((res) => res.json())
       .then(async (data) => {
-        if (data.role !== "MANAGER") {
+        if (data.role !== "MANAGER" && data.role !== "ADMIN") {
           setLoading(false);
           return;
         }
