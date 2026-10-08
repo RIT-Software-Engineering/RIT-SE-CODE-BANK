@@ -54,6 +54,7 @@ model Session {
   date        String?
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
+  blocks      SessionBlock[]
 }
 
 model SessionMaterial {
@@ -64,7 +65,21 @@ model SessionMaterial {
   active      Boolean   @default(true)
   sessionId   Int
   sessionNum  Int
+  blockId     Int?
   session     Session @relation(fields: [sessionId], references: [id])
+  block       SessionBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+}
+
+model SessionBlock {
+  id        Int                @id @default(autoincrement())
+  name      String
+  status    session_block_status @default(NOT_STARTED)
+  position  Int                @default(0)
+  sessionId Int
+  session   Session            @relation(fields: [sessionId], references: [id])
+  material  SessionMaterial[]
+
+  @@index([sessionId, position])
 }
 
 model TBEnrollment {
@@ -147,4 +162,10 @@ enum tbteamset_status {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum session_block_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }

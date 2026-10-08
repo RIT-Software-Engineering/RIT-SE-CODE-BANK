@@ -27,10 +27,19 @@ router.get("/:courseId", async(req, res) => {
        return {material}
     })
     )
+    const sessionBlocks = await Promise.all(
+        sessions.map(async (session) => ({
+            blocks: await prisma.sessionBlock.findMany({
+                where: {sessionId: Number(session.id)},
+                orderBy: [{position: "asc"}, {id: "asc"}]
+            })
+        }))
+    );
     
     res.json({
         sessions: sessions,
-        sessionMaterials: sessionMaterials
+        sessionMaterials: sessionMaterials,
+        sessionBlocks
     })
 });
 
@@ -48,12 +57,39 @@ router.post("/", async (req, res) => {
     res.json({ session })
 });
 
+/** POST /api/cmt/session/blocks
+ * Creates an optional organizational block within a session.
+ */
+router.post("/blocks", async (req, res) => {
+    const {sessionId, name} = req.body;
+    if (!req.user) return res.status(401).json({error: "Not authenticated"});
+    if (!name?.trim()) return res.status(400).json({error: "Block name is required"});
+
+    const session = await prisma.session.findFirst({
+        where: {id: Number(sessionId), course: {professorId: req.user.uid}}
+    });
+    if (!session) return res.status(404).json({error: "Session not found for this instructor"});
+
+    const position = await prisma.sessionBlock.count({where: {sessionId: session.id}});
+    const block = await prisma.sessionBlock.create({
+        data: {name: name.trim(), position, sessionId: session.id}
+    });
+    res.json({block});
+});
+
 /** POST /api/cmt/session/:sessionId
  * Creates session material. Upon success returns the session material, but it doesn't do anything with it
  */ 
 router.post("/:sessionId", async (req, res) => {
     const { sessionId } = req.params;
     const item = req.body;
+    const blockId = item.blockId ? Number(item.blockId) : null;
+    if (blockId) {
+        const block = await prisma.sessionBlock.findFirst({
+            where: {id: blockId, sessionId: parseInt(sessionId)}
+        });
+        if (!block) return res.status(400).json({error: "Block does not belong to this session"});
+    }
     const material = await prisma.sessionMaterial.create({
         data: {
             type: item.itemType,
@@ -61,6 +97,7 @@ router.post("/:sessionId", async (req, res) => {
             body: item.itemBody,
             sessionId: parseInt(sessionId),
             sessionNum: item.sessionNum,
+            blockId,
         }
     });
     res.json({ material })
@@ -72,7 +109,15 @@ router.post("/:sessionId", async (req, res) => {
  */ 
 router.put("/material/:materialId", async (req, res) => {
     const {materialId} = req.params;
-    const {itemLabel, itemBody, itemType, sessionNum, sessionId} = req.body;
+    const {itemLabel, itemBody, itemType, sessionNum, sessionId, blockId} = req.body;
+
+    const parsedBlockId = blockId ? Number(blockId) : null;
+    if (parsedBlockId) {
+        const block = await prisma.sessionBlock.findFirst({
+            where: {id: parsedBlockId, sessionId: parseInt(sessionId)}
+        });
+        if (!block) return res.status(400).json({error: "Block does not belong to this session"});
+    }
     
     const material = await prisma.sessionMaterial.update({
         where: {id: Number(materialId)},
@@ -82,11 +127,96 @@ router.put("/material/:materialId", async (req, res) => {
             type: itemType,
             sessionNum: parseInt(sessionNum),
             sessionId: parseInt(sessionId),
+            ...(blockId !== undefined && {blockId: parsedBlockId}),
         }
     })
 
     res.json({ material })
 })
+
+/** PATCH /api/cmt/session/blocks/:blockId
+ * Updates a block's name or progression status.
+ */
+router.patch("/blocks/:blockId", async (req, res) => {
+    const {blockId} = req.params;
+    const {name, status} = req.body;
+    if (!req.user) return res.status(401).json({error: "Not authenticated"});
+
+    const existingBlock = await prisma.sessionBlock.findFirst({
+        where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}}
+    });
+    if (!existingBlock) return res.status(404).json({error: "Block not found for this instructor"});
+
+    const allowedStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
+    if (status !== undefined && !allowedStatuses.includes(status))
+        return res.status(400).json({error: "Invalid block status"});
+    if (name !== undefined && !name.trim())
+        return res.status(400).json({error: "Block name is required"});
+
+    const block = await prisma.sessionBlock.update({
+        where: {id: Number(blockId)},
+        data: {
+            ...(name !== undefined && {name: name.trim()}),
+            ...(status !== undefined && {status})
+        }
+    });
+    res.json({block});
+});
+
+/** PATCH /api/cmt/session/blocks/:blockId/move
+ * Reorders a block or moves it to another session in the same course.
+ */
+router.patch("/blocks/:blockId/move", async (req, res) => {
+    const {blockId} = req.params;
+    const {targetSessionId, targetPosition} = req.body;
+    if (!req.user) return res.status(401).json({error: "Not authenticated"});
+
+    const block = await prisma.sessionBlock.findFirst({
+        where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}},
+        include: {session: true}
+    });
+    const targetSession = await prisma.session.findFirst({
+        where: {
+            id: Number(targetSessionId),
+            courseId: block?.session.courseId,
+            course: {professorId: req.user.uid}
+        }
+    });
+    if (!block || !targetSession) return res.status(404).json({error: "Block or target session not found"});
+
+    const sourceBlocks = await prisma.sessionBlock.findMany({
+        where: {sessionId: block.sessionId, id: {not: block.id}},
+        orderBy: [{position: "asc"}, {id: "asc"}]
+    });
+    const targetBlocks = block.sessionId === targetSession.id
+        ? sourceBlocks
+        : await prisma.sessionBlock.findMany({
+            where: {sessionId: targetSession.id},
+            orderBy: [{position: "asc"}, {id: "asc"}]
+        });
+    const position = Math.max(0, Math.min(Number(targetPosition ?? targetBlocks.length), targetBlocks.length));
+    targetBlocks.splice(position, 0, block);
+
+    await prisma.$transaction(async (tx) => {
+        if (block.sessionId !== targetSession.id) {
+            await Promise.all(sourceBlocks.map((sourceBlock, index) =>
+                tx.sessionBlock.update({where: {id: sourceBlock.id}, data: {position: index}})
+            ));
+        }
+        await Promise.all(targetBlocks.map((targetBlock, index) =>
+            tx.sessionBlock.update({
+                where: {id: targetBlock.id},
+                data: {sessionId: targetSession.id, position: index}
+            })
+        ));
+        await tx.sessionMaterial.updateMany({
+            where: {blockId: block.id},
+            data: {sessionId: targetSession.id, sessionNum: targetSession.sessionNum - 1}
+        });
+    });
+
+    res.json({success: true});
+});
 
 /** PUT /api/cmt/session/:sessionId
  * Updates session material. Upon success returns the session material.

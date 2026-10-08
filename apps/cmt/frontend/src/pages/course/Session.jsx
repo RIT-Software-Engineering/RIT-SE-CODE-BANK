@@ -7,6 +7,7 @@ import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetecti
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import { SessionBlocks } from "./SessionBlocks";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -38,6 +39,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
      * body - the content of the material
      */
     const [sessionData, setSessionData] = useState([]);
+    const [sessionBlocks, setSessionBlocks] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [sessionNum, setSessionNum] = useState(0);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -45,6 +47,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [curMaterialId, setCurMaterialId] = useState(0);
     const [defaultMaterialType, setDefaultMaterialType] = useState('Topic/Lecture');
     const [sessionToCancel, setSessionToCancel] = useState(null);
+    const [blockSessionIdForCreate, setBlockSessionIdForCreate] = useState(null);
     const [error, setError] = useState(null)
 
     // We only work with 1 session date at a time, and it gets reset regardless.
@@ -62,6 +65,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 setSessionCount(json.sessions.length)
                 const materialsArray = json.sessionMaterials.filter(m => m.material).map(m => m.material);
                 setSessionData(materialsArray.flat());
+                setSessionBlocks((json.sessionBlocks ?? []).flatMap(item => item.blocks ?? []));
             })
             .catch(createErrorHandler("Failed to fetch session details", setError))
     }, [courseId, setSessionCount])
@@ -84,10 +88,10 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
         isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
-        courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
+        blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
         <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
-        setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions}/>
+        setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
         <CancelSessionModal
@@ -160,9 +164,23 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                             </div>
                         </Accordion.Header>
                         <Accordion.Body>
+                            <SessionBlocks
+                                session={currentSession}
+                                sessions={sessions}
+                                blocks={sessionBlocks}
+                                materials={sessionData}
+                                refresh={update}
+                                setError={setError}
+                                createOpen={blockSessionIdForCreate === currentSession?.id}
+                                onCreateClose={() => setBlockSessionIdForCreate(null)}
+                                onEditMaterial={materialId => {
+                                    setCurMaterialId(materialId);
+                                    setIsEditOpen(true);
+                                }}
+                            />
                             { sessionData.find(data => data.sessionNum === i) ?
                             <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
-                            setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType}/> :
+                            setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType} blocks={sessionBlocks}/> :
                             <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                             }
                             { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
@@ -224,6 +242,13 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     <Button variant='outline-danger' onClick={()=>setIsDeleteOpen(true)}>Delete All Material</Button>
                                 </div>
                                 <div className="justify-end">
+                                    <Button
+                                        className="mr-2"
+                                        variant="outline-primary"
+                                        onClick={() => setBlockSessionIdForCreate(currentSession?.id)}
+                                    >
+                                        Add block
+                                    </Button>
                                     {currentSession?.canceled ?
                                         <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false)}>Restore session</Button> :
                                         <Button className="mr-2" variant="outline-danger" onClick={() => setSessionToCancel(currentSession)}>Cancel session</Button>
@@ -389,6 +414,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @param {Boolean} props.isOpen - whether the modal is open
  * @param {React.Dispatch<SetStateAction<boolean>>} props.setIsOpen - open/close the modal
  * @param {Array} props.sessions - the sessions the user has created
+ * @param {Array} props.blocks - the optional blocks available in the course sessions
  * @param {string} props.courseId - the course ID for resource linking
  * @param {string} props.defaultMaterialType - What the material type dropdown should start as. Default is Topic/Lecture
  * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - state setter for defaultMaterialType
@@ -396,10 +422,11 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  */
 export function SessionModal({ sessionNum, sessionData, setSessionData, 
     isOpen, setIsOpen, sessions, 
-    courseId, defaultMaterialType, setDefaultMaterialType }) {
+    blocks, courseId, defaultMaterialType, setDefaultMaterialType }) {
     const [itemLabel, setItemLabel] = useState('');
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState(defaultMaterialType);
+    const [blockId, setBlockId] = useState("");
     const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -408,6 +435,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
         setDefaultMaterialType('Topic/Lecture');
         setItemLabel('');
         setItemBody('');
+        setBlockId('');
         setError('');
     }, [setDefaultMaterialType])
 
@@ -415,14 +443,20 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
         const session = sessions.find(session => session.sessionNum === sessionNum + 1)
         if (!session) throw new CMTError({ message: "Unable to find session "})
         const id = session.id
-        return CMTJsonFetch('POST', `/session/${id}`, { itemType, itemLabel, itemBody: hasLinksInTitle ? undefined : itemBody, sessionNum })
+        return CMTJsonFetch('POST', `/session/${id}`, {
+            itemType,
+            itemLabel,
+            itemBody: hasLinksInTitle ? undefined : itemBody,
+            sessionNum,
+            blockId: blockId ? Number(blockId) : null
+        })
             .then(async json => {
                 setSessionData(sessionData => [...sessionData, json.material])
                 setIsOpen(false)
                 resetForm()
             })
             .catch(createErrorHandler("Error uploading material", setError))
-    }, [hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData])
+    }, [blockId, hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData])
 
     function handleClose() {
         setIsOpen(false);
@@ -467,6 +501,17 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
                                     <option>Group Assignment</option>
                                     <option>Individual Assignment</option>
                                     {!sessionData.find(data => data.sessionNum === sessionNum && data.type === 'Personal Notes') ? <option value="Personal Notes">Your Personal Notes (Hidden from students)</option> : <></>}
+                                </Form.Select>
+                            </div>
+
+                            <div className="mb-3">
+                                <Form.Label>Session block</Form.Label>
+                                <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
+                                    <option value="">No block</option>
+                                    {blocks
+                                        .filter(block => block.sessionId === sessions.find(session => session.sessionNum === sessionNum + 1)?.id)
+                                        .sort((a, b) => a.position - b.position)
+                                        .map(block => <option key={block.id} value={block.id}>{block.name}</option>)}
                                 </Form.Select>
                             </div>
 
@@ -541,17 +586,21 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
  * @param {(materialId: Number) => void} props.setMaterialId - sets the material id we're working with. We turn it to 0 upon closing.
  * @param {Number} props.sessionCount 
  * @param {Array} props.sessions
+ * @param {Array} props.blocks
  * @returns {React.ReactElement} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, 
     isEditOpen, setIsEditOpen, courseId, 
-    setDeleteOpen, setMaterialId, sessionCount, sessions }){
+    setDeleteOpen, setMaterialId, sessionCount, sessions, blocks }){
     const curMaterial = sessionData.find(material => material.id === materialId);
     
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
     const [itemBody, setItemBody] = useState(curMaterial?.body ?? "");
     const [itemType, setItemType] = useState(curMaterial?.type ?? "Topic/Lecture");
     const [sessionNum, setSessionNum] = useState(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
+    const [blockId, setBlockId] = useState(curMaterial?.blockId ? String(curMaterial.blockId) : "");
+    const [updatePromptOpen, setUpdatePromptOpen] = useState(false);
+    const [notificationOption, setNotificationOption] = useState("none");
     const [warningVisible, setWarningVisible] = useState(false);
     const [error, setError] = useState(null)
     const [titleEditor, setTitleEditor] = useState(null);
@@ -572,18 +621,34 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
         const realItemBody = hasLinksInTitle ? '' : itemBody;
         const realSessionNum = parseInt(sessionNum.replace("Session ", ""))-1;
         const sessionId = sessions.find(session => session.sessionNum === (realSessionNum+1))?.id;
-        CMTJsonFetch("PUT", `/session/material/${materialId}`, {itemLabel, itemBody: realItemBody, itemType, sessionNum: realSessionNum, sessionId})
+        CMTJsonFetch("PUT", `/session/material/${materialId}`, {
+            itemLabel,
+            itemBody: realItemBody,
+            itemType,
+            sessionNum: realSessionNum,
+            sessionId,
+            blockId: blockId ? Number(blockId) : null
+        })
             .then(() => {
                 const sessionDataCopy = sessionData.map(material => {
                     if (material.id === materialId) 
-                        return {...material, label: itemLabel, body: realItemBody, type: itemType, sessionNum: realSessionNum, sessionId}
+                        return {...material, label: itemLabel, body: realItemBody, type: itemType, sessionNum: realSessionNum, sessionId, blockId: blockId ? Number(blockId) : null}
                     return material
                 });
                 setSessionData(sessionDataCopy);
                 setIsEditOpen(false);
+                setUpdatePromptOpen(false);
+                setNotificationOption("none");
                 resetForm();
             })
             .catch(createErrorHandler("Error updating resource", setError))
+    }
+
+    function requestMaterialUpdate() {
+        if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, ""))
+            setUpdatePromptOpen(true);
+        else
+            setWarningVisible(true);
     }
 
     const titleTip = (
@@ -605,6 +670,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setItemBody(curMaterial?.body ?? "");
                 setItemType(curMaterial?.type ?? "Topic/Lecture");
                 setSessionNum(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
+                setBlockId(curMaterial?.blockId ? String(curMaterial.blockId) : "");
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -619,7 +685,10 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
         
                     <Alert variant="danger" className={`${warningVisible ? 'block' : 'hidden'}`}>Material needs to have a title!</Alert>
                     <CMTDangerAlert error={error} />
-                    <Form onSubmit={updateMaterial}>
+                    <Form onSubmit={event => {
+                        event.preventDefault();
+                        requestMaterialUpdate();
+                    }}>
                         <div className='flex'>
                             <div className='w-full'>
                                 <div className={`${sessionData.find(material => material.id === materialId && material.type === "Personal Notes") ? 'hidden' : ''}`}>
@@ -637,10 +706,24 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 
                                     <div className="mb-3">
                                         <Form.Label>Session</Form.Label>
-                                        <Form.Select onChange={e => setSessionNum(e.target.value)} value={sessionNum}>
+                                        <Form.Select onChange={e => {
+                                            setSessionNum(e.target.value);
+                                            setBlockId("");
+                                        }} value={sessionNum}>
                                             {Array.from({ length: sessionCount }, (_, i) => {
                                                 return <option key={i}>Session {i+1}</option>
                                             })}
+                                        </Form.Select>
+                                    </div>
+
+                                    <div className="mb-3">
+                                        <Form.Label>Session block</Form.Label>
+                                        <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
+                                            <option value="">No block</option>
+                                            {blocks
+                                                .filter(block => block.sessionId === sessions.find(session => session.sessionNum === parseInt(sessionNum.replace("Session ", "")))?.id)
+                                                .sort((a, b) => a.position - b.position)
+                                                .map(block => <option key={block.id} value={block.id}>{block.name}</option>)}
                                         </Form.Select>
                                     </div>
                                 </div>
@@ -687,18 +770,33 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 }}>Delete Item</Button>
                             </div>
                             <div className="justify-end">
-                                <Button type="submit" onClick={(e) => {
-                                e.preventDefault();
-                                // basically if we match any actual text
-                                if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, "")){
-                                    updateMaterial();
-                                }
-                                else setWarningVisible(true);
-                                }}>Submit</Button>
+                                <Button type="submit">Submit</Button>
                             </div>
                         </div>
                     </Form>
                     </Offcanvas.Body>
+                    <Modal show={updatePromptOpen} onHide={() => setUpdatePromptOpen(false)} centered>
+                        <Modal.Header closeButton>
+                            <Modal.Title>Update session material</Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Form.Group>
+                                <Form.Label>Student notification</Form.Label>
+                                <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                                    <option value="none">Do not notify students</option>
+                                    <option value="students">Prompt to notify students</option>
+                                    <option value="personal">Create a personal reminder</option>
+                                </Form.Select>
+                            </Form.Group>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button variant="secondary" onClick={() => setUpdatePromptOpen(false)}>Back</Button>
+                            <Button onClick={() => {
+                                void notificationOption;
+                                updateMaterial();
+                            }}>Save changes</Button>
+                        </Modal.Footer>
+                    </Modal>
         </Offcanvas>
     );
 }
@@ -715,9 +813,10 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
  * @param {(isEditOpen: Boolean) => void} props.setIsEditOpen - opens/closes the edit modal. We only open here.
  * @param {(materialId: Number) => void} props.setMaterialId - sets the id of the material we're working with.
  * @param {(defaultMaterialType: string) => void} props.setDefaultMaterialType - sets the default material type depending on where the user clicked. Used for the creation modal.
+ * @param {Array} props.blocks - the optional blocks used to order session material
  * @returns {React.ReactElement} the table in HTML
  */
-function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType } ) {
+function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, setIsEditOpen, setMaterialId, setDefaultMaterialType, blocks } ) {
     const [cols, setCols] = useState(Array.of(0,0,0,0,0,0,0));
     const allCols = useMemo(() => ["Topic/Lecture", "Class Activity", "Reading/Resources", "Projects & Practica", "Group Assignment", "Individual Assignment"], []);
     const [isPreviewMode, setIsPreviewMode] = useState(false);
@@ -757,7 +856,13 @@ function SessionTable( {sessionData, sessionNum, sessionDate, setIsCreateOpen, s
      * @returns raw html that can be fed into an editor
      */
     function getLabelContent(col, index) {
-        const labels = sessionData.filter(data => data.type === allCols[col] && data.sessionNum === sessionNum);
+        const labels = sessionData
+            .filter(data => data.type === allCols[col] && data.sessionNum === sessionNum)
+            .sort((a, b) => {
+                const aPosition = blocks.find(block => block.id === a.blockId)?.position ?? Number.MAX_SAFE_INTEGER;
+                const bPosition = blocks.find(block => block.id === b.blockId)?.position ?? Number.MAX_SAFE_INTEGER;
+                return aPosition - bPosition || a.id - b.id;
+            });
 
         if (index === -1)
             return labels.map(label => label.label).join('\n');

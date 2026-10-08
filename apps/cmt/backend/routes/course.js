@@ -249,7 +249,8 @@ router.post('/:templateId', async (req, res) => {
             include: {
                 sessions: {
                     include: {
-                        material: true
+                        material: true,
+                        blocks: true
                     }
                 },
                 Resource: true
@@ -324,6 +325,19 @@ router.post('/:templateId', async (req, res) => {
                         courseId: Number(newCourse.id)
                     },
                 });
+
+                const blockIds = new Map();
+                for (const block of (course.sessions[i]?.blocks ?? []).sort((a, b) => a.position - b.position)) {
+                    const copiedBlock = await prisma.sessionBlock.create({
+                        data: {
+                            name: block.name,
+                            status: toBeTemplate ? "NOT_STARTED" : block.status,
+                            position: block.position,
+                            sessionId: session.id
+                        }
+                    });
+                    blockIds.set(block.id, copiedBlock.id);
+                }
             
                 // Go through all of the session materials now and upload them
                 if (course.sessions[i]?.material.length > 0){
@@ -354,7 +368,8 @@ router.post('/:templateId', async (req, res) => {
                                 type: material.type,
                                 body: actualBody,
                                 label: actualLabel,
-                                active: material.active
+                                active: material.active,
+                                blockId: material.blockId ? blockIds.get(material.blockId) : null
                             }
                         })
                     })
