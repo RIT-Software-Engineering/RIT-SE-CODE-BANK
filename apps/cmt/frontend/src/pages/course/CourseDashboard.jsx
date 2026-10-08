@@ -23,6 +23,7 @@ export function CourseDashboard() {
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
     const [error, setError] = useState(null)
+    const [execState, setExecState] = useState(null);
 
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
@@ -32,10 +33,17 @@ export function CourseDashboard() {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
             })
+            setExecState(json.execState)
         }).catch(createErrorHandler("Failed to fetch course details.", setError)),
         [id]
     )
-    useEffect(() => void update(), [id, update])
+    useEffect(() => void update(), [id, update]);
+
+    async function startCourse(){
+        CMTJsonFetch('PUT', `course/${id}/start`)
+        .then(update)
+        .catch(createErrorHandler("Failed to start course.", setError))
+    }
 
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
@@ -75,6 +83,13 @@ export function CourseDashboard() {
                             )}
                         </div>
                     </div>
+                    
+                    {(!course.isTemplate && execState != null) 
+                    ? (execState === "notStarted") ?
+                    <Button onClick={startCourse}>Start Course</Button> 
+                    : <Button disabled>Course in Progress</Button> 
+                    : <></> 
+                    }
                     <div className="h-10"></div>
                     <ResourceManager courseId={course.id} />
                     <div className='mb-5 border-b mt-10'>
