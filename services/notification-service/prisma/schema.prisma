@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output = "./generated/client" // Prevent prisma from placing client at the root level
 }
 
 datasource db {
