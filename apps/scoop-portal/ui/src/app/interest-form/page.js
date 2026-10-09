@@ -29,6 +29,17 @@ function InterestFormPage() {
     const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
     const [errors, setErrors] = useState({});
     const [courseData, setCourseData] = useState([]);
+    const [users, setUsers] = useState([]);
+
+    useEffect(() => {
+    const fetchUsers = async () => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`);
+      const data = await res.json();
+      setUsers(data);
+    };
+
+    fetchUsers();
+  }, []);
 
     useEffect(() => {
         setCourseData([
@@ -108,6 +119,39 @@ function InterestFormPage() {
             console.error(err);
             setModalOpen(MODAL_STATUS.FAIL);
         }
+
+        //Checks if a user already has an account
+        if (users.filter((u) => u.email == formValues.ritEmail).length == 0) {
+            //Creates a new prospect user from the interest form data
+            try {
+                const user_id = formValues.ritEmail.split("@")[0];
+                const response = await fetch(
+                    process.env.NEXT_PUBLIC_API_URL + "/api/users",
+                    {
+                    method: "POST",
+                    body: JSON.stringify({
+                        id: user_id,
+                        fname: formValues.firstName,
+                        lname: formValues.lastName,
+                        email: formValues.ritEmail,
+                        type: "prospect",
+                        semester_group: "",
+                        project: "",
+                        active: "pending",
+                        last_login: "",
+                        prev_login: "",
+                    }),
+                    headers: { "Content-Type": "application/json" },
+                    }
+                );
+                if (!response.ok) throw new Error("Failed to create user");
+                return response.json();
+                } catch (error) {
+                console.error("Error creating prospect user:", error);
+                throw error;
+            }
+        }
+        
     };
 
     const closeModal = () => {

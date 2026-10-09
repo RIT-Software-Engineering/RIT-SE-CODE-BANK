@@ -121,35 +121,35 @@ export default function InterestFormDetailPage() {
   /**
    * Creates a new prospect user from the interest form data.
    */
-  async function createProspectUser(form) {
-    try {
-      const user_id = form.ritEmail.split("@")[0];
-      const response = await fetch(
-        process.env.NEXT_PUBLIC_API_URL + "/api/users",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            id: user_id,
-            fname: form.firstName,
-            lname: form.lastName,
-            email: form.ritEmail,
-            type: "prospect",
-            semester_group: "",
-            project: "",
-            active: "pending",
-            last_login: "",
-            prev_login: "",
-          }),
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!response.ok) throw new Error("Failed to create user");
-      return response.json();
-    } catch (error) {
-      console.error("Error creating prospect user:", error);
-      throw error;
-    }
-  }
+  // async function createProspectUser(form) {
+  //   try {
+  //     const user_id = form.ritEmail.split("@")[0];
+  //     const response = await fetch(
+  //       process.env.NEXT_PUBLIC_API_URL + "/api/users",
+  //       {
+  //         method: "POST",
+  //         body: JSON.stringify({
+  //           id: user_id,
+  //           fname: form.firstName,
+  //           lname: form.lastName,
+  //           email: form.ritEmail,
+  //           type: "prospect",
+  //           semester_group: "",
+  //           project: "",
+  //           active: "pending",
+  //           last_login: "",
+  //           prev_login: "",
+  //         }),
+  //         headers: { "Content-Type": "application/json" },
+  //       }
+  //     );
+  //     if (!response.ok) throw new Error("Failed to create user");
+  //     return response.json();
+  //   } catch (error) {
+  //     console.error("Error creating prospect user:", error);
+  //     throw error;
+  //   }
+  // }
 
   /**
    * Handles the logic for accepting an interest form.
@@ -157,7 +157,7 @@ export default function InterestFormDetailPage() {
   const handleAccept = async () => {
     try {
       await putInterestFormStatus("ACCEPTED");
-      await createProspectUser(interestForm);
+      // await createProspectUser(interestForm);
       setNotification({
         open: true,
         message: "Interest form accepted and prospect user created",
