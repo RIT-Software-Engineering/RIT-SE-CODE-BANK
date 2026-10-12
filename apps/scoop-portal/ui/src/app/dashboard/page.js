@@ -179,6 +179,17 @@ const workflows = [
     ],
   },
   {
+    title: "Prospective Students",
+    steps: [
+      {
+        title: "Status",
+        roles: ["prospect","applicant"],
+        description: "Check the status of your interest form or application.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/status",
+      },
+    ],
+  },
+  {
     title: "Resources",
     steps: [
       {
@@ -343,6 +354,12 @@ export default function WorkflowDashboard() {
               Congratulations! You have a pending SCOOP offer awaiting your response.
             </Typography>
           </Alert>
+        )}
+
+        {hasPendingOffer && (
+          <Divider>
+
+          </Divider>
         )}
 
         <Grid container spacing={4} direction="column">

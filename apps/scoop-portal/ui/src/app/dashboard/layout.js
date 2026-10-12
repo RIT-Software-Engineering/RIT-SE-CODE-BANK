@@ -2,7 +2,7 @@ import ProtectedRoute from "../utils/ProtectedRoute";
 
 export default function dashboardLayout({ children }) {
   return (
-    <ProtectedRoute requiredRoles={["scoopdinator", "scoopervisor", "scooployee", "advisor", "applicant"]}>
+    <ProtectedRoute requiredRoles={["scoopdinator", "scoopervisor", "scooployee", "advisor", "applicant", "prospect"]}>
         {children}
     </ProtectedRoute>
   );
