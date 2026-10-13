@@ -157,6 +157,29 @@ model Holiday {
   @@map("holidays")
 }
 
+// notification entity
+model Notification {
+  id            Int         @id @default(autoincrement())
+  courseId      Int
+  event         String      // event for notif templates: class_cancelled, holiday_updated, materials_moved, etc    
+  triggerId     Int?        // the thing the notif is about (holiday, session, course, material, etc). null if it was deleted
+  context       Json        // details of the thing the notification is about - shape depends on templates. 
+  note          String?     // aditional information, optional
+  recipients    Json        // Json array of emails
+  status        NotificationStatus @default(SCHEDULED)
+  sendAt        DateTime    
+  createdAt     DateTime    @default(now())
+
+  @@index([courseId])
+}
+
+enum NotificationStatus {
+  SCHEDULED
+  SENT 
+  FAILED 
+  CANCELLED
+}
+
 enum tbteamset_status {
   DRAFT
   PUBLISHED
