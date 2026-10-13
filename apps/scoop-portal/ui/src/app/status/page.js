@@ -3,8 +3,66 @@ import { useRouter } from "next/navigation"
 import {Box, Container, Grid, IconButton, Typography, Paper} from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import Header from "@components/Header"
+import { useState, useEffect, useMemo } from "react"
+import { useUser } from "../utils/user-context/page";
 
 export default function Status() {
+
+    const [interestForms, setInterestForms] = useState([]);
+    // const [filteredInterestForms, setFilteredInterestForms] = useState([]);
+    const { user } = useUser();
+    const [interestFormStatus, setInterestFormStatus] = useState("");
+
+    useEffect(() => {
+        const fetchForms = async () => {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interestform`);
+            const data = await res.json();
+            setInterestForms(data);
+          } catch (err) {
+            console.error("Failed to fetch interest forms:", err);
+          }
+        };
+        fetchForms();
+      }, []);
+
+    useEffect(() => {
+        // filteredForms();
+        // console.log(filteredInterestForms);
+        getText();
+    });
+
+    // const filteredForms = async() => {
+    //     const filtered = interestForms.filter((form) => {
+        
+    //     const matched = form.ritEmail?.toLowerCase().includes(user.ritEmail);
+    //     if (!matched) return false;   
+    //     return true;
+    //     });
+    //     setFilteredInterestForms(filtered);
+    // .filter((form) => {form.ritEmail === user.ritEmail});
+    //   };
+
+    const getText = async () => {
+        const filteredInterestForms = interestForms.filter((form) => form.ritEmail === user.email);
+        const acceptedInterestForms = filteredInterestForms.filter((form) => form.status === "ACCEPTED");
+        console.log(acceptedInterestForms);
+        if (filteredInterestForms.length > 0) {
+
+            if (acceptedInterestForms.length > 0) {
+                setInterestFormStatus("Accepted");
+            }
+
+            else {
+                setInterestFormStatus("Submitted");
+            }
+        }
+
+        else {
+            setInterestFormStatus("Not submitted");
+        }
+    }
+
     const router = useRouter();
     return (
         <Box>
@@ -89,7 +147,7 @@ export default function Status() {
                                     color: (theme) => theme.palette.text.secondary,
                                     whiteSpace: "normal",
                                     }}>
-                                    Submitted
+                                    {interestFormStatus}
                                     </Typography>
                                 </Box>
                                 <Box>
