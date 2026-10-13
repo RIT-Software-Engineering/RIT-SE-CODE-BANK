@@ -1,6 +1,7 @@
 "use client"
 import { useRouter } from "next/navigation"
-import {Box, Container, Grid, IconButton, Typography, Paper} from "@mui/material"
+import Link from "next/link";
+import {Box, Container, Grid, IconButton, Typography, Paper, useTheme} from "@mui/material"
 import ArrowBackIcon from "@mui/icons-material/ArrowBack"
 import Header from "@components/Header"
 import { useState, useEffect, useMemo } from "react"
@@ -9,9 +10,11 @@ import { useUser } from "../utils/user-context/page";
 export default function Status() {
 
     const [interestForms, setInterestForms] = useState([]);
+    const [applications, setApplications] = useState([]);
     // const [filteredInterestForms, setFilteredInterestForms] = useState([]);
     const { user } = useUser();
     const [interestFormStatus, setInterestFormStatus] = useState("");
+    const [applicationStatus, setApplicationStatus] = useState("");
 
     useEffect(() => {
         const fetchForms = async () => {
@@ -24,29 +27,27 @@ export default function Status() {
           }
         };
         fetchForms();
+        const fetchApps = async () => {
+            try {
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/application`);
+                const data = await res.json();
+                setApplications(data);
+            } catch (err) {
+                console.error("Failed to fetch applications:", err);
+            }
+        };
+        fetchApps();
       }, []);
 
     useEffect(() => {
-        // filteredForms();
-        // console.log(filteredInterestForms);
-        getText();
+        getInterestFormStatus();
+        getApplicationStatus();
     });
 
-    // const filteredForms = async() => {
-    //     const filtered = interestForms.filter((form) => {
-        
-    //     const matched = form.ritEmail?.toLowerCase().includes(user.ritEmail);
-    //     if (!matched) return false;   
-    //     return true;
-    //     });
-    //     setFilteredInterestForms(filtered);
-    // .filter((form) => {form.ritEmail === user.ritEmail});
-    //   };
-
-    const getText = async () => {
+    const getInterestFormStatus = async () => {
         const filteredInterestForms = interestForms.filter((form) => form.ritEmail === user.email);
         const acceptedInterestForms = filteredInterestForms.filter((form) => form.status === "ACCEPTED");
-        console.log(acceptedInterestForms);
+        
         if (filteredInterestForms.length > 0) {
 
             if (acceptedInterestForms.length > 0) {
@@ -62,6 +63,63 @@ export default function Status() {
             setInterestFormStatus("Not submitted");
         }
     }
+
+    const getApplicationStatus = async () => {
+        const filteredApplications = applications.filter((application) => application.ritEmail === user.email);
+        const acceptedApplications = filteredApplications.filter((application) => application.status === "APPROVED");
+
+        if (filteredApplications.length > 0) {
+
+            if (acceptedApplications.length > 0) {
+                setApplicationStatus("Approved");
+            }
+
+            else {
+                setApplicationStatus("Submitted");
+            }
+        }
+
+        else {
+            setApplicationStatus("Not submitted");
+        }
+    }
+
+    const NavButton = ({ href, children }) => {
+        const theme = useTheme();
+        const baseStyle = {
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: theme.palette.primary.main,
+            color: theme.palette.primary.contrastText,
+            borderRadius: 0,
+            padding: "8px 24px",
+            fontWeight: 600,
+            minWidth: "100px",
+            textAlign: "center",
+            textDecoration: "none",
+            cursor: "pointer",
+            transition: "background-color 300ms cubic-bezier(0.4, 0, 0.2, 1), border-color 300ms cubic-bezier(0.4, 0, 0.2, 1)",
+            boxShadow: "none",
+        };
+
+        const [hover, setHover] = useState(false);
+
+        return (
+            <Link
+            href={href}
+            role="button"
+            style={{
+                ...baseStyle,
+                backgroundColor: hover ? "#000000" : theme.palette.primary.main,
+            }}
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+            >
+            {children}
+            </Link>
+        );
+    };
 
     const router = useRouter();
     return (
@@ -170,7 +228,7 @@ export default function Status() {
                                     color: (theme) => theme.palette.text.secondary,
                                     whiteSpace: "normal",
                                     }}>
-                                    Not Submitted
+                                    {applicationStatus}
                                     </Typography>
                                 </Box>
                                 <Typography
@@ -180,12 +238,18 @@ export default function Status() {
                                     whiteSpace: "normal",
                                 }}
                                 >
-                                Step Description
+                                Once you have submitted an interest form, an advisor will review it and accept or reject it.
+                                Once an interest form has been accepted, you can submit an application to join the SCOOP Program.
                                 </Typography>
                       </Box>
                         </Box>
                     </Paper>
+                    <Box gap={2} sx={{ display: "flex", justifyContent: "center", flexWrap: "wrap", mb: 6 }}>
+                        <NavButton href="/application">Apply Now</NavButton>
+                        <NavButton href="/interest-form">Interest Form</NavButton>
+                    </Box>
                 </Grid>
+                
             </Container>
         </Box>
     )
