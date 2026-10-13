@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { ReadOnlyEditor } from "../components/RichTextEditor/RichTextEditor.jsx";
 import { CMTJsonFetch, CMTJsonFetchRaw } from "../utils/api.js";
 import { createErrorHandler } from "../utils/error.jsx";
@@ -42,6 +42,7 @@ export default function CourseWebsitePage() {
         const combined = json.sessions.map((session, index) => ({
           ...session,
           materials: json.sessionMaterials[index]?.material || [],
+          blocks: json.sessionBlocks?.[index]?.blocks || [],
         })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
 
@@ -91,27 +92,22 @@ export default function CourseWebsitePage() {
   
 
   const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName, courseRows) => {
+    const showBlockColumn = sessions.some(session => (session.blocks || []).length > 0);
     let rows;
     if (isWeeks && weeks)
       rows = await Promise.all(
         weeks
           .map((week) =>
-            generateWeekRowHTML(week, visibleColumns)
+            generateWeekRowHTML(week, visibleColumns, showBlockColumn)
           )
       );
     else
       rows = await Promise.all(
-        // sessions
-        //   .sort((a, b) => a.sessionNum - b.sessionNum)
-        //   .map(session =>
-        //     generateSessionRowHTML(session, visibleColumns)
-        //   )
         courseRows.map(
           (row) => row.type === "session" ? 
-            generateSessionRowHTML(row.data, visibleColumns)
+            generateSessionRowHTML(row.data, visibleColumns, showBlockColumn)
           : generateHolidayRowHTML(row.data, visibleColumns.length)
         )
-
       );
 
     return `
@@ -195,6 +191,15 @@ export default function CourseWebsitePage() {
           font-weight: bold;
           font-size: 1.15em;
         }
+
+        tr.canceled {
+          background-color: #fef2f2;
+          color: #991b1b;
+        }
+
+        .canceled-label {
+          font-weight: bold;
+        }
       </style>
     </head>
     <body>
@@ -214,6 +219,7 @@ export default function CourseWebsitePage() {
         <thead>
           <tr>
             <th>${isWeeks ? 'Week' : 'Session'}</th>
+            ${showBlockColumn ? '<th>Block</th>' : ''}
             ${visibleColumns.map(col => `<th>${col}</th>`).join("")}
           </tr>
         </thead>
@@ -329,6 +335,7 @@ export default function CourseWebsitePage() {
       (session.materials || []).some(m => m.type === col && m.active)
     )
   );
+  const showBlockColumn = sessions.some(session => (session.blocks || []).length > 0);
 
   return (
     <div>
@@ -389,6 +396,9 @@ export default function CourseWebsitePage() {
           <thead className="[&>tr>th]:text-white [&>tr>th]:font-bold [&>tr>th]:bg-[#0484c9]">
             <tr>
               <th className="border border-blue-300 p-3 text-center w-[140px]">{isWeeks ? 'Week' : 'Session'}</th>
+                {showBlockColumn && (
+                  <th className="border border-blue-300 p-3 text-center">Block</th>
+                )}
                 {visibleColumns.map(col => (
                   <th key={col} className="border border-blue-300 p-3 text-center">
                     {col}
@@ -397,7 +407,6 @@ export default function CourseWebsitePage() {
             </tr>
           </thead>
           <tbody>
-            {/* display holidays on the course schedule */}
             {!isWeeks ? courseRows
               .map((row, index) => {
                 if (row.type === "holiday") {
@@ -419,80 +428,114 @@ export default function CourseWebsitePage() {
                 }
 
                 const session = row.data;
-                const materials = session.materials || [];
-                const grouped = visibleColumns.map(col => materials.filter(m => m.type === col && m.active));
-                return (
-                  <tr key={session.id} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>   
+                const scheduleRows = getSessionScheduleRows(session);
+                const rowClass = session.canceled ? "bg-red-50 text-red-800" : index % 2 === 0 ? "bg-white-100" : "bg-gray-100";
+                return scheduleRows.map((scheduleRow, rowIndex) => (
+                  <tr key={scheduleRow.key} className={rowClass}>
+                    {rowIndex === 0 && (
+                      <td rowSpan={scheduleRows.length} className="border border-blue-300 p-3 text-center">
+                        <p className="font-semibold">{session.sessionNum}</p>
+                        <p>{session?.date ?? "TBD"}</p>
+                        {session.canceled && <p className="font-semibold">Canceled - No class</p>}
+                      </td>
+                    )}
 
-                    <td className="border border-blue-300 p-3 text-center">
-                      <p className="font-semibold">{session.sessionNum}</p>
-                      <p>{session?.date ?? "TBD"}</p>
-                    </td>
+                    {showBlockColumn && (
+                      <td className="border border-blue-300 p-3 align-top font-semibold">
+                        {scheduleRow.name || "Unassigned"}
+                      </td>
+                    )}
 
-                    {grouped.map((colItems, colIndex) => (
-                      <td key={colIndex} className="border border-blue-300 p-3 align-top">
-                        {colItems.map(item => (
+                    {visibleColumns.map(col => (
+                      <td key={col} className="border border-blue-300 p-3 align-top">
+                        {scheduleRow.materials.filter(item => item.type === col).map(item => (
                           <div key={item.id} className="mb-1">
                             <ReadOnlyEditor value={item.label} />
                           </div>
                         ))}
                       </td>
                     ))}
-                </tr>
-                );
+                  </tr>
+                ));
               }) : 
 
               (weeks? weeks.flatMap(([, items], index) => {
                 const week = items.filter(item => item.type === "session").map(item => item.data);
                 const weekHolidays = items.filter(item => item.type === "holiday").map(item => item.data);
-                
-                const materials = week.flatMap(session => session?.materials);
-                const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
-                console.log(materials.length);
-                return (<>
-                <tr key={`week-${index}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
-                  <td rowSpan={(weekHolidays.length > 0) ? 2 : 1} className="border border-orange-300 p-3 text-center text-lg">
-                    <p className="font-semibold p">{index+1}</p>
+                const canceledSessions = week.filter(session => session?.canceled);
+                const totalColumns = visibleColumns.length + (showBlockColumn ? 1 : 0);
+
+                const scheduleRows = week.flatMap(session =>
+                  getSessionScheduleRows(session).map(row => ({
+                    ...row,
+                    name: `Session ${session.sessionNum}: ${row.name || "Unassigned"}`
+                  }))
+                );
+
+                const weekCell = (
+                  <td className = "border border-blue-300 p-3 text-center" rowSpan={Math.max(scheduleRows.length, 1) + (weekHolidays.length > 0? 1 : 0)}>
+                    <p className="font-semibold">{index+1}</p>
                     <small>
-                      <span>{week[0]?.date ?? "TBD"} <br/> - </span>
+                      <span>{week[0]?.date ?? "TBD"} -</span>
                       <p>{week[week.length-1]?.date ?? "TBD"}</p>
                     </small>
+                    {canceledSessions.map(session =>
+                      <p key={session.id} className="font-semibold text-red-800">
+                        Session {session.sessionNum}: Canceled - No class
+                      </p>
+                    )}
                   </td>
-                    {materials.length > 0 ?
-                      grouped.map((colItems, colIndex) => (
-                          <td key={colIndex} className="border border-orange-300 p-3 align-top text-lg">
-                            {colItems.map(item => (
+                );
+
+                return (<Fragment key={`week-${index}`}>
+                  {scheduleRows.length === 0 ? (
+                    // week with holiday but no class
+                    <tr className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                      {weekCell}
+                      <td colSpan={totalColumns} className="border border-blue-300 p-3">
+                        <p className="text-center text-lg font-semibold">No class meeting this week</p>
+                      </td>
+                    </tr>
+                  ) : scheduleRows.map((scheduleRow, rowIndex) => (
+                    <tr key={`week-${index}-${scheduleRow.key}`} className={index % 2 === 0 ? "bg-white-100" : "bg-gray-100"}>
+                      {rowIndex === 0 && weekCell}
+
+                      {showBlockColumn && (
+                        <td className="border border-blue-300 p-3 align-top font-semibold">
+                          {scheduleRow.name}
+                        </td>
+                      )}
+
+                      {visibleColumns.map(col => (
+                        <td key={col} className="border border-blue-300 p-3 align-top">
+                          {scheduleRow.materials.filter(item => item.type === col).map(item => (
                             <div key={item.id} className="mb-1">
                               <ReadOnlyEditor value={item.label} />
                             </div>
                           ))}
-                          </td>
-                      )) :
-                      <td colSpan={visibleColumns.length}>
-                        <p className="text-center text-lg font-semibold">No class meeting this week</p>
                         </td>
-                    }
-                </tr>
-                {weekHolidays.length > 0 && (
-                  <tr key={`week-${index}-holiday`} className="bg-orange-100">
-                    <td colSpan={visibleColumns.length} className="border border-orange-300 p-3 text-center">
-                      {weekHolidays.map(holiday => (
-                        <p key={holiday.id} className="mb-1 text-lg font-bold">
-                          {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
-                        </p>
                       ))}
-                    </td>
-                  </tr>
-                )}
-                </>)
+                    </tr>
+                  ))}
+
+                  {weekHolidays.length > 0 && (
+                    <tr className="bg-orange-100">
+                      <td colSpan={totalColumns} className="border border-orange-300 p-3 text-center">
+                        {weekHolidays.map(holiday => (
+                          <p key={holiday.id} className="mb-1 text-lg font-bold">
+                            {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+                          </p>
+                        ))}
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>);
               }) :
               <Alert variant="danger">
                 <p>You have not selected days in your course, so we cannot display the site in weeks.</p>
                 <p>If you would like to see your course in weeks, please finish the first multi-step to continue.</p>
               </Alert>
-            )
-
-            }
+            )}
           </tbody>
         </table>
       )}
@@ -527,54 +570,31 @@ function combineSessionsAndHolidays(sessions, holidays){
   ].sort((a, b) => a.date - b.date)
 }
 
-// Generates the sessions rows for the downloaded site
-async function generateSessionRowHTML(session, visibleColumns) {
-  const materials = session.materials || [];
+function getSessionScheduleRows(session) {
+  const materials = (session.materials || []).filter(material => material.active);
+  const blocks = [...(session.blocks || [])].sort((a, b) => a.position - b.position || a.id - b.id);
 
-  const grouped = visibleColumns.map(col =>
-    materials.filter(m => m.type === col && m.active)
-  );
+  if (blocks.length === 0) {
+    return [{key: `session-${session.id}`, name: null, materials}];
+  }
 
-  const columnsHTML = await Promise.all(
-    grouped.map(async colItems => {
-      const itemsHTML = await Promise.all(
-        colItems.map(async item => {
-          // If an item has a body rewrite any resource links in the body and encoded it.
-          // Then whenever the title is clicked open a new page with the body content
-          if (item.body) {
-            const rewrittenBody = await rewriteResourceLinks(item.body);
-            const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
-            const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+  const blockIds = new Set(blocks.map(block => block.id));
+  const rows = blocks.map(block => ({
+    key: `block-${block.id}`,
+    name: block.name,
+    materials: materials.filter(material => material.blockId === block.id)
+  }));
+  const unassignedMaterials = materials.filter(material => !blockIds.has(material.blockId));
 
-            return `<a href="#" onclick="openItem('${encoded}'); return false;">
-              ${item.label}
-            </a>`;
-          }
+  if (unassignedMaterials.length > 0) {
+    rows.push({
+      key: `session-${session.id}-unassigned`,
+      name: "Unassigned",
+      materials: unassignedMaterials
+    });
+  }
 
-          // Rewrite resource links in title
-          const rewrittenLabel = await rewriteResourceLinks(item.label);
-
-          if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
-            return `<span>${item.label}</span>`;
-          }
-
-          return `<span>${rewrittenLabel}</span>`;
-        })
-      );
-
-      return `<td>${itemsHTML.join("")}</td>`;
-    })
-  );
-
-  return `
-    <tr>
-      <td>
-      <p><strong>${session.sessionNum}</strong></p>
-      <p>${session?.date ?? "TBD"}</p>
-      </td>
-      ${columnsHTML.join("")}
-    </tr>
-  `;
+  return rows;
 }
 
 // Generates the holiday rows for the downloaded site
@@ -593,74 +613,139 @@ async function generateHolidayRowHTML(holiday, holidayWidth) {
   `
 }
 
-async function generateWeekRowHTML(weekItem, visibleColumns) {
+async function generateWeekRowHTML(weekItem, visibleColumns, showBlockColumn) {
   const weekIndex = weekItem[0];
   const week = weekItem[1].filter(row => row.type === "session").map(row => row.data);
   const weekHolidays = weekItem[1].filter(row => row.type === "holiday").map(row => row.data);
-  const materials = week.flatMap(session => session?.materials);
-  const grouped = visibleColumns.map(col => materials?.filter(m => m.type === col && m.active));
+  const canceledSessions = week.filter(session => session?.canceled);
+  const totalColumns = visibleColumns.length + (showBlockColumn ? 1 : 0);
 
-  let columnsHTML;
-  if (materials.length === 0){ 
-    columnsHTML = [`<td colSpan=${visibleColumns.length}><p class="no-class">No class meeting this week</p></td>`];
-  } else
-    columnsHTML = await Promise.all(
-      grouped.map(async (colItems, colIndex) => {
-        const itemsHTML = await Promise.all(
-          colItems.map(async item => {
-            // If an item has a body rewrite any resource links in the body and encoded it.
-            // Then whenever the title is clicked open a new page with the body content
-            if (item.body) {
-              const rewrittenBody = await rewriteResourceLinks(item.body);
-              const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
-              const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+  const scheduleRows = week.flatMap(session =>
+    getSessionScheduleRows(session).map(row => ({
+      ...row,
+      name: `Session ${session.sessionNum}: ${row.name || "Unassigned"}`
+    }))
+  );
 
-              return `<a href="#" onclick="openItem('${encoded}'); return false;">
-                ${item.label}
-              </a>`;
-            }
+  // week cell spans every session row and holiday row if it falls in that week
+  const spanCount = Math.max(scheduleRows.length, 1) + (weekHolidays.length > 0 ? 1 : 0);
+  const weekCell = `
+    <td rowspan="${spanCount}">
+      <p><strong>${weekIndex+1}</strong></p>
+      <small>
+        <span>${week[0]?.date ?? "TBD"} - </span>
+        <p>${week[week.length-1]?.date ?? "TBD"}</p>
+      </small>
+      ${canceledSessions.map(session =>
+        `<p class="canceled-label">Session ${session.sessionNum}: Canceled - No class</p>`
+      ).join("")}
+    </td>
+  `;
 
-            // Rewrite resource links in title
-            const rewrittenLabel = await rewriteResourceLinks(item.label);
+  let sessionRowsHTML;
+  if (scheduleRows.length === 0){
+    sessionRowsHTML = `<tr>${weekCell}<td colSpan="${totalColumns}"><p class="no-class">No class meeting this week</p></td></tr>`;
+  } else{
+    const rowsHTML = await Promise.all(scheduleRows.map(async (scheduleRow, rowIndex) => {
+      const columnsHTML = await generateMaterialColumnsHTML(scheduleRow.materials, visibleColumns);
+      const blockCell = showBlockColumn
+        ? `<td><strong>${escapeHTML(scheduleRow.name)}</strong></td>`
+        : "";
 
-            if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
-              return `<span>${item.label}</span>`;
-            }
+      return `
+        <tr>
+          ${rowIndex === 0 ? weekCell : ""}
+          ${blockCell}
+          ${columnsHTML}
+        </tr>
+      `;
+    }));
 
-            return `<span>${rewrittenLabel}</span>`;
-          })
-          
-        );
-        return `<td>${itemsHTML.join("")}</td>`
-      })
-    );
+    sessionRowsHTML = rowsHTML.join("");
+  }
 
   const holidayHTML = weekHolidays.length > 0
     ? `
       <tr class="border-orange">
-        <td class="bg-orange" colSpan=${visibleColumns.length}>
+        <td class="bg-orange" colSpan=${totalColumns}>
           ${weekHolidays.map(holiday => 
             `<p><strong>
-              ${holiday.name} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+              ${escapeHTML(holiday.name)} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
             </strong></p>`
           ).join("")}
         </td>
       </tr>`
     : "";
 
-  return `
-    <tr>
-      <td rowSpan=${weekHolidays.length > 0 ? 2 : 1}>
-      <p><strong>${weekIndex+1}</strong></p>
-      <small>
-      <span>${week[0]?.date ?? "TBD"} - </span>
-      <p>${week[week.length-1]?.date ?? "TBD"}</p>
-      </small>
-      </td>
-      ${columnsHTML.join("")}
-    </tr>
-    ${holidayHTML}
-  `;
+  return sessionRowsHTML + holidayHTML;
+}
+
+// Generates the sessions rows for the downloaded site
+async function generateSessionRowHTML(session, visibleColumns, showBlockColumn) {
+  const scheduleRows = getSessionScheduleRows(session);
+  const rowsHTML = await Promise.all(scheduleRows.map(async (scheduleRow, rowIndex) => {
+    const columnsHTML = await generateMaterialColumnsHTML(scheduleRow.materials, visibleColumns);
+    const sessionCell = rowIndex === 0 ? `
+      <td rowspan="${scheduleRows.length}">
+        <p><strong>${session.sessionNum}</strong></p>
+        <p>${session?.date ?? "TBD"}</p>
+        ${session.canceled ? '<p class="canceled-label">Canceled - No class</p>' : ''}
+      </td>` : "";
+    const blockCell = showBlockColumn
+      ? `<td><strong>${escapeHTML(scheduleRow.name || "Unassigned")}</strong></td>`
+      : "";
+
+    return `
+      <tr${session.canceled ? ' class="canceled"' : ''}>
+        ${sessionCell}
+        ${blockCell}
+        ${columnsHTML}
+      </tr>
+    `;
+  }));
+
+  return rowsHTML.join("");
+}
+
+async function generateMaterialColumnsHTML(materials, visibleColumns) {
+  const columnsHTML = await Promise.all(visibleColumns.map(async col => {
+    const itemsHTML = await Promise.all(
+      materials.filter(item => item.type === col).map(generateMaterialHTML)
+    );
+    return `<td>${itemsHTML.join("")}</td>`;
+  }));
+
+  return columnsHTML.join("");
+}
+
+async function generateMaterialHTML(item) {
+  // Material bodies open on a separate overlay in the generated website.
+  if (item.body) {
+    const rewrittenBody = await rewriteResourceLinks(item.body);
+    const fullHtml = `<!DOCTYPE html><html><body>${rewrittenBody}</body></html>`;
+    const encoded = btoa(unescape(encodeURIComponent(fullHtml)));
+
+    return `<a href="#" onclick="openItem('${encoded}'); return false;">
+      ${item.label}
+    </a>`;
+  }
+
+  const rewrittenLabel = await rewriteResourceLinks(item.label);
+
+  if (rewrittenLabel === item.label && ![...item.label.matchAll(/href="([^"]*)"/g)].length) {
+    return `<span>${item.label}</span>`;
+  }
+
+  return `<span>${rewrittenLabel}</span>`;
+}
+
+function escapeHTML(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
 // Helper function to rewrite the resource links from api calls to relatives paths
