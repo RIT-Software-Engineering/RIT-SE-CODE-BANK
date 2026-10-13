@@ -1,5 +1,6 @@
 import express from 'express';
 import * as notificationClient from '../utils/notifications.js';
+import {addNotification, sendDueNotifications } from '../utils/notifier.js';
 
 // server/routing/notifications_api.js
 const router = express.Router();
@@ -12,6 +13,38 @@ function requireUser(req, res) {
     }
     return req.user;
 }
+
+/**
+ * POST /api/cmt/notifications/notify
+ */
+router.post('/notify', async (req, res) => {
+    const user = requireUser(req, res);
+    const {courseId, details} = req.body;
+
+    if (!user) return null;
+    if (!courseId || !details) {
+        return res.status(400).json({error: 'Missing required fields'});
+    }
+    await addNotification(courseId, details);
+    await sendDueNotifications(user.uid, courseId);
+
+    res.json({success: true});
+});
+
+/**
+ * POST /api/cmt/notifications/send-due
+ * Call this to check for and send due notifications
+ */
+router.post('/send-due', async (req, res) => {
+    const user = requireUser(req, res);
+    const {courseId} = req.body;
+    if (!user) return null;
+
+    await sendDueNotifications(user.uid, courseId);
+    res.json({
+        success: true
+    });
+});
 
 // GET /api/notifications/preferences/:appId/:identifier
 router.get('/preferences/:appId/:identifier', async (req, res) => {
