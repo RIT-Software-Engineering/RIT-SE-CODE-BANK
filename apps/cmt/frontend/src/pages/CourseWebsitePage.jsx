@@ -45,18 +45,6 @@ export default function CourseWebsitePage() {
           blocks: json.sessionBlocks?.[index]?.blocks || [],
         })).sort((a, b) => a.sessionNum - b.sessionNum);
         setSessions(combined);
-
-        // // AI-generated code
-        // if (courses.find(c => c.id === selectedCourse)?.days)
-        //   setWeeks(combined.reduce((acc, item, index) => {
-        //     const group = Math.floor(index / courses.find(c => c.id === selectedCourse)?.days?.split(", ")?.length);
-        //     if (!acc[group]) acc[group] = [];
-        //     acc[group].push(item);
-        //     return acc;
-        //   }, []));
-        // else
-        //   setWeeks(null);
-
       }).catch(async error => {
         console.error("Error fetching sessions:", error);
         setSessions([]);
@@ -90,9 +78,10 @@ export default function CourseWebsitePage() {
     return [...courseWeeks.entries()].sort((a, b) => a[0] - b[0]);
   }, [sessions, holidays, selectedCourseObj])
   
-
   const generateCourseHTML = async (course, sessions, weeks, isWeeks, syllabusName, courseRows) => {
     const showBlockColumn = sessions.some(session => (session.blocks || []).length > 0);
+    const totalColumns = visibleColumns.length + (showBlockColumn ? 1 : 0);
+
     let rows;
     if (isWeeks && weeks)
       rows = await Promise.all(
@@ -106,7 +95,7 @@ export default function CourseWebsitePage() {
         courseRows.map(
           (row) => row.type === "session" ? 
             generateSessionRowHTML(row.data, visibleColumns, showBlockColumn)
-          : generateHolidayRowHTML(row.data, visibleColumns.length)
+          : generateHolidayRowHTML(row.data, totalColumns)
         )
       );
 
@@ -174,16 +163,25 @@ export default function CourseWebsitePage() {
           background-color: #f3f4f6;
         }
 
-        .bg-orange {
-          background-color: #ffedd5;
-        }
-
-        .border-orange td {
+        .holiday-row td{
           border: 1px solid #fdba74;
+          background-color: #ffedd5;
+          font-size: 1.125rem;
+          line-height: 1.25rem;
+          padding: 0.75rem;
+          text-align: center;
         }
 
-        .bg-orange p{
-          font-size: 1.15em;
+        .holiday-cell-wide{
+          vertical-align: top;
+        }
+
+        .holiday-cell-wide .label{
+          font-size: 1.875rem;
+        }
+
+        .holiday-cell-wide .date-range{
+          font-size: 1.25rem;
         }
 
         .no-class {
@@ -336,6 +334,7 @@ export default function CourseWebsitePage() {
     )
   );
   const showBlockColumn = sessions.some(session => (session.blocks || []).length > 0);
+  const totalColumns = visibleColumns.length + (showBlockColumn ? 1 : 0);
 
   return (
     <div>
@@ -411,17 +410,17 @@ export default function CourseWebsitePage() {
               .map((row, index) => {
                 if (row.type === "holiday") {
                   return (
-                    <tr key={`holiday-${row.data.id}`} className={index % 2 === 0 ? "bg-orange-100" : "bg-orange-100"}>
-                      <td className="border border-orange-300 p-3 text-center text-lg">
-                        <p className="font-bold">Break</p>
-                        <p className="font-bold">{row.data.date?.split('T')[0] ?? "TBD"}</p>
+                    <tr key={`holiday-${row.data.id}`} className="bg-orange-100">
+                      <td className="border border-orange-300 p-3 text-center text-lg font-bold">
+                        <p>Break</p>
+                        <p>{row.data.date?.split('T')[0] ?? "TBD"}</p>
                       </td>
-                      <td colSpan={visibleColumns.length} className="border border-orange-300 p-3 align-top text-lg">
-                        <p className="font-bold text-center text-3xl">{row.data.name}</p>
-                        <p className="font-bold text-center text-xl">
+                      <td colSpan={totalColumns} className="border border-orange-300 p-3 text-center text-lg align-top">
+                        <p className="font-bold text-3xl">{row.data.name}</p>
+                        <p className="font-bold text-xl">
                           {row.data.endDate ? `${(row.data.date?.split('T')[0]).replaceAll('-', '/')} - ${row.data.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
                         </p>
-                        <p className="text-center text-medium">No class meeting</p>
+                        <p>No class meeting</p>
                       </td>
                     </tr>
                   );
@@ -463,7 +462,6 @@ export default function CourseWebsitePage() {
                 const week = items.filter(item => item.type === "session").map(item => item.data);
                 const weekHolidays = items.filter(item => item.type === "holiday").map(item => item.data);
                 const canceledSessions = week.filter(session => session?.canceled);
-                const totalColumns = visibleColumns.length + (showBlockColumn ? 1 : 0);
 
                 const scheduleRows = week.flatMap(session =>
                   getSessionScheduleRows(session).map(row => ({
@@ -523,7 +521,7 @@ export default function CourseWebsitePage() {
                       <td colSpan={totalColumns} className="border border-orange-300 p-3 text-center">
                         {weekHolidays.map(holiday => (
                           <p key={holiday.id} className="mb-1 text-lg font-bold">
-                            {holiday.name} : {holiday.date.split('T')[0]}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+                            {holiday.name}: {holiday.date.split('T')[0].replaceAll('-', '/')}{holiday.endDate ? ` - ${holiday.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
                           </p>
                         ))}
                       </td>
@@ -600,14 +598,15 @@ function getSessionScheduleRows(session) {
 // Generates the holiday rows for the downloaded site
 async function generateHolidayRowHTML(holiday, holidayWidth) {
   return `
-    <tr class="border-orange">
-      <td class="bg-orange">
-        <p><strong>No Session</strong></p>
-        <p>${holiday?.date ?? "TBD"}</p>
+    <tr class="holiday-row">
+      <td>
+        <p><strong>Break</strong></p>
+        <p><strong>${(holiday?.date).split('T')[0] ?? "TBD"}</strong></p>
       </td>
-      <td class="bg-orange" colspan=${holidayWidth}>
-        <p><strong>${holiday.name}</strong></p>
-        <p>${(holiday.date).split('T')[0]}${holiday.endDate ? ` - ${(holiday.endDate).split('T')[0]}` : ""}</p>
+      <td class="holiday-cell-wide" colspan=${holidayWidth}>
+        <p class="label"><strong>${holiday.name}</strong></p>
+        <p class="date-range"><strong>${holiday.endDate ? `${(holiday.date).split('T')[0].replaceAll('-', '/')} - ${(holiday.endDate).split('T')[0].replaceAll('-', '/')}` : ""}</strong></p>
+        <p>No class meeting</p>
       </td>
     </tr>
   `
@@ -666,11 +665,11 @@ async function generateWeekRowHTML(weekItem, visibleColumns, showBlockColumn) {
 
   const holidayHTML = weekHolidays.length > 0
     ? `
-      <tr class="border-orange">
-        <td class="bg-orange" colSpan=${totalColumns}>
+      <tr class="holiday-row">
+        <td class="holiday-cell-wide" colSpan=${totalColumns}>
           ${weekHolidays.map(holiday => 
             `<p><strong>
-              ${escapeHTML(holiday.name)} : ${holiday.date.split('T')[0]}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0]}` : ""}
+              ${escapeHTML(holiday.name)}: ${holiday.date.split('T')[0].replaceAll('-', '/')}${holiday.endDate ? ` - ${holiday.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
             </strong></p>`
           ).join("")}
         </td>
