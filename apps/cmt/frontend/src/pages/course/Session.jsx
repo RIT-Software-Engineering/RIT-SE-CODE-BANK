@@ -56,9 +56,10 @@ function sessionConflicts(sessions, blocks, holidays){
  * @param {() => void} props.updateWorkflow 
  * @param {FetchToCallback} props.fetchToCallback 
  * @param {string} props.courseId - the identifier for which sessionData to obtain
+ * @param {string | null} [props.execState] - the course's execution state ("notStarted" | "inProgress" | "completed" | null)
  * @returns {React.ReactElement} the session accordion as HTML
  */
-export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId}) {
+export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId, execState}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -124,6 +125,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     if (error) return <CMTDangerAlert error={error} />
 
     const conflicts = sessionConflicts(sessions, sessionBlocks, holidays);
+    const started = (execState != null) && (execState !== "notStarted");
 
     return (
         <Accordion>
@@ -136,6 +138,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
         <CancelSessionModal
+            showNotify={started}
             session={sessionToCancel}
             onClose={() => setSessionToCancel(null)}
             onConfirm={(notificationOption) => {
@@ -319,7 +322,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
   );
 }
 
-function CancelSessionModal({session, onClose, onConfirm}) {
+function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
     const [notificationOption, setNotificationOption] = useState('none');
     const [submitting, setSubmitting] = useState(false);
     const isFutureSession = Boolean(session?.date && session.date > new Date().toISOString().split('T')[0]);
@@ -344,14 +347,16 @@ function CancelSessionModal({session, onClose, onConfirm}) {
             </Modal.Header>
             <Modal.Body>
                 <p>This session will remain on the schedule and be marked as canceled.</p>
-                <Form.Group>
-                    <Form.Label>Student notification</Form.Label>
-                    <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                        <option value="none">Do not send a notification</option>
-                        <option value="now">Send a notification now</option>
-                        {isFutureSession && <option value="scheduled">Schedule a notification</option>}
-                    </Form.Select>
-                </Form.Group>
+                {showNotify && (
+                    <Form.Group>
+                        <Form.Label>Student notification</Form.Label>
+                        <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                            <option value="none">Do not send a notification</option>
+                            <option value="now">Send a notification now</option>
+                            {isFutureSession && <option value="scheduled">Schedule a notification</option>}
+                        </Form.Select>
+                    </Form.Group>
+                )}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={close} disabled={submitting}>Keep session</Button>

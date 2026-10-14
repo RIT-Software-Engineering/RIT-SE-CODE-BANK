@@ -1,7 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { notifyOfCancellation } from "../utils/notifier.js";
+import { hasStarted, notifyOfCancellation } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -241,6 +241,7 @@ router.put("/:sessionId", async (req, res) => {
 /** PATCH /api/cmt/session/:sessionId/cancellation
  * Marks a session as canceled or restores it without changing its date,
  * completion state, or materials.
+ * Triggers a notifcation if the course has started
  */
 router.patch("/:sessionId/cancellation", async (req, res) => {
     const {sessionId} = req.params;
@@ -267,7 +268,7 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
     });
 
     try{
-        if (canceled && notify === "now"){
+        if (canceled && notify === "now" && await hasStarted(existingSession.course)){
             await notifyOfCancellation(req.user, existingSession);
         }
     } catch(error){

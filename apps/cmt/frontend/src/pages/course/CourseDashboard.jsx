@@ -105,6 +105,7 @@ export function CourseDashboard() {
                                 updateWorkflow={update}
                                 fetchToCallback={fetchToCallback}
                                 courseId={course.id}
+                                execState={execState}
                             />
                             <div className='flex justify-end pt-4 mb-4'>
                                 <Button onClick={() => {
