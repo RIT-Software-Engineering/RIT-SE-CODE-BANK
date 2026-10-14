@@ -9,6 +9,7 @@ import {
 import { styled } from "@mui/material/styles";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import { useRouter } from "next/navigation";
+import { useUser } from "../utils/user-context/page";
 
 const MODAL_STATUS = { SUCCESS: "success", FAIL: "fail", CLOSED: false };
 
@@ -30,12 +31,25 @@ function ApplicationPage() {
     const [modalOpen, setModalOpen] = useState(MODAL_STATUS.CLOSED);
     const [errors, setErrors] = useState({});
     const [semesterData, setSemesterData] = useState([]);
+    const [interestForms, setInterestForms] = useState([]);
+    const { user } = useUser();
 
     useEffect(() => {
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/semestergroup`)
             .then((res) => res.json())
             .then((data) => setSemesterData(data))
             .catch((err) => console.error("Failed to fetch semesters:", err));
+        
+        const fetchForms = async () => {
+          try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/interestform`);
+            const data = await res.json();
+            setInterestForms(data);
+          } catch (err) {
+            console.error("Failed to fetch interest forms:", err);
+          }
+        };
+        fetchForms();
     }, []);
 
     const handleChange = (e) => {
@@ -141,6 +155,13 @@ function ApplicationPage() {
             }
             const userCheckData = await userCheckResponse.json();
             if (userCheckData?.type !== "prospect") {
+                setErrors({ _form: "You are not eligible to submit an application. Please contact the SE Department." });
+                return;
+            }
+
+            const filteredInterestForms = interestForms.filter((form) => form.ritEmail === user.email);
+            const acceptedInterestForms = filteredInterestForms.filter((form) => form.status === "ACCEPTED");
+            if (acceptedInterestForms.length === 0) {
                 setErrors({ _form: "You are not eligible to submit an application. Please contact the SE Department." });
                 return;
             }
