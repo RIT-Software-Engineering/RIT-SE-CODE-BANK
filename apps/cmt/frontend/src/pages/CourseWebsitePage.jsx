@@ -418,7 +418,7 @@ export default function CourseWebsitePage() {
                       <td colSpan={totalColumns} className="border border-orange-300 p-3 text-center text-lg align-top">
                         <p className="font-bold text-3xl">{row.data.name}</p>
                         <p className="font-bold text-xl">
-                          {row.data.endDate ? `${(row.data.date?.split('T')[0]).replaceAll('-', '/')} - ${row.data.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
+                          {row.data.endDate ? `${(row.data.date?.split('T')[0].replaceAll('-', '/'))} - ${row.data.endDate.split('T')[0].replaceAll('-', '/')}` : ""}
                         </p>
                         <p>No class meeting</p>
                       </td>

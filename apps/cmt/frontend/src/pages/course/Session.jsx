@@ -8,13 +8,39 @@ import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
-
-import { useHolidays } from "../../components/workflows/holidays"
+import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  * @import { SetStateAction } from "react"
  */
+
+// look for sessions that land on/during holidays and return them.
+function sessionConflicts(sessions, blocks, holidays){
+    const conflicts = [];
+
+    for (const session of sessions){
+        const blockCount = blocks.filter(block => block.sessionId === session.id).length;
+        if (blockCount === 0) continue;
+
+        if (session.canceled){
+            conflicts.push({session, blockCount, reason:'canceled'});
+            continue
+        }
+
+        if (!session.date) continue;
+
+        const day = session.date.split('T')[0];
+        const holiday = holidays.find(hol => 
+            day >= hol.date.split('T')[0] && day <= (hol.endDate ?? hol.date).split('T')[0]
+        );
+
+        if (holiday){
+            conflicts.push({session, blockCount, reason: 'holiday', holiday});
+        }
+    }
+    return conflicts;
+}
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -62,6 +88,11 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         new Date(sessionDate) <= new Date(holiday.endDate ?? holiday.date)
     )
 
+    useEffect(() => {
+        window.addEventListener(HOLIDAYS_CHANGED, loadHolidays)
+        return () => window.removeEventListener(HOLIDAYS_CHANGED, loadHolidays)
+    }, [loadHolidays])
+
     /**
      * Initial GET request upon loading the page
      * Sets the correct amount of sessions and the actual sessions themselves with useful data
@@ -92,6 +123,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     if (error) return <CMTDangerAlert error={error} />
 
+    const conflicts = sessionConflicts(sessions, sessionBlocks, holidays);
+
     return (
         <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
@@ -110,6 +143,15 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 return setCanceled(sessionToCancel, true);
             }}
         />
+        {conflicts.map(conflict => (
+            <Alert variant="warning" key={conflict.session.id}>
+                {conflict.reason === "canceled" 
+                    ? `Session ${conflict.session.sessionNum} is canceled and has content! `
+                    : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
+                }
+                Move the blocks to another available session.
+            </Alert>
+        ))}
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
