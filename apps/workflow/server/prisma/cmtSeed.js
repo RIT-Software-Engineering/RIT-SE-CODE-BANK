@@ -141,6 +141,36 @@ async function main() {
                         ],
                     },
                 },  
+                // new action for holidays
+                {
+                    name: 'Course Holidays',
+                    description: 'Add dates and/or ranges for holidays, breaks, and other days where the course will not meet! These dates will be skipped when generating session dates!',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'COURSE_HOLIDAYS',
+                        outputs: [
+                            {
+                                name: 'Holiday Name',
+                                key: 'holidayName',
+                                type: 'text',
+                                isRequired: true,
+                                placeholder: 'Thanksgiving'
+                            },
+                            {
+                                name: 'Start Date',
+                                key: 'date',
+                                type: 'date',
+                                isRequired: true
+                            },
+                            {
+                                name: 'End Date (optional)',
+                                key: 'endDate',
+                                type: 'date',
+                                isRequired: false
+                            },
+                        ],
+                    }
+                }
             ],
         },
         {

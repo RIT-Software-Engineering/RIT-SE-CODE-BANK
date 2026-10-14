@@ -8,11 +8,39 @@ import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
+import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  * @import { SetStateAction } from "react"
  */
+
+// look for sessions that land on/during holidays and return them.
+function sessionConflicts(sessions, blocks, holidays){
+    const conflicts = [];
+
+    for (const session of sessions){
+        const blockCount = blocks.filter(block => block.sessionId === session.id).length;
+        if (blockCount === 0) continue;
+
+        if (session.canceled){
+            conflicts.push({session, blockCount, reason:'canceled'});
+            continue
+        }
+
+        if (!session.date) continue;
+
+        const day = session.date.split('T')[0];
+        const holiday = holidays.find(hol => 
+            day >= hol.date.split('T')[0] && day <= (hol.endDate ?? hol.date).split('T')[0]
+        );
+
+        if (holiday){
+            conflicts.push({session, blockCount, reason: 'holiday', holiday});
+        }
+    }
+    return conflicts;
+}
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -54,6 +82,17 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     // Probably not the best system and could be improved
     const [sessionDate, setSessionDate] = useState('');
 
+    const [holidays, , loadHolidays] = useHolidays(parseInt(courseId))
+    const isHoliday = sessionDate && holidays.some(holiday =>
+        new Date(sessionDate) >= new Date(holiday.date) && 
+        new Date(sessionDate) <= new Date(holiday.endDate ?? holiday.date)
+    )
+
+    useEffect(() => {
+        window.addEventListener(HOLIDAYS_CHANGED, loadHolidays)
+        return () => window.removeEventListener(HOLIDAYS_CHANGED, loadHolidays)
+    }, [loadHolidays])
+
     /**
      * Initial GET request upon loading the page
      * Sets the correct amount of sessions and the actual sessions themselves with useful data
@@ -84,6 +123,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     if (error) return <CMTDangerAlert error={error} />
 
+    const conflicts = sessionConflicts(sessions, sessionBlocks, holidays);
+
     return (
         <Accordion>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
@@ -102,6 +143,15 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 return setCanceled(sessionToCancel, true);
             }}
         />
+        {conflicts.map(conflict => (
+            <Alert variant="warning" key={conflict.session.id}>
+                {conflict.reason === "canceled" 
+                    ? `Session ${conflict.session.sessionNum} is canceled and has content! `
+                    : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
+                }
+                Move the blocks to another available session.
+            </Alert>
+        ))}
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
@@ -109,7 +159,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 const currentSession = sessions.find(session => session.sessionNum === i+1);
 
                 return (
-                    <Accordion.Item eventKey={`${i}`} key={sessionAction} onClick={()=>setSessionNum(i)}>
+                    <Accordion.Item eventKey={`${i}`} key={i} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
@@ -209,31 +259,35 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 </Card.Body>
                             </Card> : <></>
                             }
-
-                            {sessionDate ? 
-                            <Form className="flex max-w-[30%] gap-2 items-center"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                console.log(sessionDate)
-                                CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
-                                    const sessionsCopy = sessions.map(session => {
-                                        if (session.sessionNum === i+1) 
-                                            return {...session, date: sessionDate}
-                                        return session
-                                    });
-                                    setSessions(sessionsCopy);
-                                    setSessionDate('');
-                                })
-                            }}>
-                                <Form.Label>Date: </Form.Label>
-                                <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
-                                <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
-                                <Button type="submit" variant="success">Submit</Button>
-                            </Form> :
+                            {
+                            sessionDate ? 
+                            <>
+                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the schedule.</Alert>}
+                                <Form className="flex max-w-[30%] gap-2 items-center"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    console.log(sessionDate)
+                                    CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
+                                        const sessionsCopy = sessions.map(session => {
+                                            if (session.sessionNum === i+1) 
+                                                return {...session, date: sessionDate}
+                                            return session
+                                        });
+                                        setSessions(sessionsCopy);
+                                        setSessionDate('');
+                                    })
+                                }}>
+                                    <Form.Label>Date: </Form.Label>
+                                    <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
+                                    <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
+                                    <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
+                                </Form>
+                            </> :
                             <div className="flex gap-3 items-center">
                                 <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
                                 <Button variant="outline-secondary" onClick={() => {
                                     setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
+                                    loadHolidays()
                                     }} size="sm">Edit</Button>
                             </div>
                             }

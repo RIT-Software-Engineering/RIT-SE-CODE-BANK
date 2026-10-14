@@ -29,7 +29,7 @@ router.get('/', async (req, res) => {
     if (isActive)
         where.active = Boolean(isActive)
     const courses = await prisma.course.findMany({
-        include: { professors: true },
+        include: { professors: true, holidays: true},
         where: where,
         orderBy: {id: "desc"}
     })
@@ -46,7 +46,7 @@ router.get('/templates', async (_, res) => {
     const availTemplates = Promise.all(templateWorkflows.map(async workflow => ( 
         await prisma.course.findFirst({
             where: {workflowId: workflow.id, active: true},
-            include: {professors: true},
+            include: {professors: true, holidays: true},
         })
     )));
     res.status(200).json(await availTemplates)
@@ -75,7 +75,7 @@ router.get('/:id', async (req, res) => {
     // TODO: check perms/if prof owns course
     const course = await prisma.course.findUnique({
         where: { id: parseInt(req.params.id), professorId: req.user.uid },
-        include: {sessions: true}
+        include: {sessions: true, holidays: true}
     })
 
     if (!course) 
@@ -161,6 +161,7 @@ router.post('/', async (req, res) => {
                     color: color,
                     season: season ?? null,
                     professors: { connect: { id: professorId } },
+                    holidays: {},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: isTemplate,
@@ -253,7 +254,8 @@ router.post('/:templateId', async (req, res) => {
                         blocks: true
                     }
                 },
-                Resource: true
+                Resource: true,
+                holidays: true
             }
         });
 
@@ -282,6 +284,11 @@ router.post('/:templateId', async (req, res) => {
                     students: toBeTemplate ? null : course.students,
                     section: toBeTemplate ? null : course.section,
                     professors: { connect: { id: professorId } },
+                    holidays: {create: (course.holidays ?? []).map(holiday => ({
+                        name: holiday.name,
+                        date: holiday.date,
+                        endDate: holiday.endDate
+                    }))},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
                     isTemplate: toBeTemplate ?? false,
@@ -433,42 +440,49 @@ router.put('/:id', async (req, res) => {
         ),
         ...(updateData.active !== undefined
             && {active: updateData.active}
-        )
+        ), 
+        ...(updateData.holidays !== undefined
+            && {holidays: updateData.holidays}
+        ),
     }
 
     const updatedCourse = await prisma.course.update({
         where: { id: Number(id) },
-        data: mappedData
+        data: mappedData,
+        include: {holidays: true}
     })
 
     console.log('Course updated successfully:', updatedCourse)
 
-    if (updatedCourse.startDate && updatedCourse.days){
-        const emptyDaySessions = await prisma.session.findMany({
-            where: {date: null, courseId: Number(id)}
+    if (updatedCourse.startDate && updatedCourse.days && (updateData.startDate !== undefined || updateData.days !== undefined)){
+        const sessions = await prisma.session.findMany({
+            where: { courseId: Number(id) }
         });
-        if (emptyDaySessions.length > 0){
-            const courseDays = updatedCourse.days.split(", ");
-            const courseStartDate = new Date(updatedCourse.startDate);
-            const allDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+        const courseDays = updatedCourse.days.split(", ");
+        const courseStartDate = new Date(updatedCourse.startDate);
+        const allDays = ['Mo', 'Tu', 'We', 'Tr', 'Fr', 'Sa', 'Su'];
 
-            // AI - generated code
-            let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
+        // AI - generated code
+        let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
 
-            console.log(sessionDate)
+        const holidays = updatedCourse.holidays ?? [];
 
-            emptyDaySessions.forEach(async session => {
+        await Promise.all(sessions.map(async session => {
+            sessionDate.setDate(sessionDate.getDate() + 1);
+
+            const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
+
+            // if date is a holiday or within a holiday period, skip it 
+            // until the next non-holiday course date
+            while (!courseDays.includes(allDays[sessionDate.getDay()]) || isHoliday(sessionDate)) {
                 sessionDate.setDate(sessionDate.getDate() + 1);
+            }
 
-                while (!courseDays.includes(allDays[sessionDate.getDay()]))
-                    sessionDate.setDate(sessionDate.getDate() + 1)
-
-                await prisma.session.update({
-                    where: {id: session.id},
-                    data: {date: sessionDate.toISOString().split('T')[0]}
-                })
+            await prisma.session.update({
+                where: {id: session.id},
+                data: {date: sessionDate.toISOString().split('T')[0]}
             })
-        }
+        }))
     }
 
     const { uid: _userId, asid: actionStateId } = req.query
