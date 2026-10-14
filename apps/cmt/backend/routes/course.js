@@ -5,7 +5,6 @@ import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
-import { dispatchNotification, dispatchTemplated } from '../utils/notifications.js'
 import { scheduleHolidayReminders } from '../utils/notifier.js'
 
 /**
@@ -498,29 +497,6 @@ router.put('/:id', async (req, res) => {
     })
 
     console.log('Course updated successfully:', updatedCourse)
-    // //for testing purposes only - remove when finished
-    // try{
-    //     console.log('Sending simple notification...');
-    //     await dispatchNotification(req.user.uid, {
-    //         subject: 'COURSE_UPDATED',
-    //         message: "Course updated successfully:",
-    //         userEmail: req.user.email
-    //     });
-
-    //     console.log("Sending templated notification...");
-    //     await dispatchTemplated(req.user.uid, {
-    //         event: 'class_cancelled',
-    //         context: {
-    //             date: updatedCourse.startDate
-    //         },
-    //         role: 'student',
-    //         subject: 'Course Update',
-    //         userEmail: req.user.email
-    //     });
-
-    // } catch (error){
-    //     console.error('Error sending notification:', error)
-    // }
    
     if (updatedCourse.startDate && updatedCourse.days && (updateData.startDate !== undefined || updateData.days !== undefined)){
         const sessions = await prisma.session.findMany({

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Row, Col, Spinner, Button, Card } from 'react-bootstrap'
+import { Row, Col, Spinner, Button, Card, Modal, Form } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { CMTJsonFetch } from '../../utils/api'
@@ -89,18 +89,24 @@ export function Holidays() {
     const [startDate, setDate] = useState('')
     const [endDate, setEndDate] = useState('')
 
+    const [notifyHoliday, setNotifyHoliday] = useState(null)
+
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
         CMTJsonFetch('POST', `holidays`, { 
             name: holidayName, 
             date: new Date(startDate).toISOString(), 
             endDate: endDate ? new Date(endDate).toISOString() : null, id: parseInt(id)
-        }).then(() => {
+        }).then(json => {
             loadHolidays()
             window.dispatchEvent(new Event(HOLIDAYS_CHANGED)) // trigger an event when there is a change to holidays so the holidays in session.jsx isn't stale
             setHolidayName('')
             setDate('')
             setEndDate('')
+
+            if (json.notifyPrompt){
+                setNotifyHoliday({holidayId: json.holiday.id, change: 'add'})
+            }
         })
     }
 
@@ -108,10 +114,14 @@ export function Holidays() {
         CMTJsonFetch('PUT', `holidays/${holidayId}`, { 
             name: updatedHoliday.name, 
             date: new Date(updatedHoliday.date).toISOString(), 
-            endDate: updatedHoliday.endDate ? new Date(updatedHoliday.endDate).toISOString() : null
-        }).then(() => {
+            endDate: updatedHoliday.endDate ? new Date(updatedHoliday.endDate).toISOString() : null,
+            id: parseInt(id)
+        }).then(json => {
             loadHolidays()
             window.dispatchEvent(new Event(HOLIDAYS_CHANGED))
+            if (json.notifyPrompt){
+                setNotifyHoliday({holidayId: json.holiday.id, change: 'update'})
+            }
         })
     }
 
@@ -124,6 +134,16 @@ export function Holidays() {
 
     return (
         <div>
+            {/* appears only if course is running */}
+            <HolidayModal
+                notifyHoliday = {notifyHoliday}
+                onConfirm={(notificationOption) => 
+                    CMTJsonFetch('POST', `holidays/${notifyHoliday.holidayId}/notify`, {
+                        change: notifyHoliday.change,
+                        notifyOption: notificationOption
+                    }).then(() => setNotifyHoliday(null))
+                }
+            />
             <div className='flex gap-4 py-2 mb-4 border-b items-center'>
                 <Button onClick={loadHolidays} className="h-10" variant="outline-secondary">
                     {loading ? <Spinner animation='border'  /> : <RefreshCcw /> }
@@ -182,6 +202,51 @@ export function Holidays() {
             )}
         </div>
     )
+}
+
+function HolidayModal({notifyHoliday, onConfirm}) {
+    const [notificationOption, setNotificationOption] = useState('none');
+    const [submitting, setSubmitting] = useState(false);
+
+    async function confirmHoliday() {
+        setSubmitting(true);
+        try{
+            await onConfirm(notificationOption);
+            setNotificationOption('none');
+        } catch(error){
+            console.error("Error saving holiday:", error);
+        } finally{
+            setSubmitting(false);
+        }
+    }
+
+    if (!notifyHoliday) return null;
+
+    return (
+        <Modal show={Boolean(notifyHoliday)} backdrop='static' keyboard={false} centered>
+            <Modal.Header>
+                <Modal.Title>
+                    {notifyHoliday.change === 'add' ? 'Add Holiday' : 'Edit Holiday'}
+                </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+                <p>Notify students about this schedule change?</p>
+                <Form.Group>
+                    <Form.Label>Student notification</Form.Label>
+                    <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                        <option value="none">Do not send a notification</option>
+                        <option value="now">Send a notification now</option>
+                        {/* <option value="scheduled">Schedule a notification</option> */}
+                    </Form.Select>
+                </Form.Group>
+            </Modal.Body>
+            <Modal.Footer>
+                <Button variant="primary" onClick={confirmHoliday} disabled={submitting}>
+                    {submitting ? 'Adding changes...' : 'Continue'}
+                </Button>
+            </Modal.Footer>
+        </Modal>
+    );
 }
 
 /**

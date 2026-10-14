@@ -86,6 +86,25 @@ export async function scheduleHolidayReminders(course){
     }
 }
 
+export async function notifyOfHoliday(user, holiday, event, course){
+    await addNotification(holiday.courseId, {
+        event: event,
+        triggerId: holiday.id,
+        context: {
+            subject: event === 'holiday' ? "Holiday Added" : "Holiday Updated",
+            courseName: course.name,
+            holidayName: holiday.name,
+            date: holiday.date.toISOString().split('T')[0],
+            endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
+        },
+        recipients: [user.email], // in the future, when we have students, we'll replace this with a class list or soemthing
+        sendAt: courseNow()
+    })
+
+    // for now we're sending notifications immedaitely but we'll want to have a schedule feature later
+    await sendDueNotifications(user.uid, holiday.courseId);
+}
+
 export async function notifyOfCancellation(user, session){
     await addNotification(session.courseId, {
         event: 'class_cancelled',
@@ -102,6 +121,13 @@ export async function notifyOfCancellation(user, session){
     await sendDueNotifications(user.uid, session.courseId);
 }
 
+// returns whether the course has started
+export async function hasStarted(course){
+    if (!course?.execWorkflowStateId) return false;
+    const state = await workflowsFetch('GET', `states/workflow/${course?.execWorkflowStateId}`);
+    return state?.baseActionState?.stateType !== "notStarted";
+}
+
 export async function sendDueNotifications(userId, courseId){
     courseId = parseInt(courseId);
     const notifs = await prisma.notification.findMany({
@@ -109,11 +135,8 @@ export async function sendDueNotifications(userId, courseId){
     })
     
     const course = await prisma.course.findUnique({where: {id: courseId}})
-
-    const execStateId = course.execWorkflowStateId;
-    if (!execStateId) return;
-    const state = await workflowsFetch('GET', `states/workflow/${execStateId}`) 
-    if (state.baseActionState.stateType === 'notStarted') return; // course hasn't started yet
+    const started = await hasStarted(course);
+    if (!started) return null;
 
     for (const notif of notifs){
         try{
