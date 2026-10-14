@@ -17,7 +17,7 @@ function HolidayCard({ holiday, onChange, onDelete }) {
     // local state from holiday prop
     const [name, setName] = useState(holiday.name)
     const [date, setDate] = useState((holiday.date).split('T')[0])
-    const [endDate, setEndDate] = useState((holiday.endDate)?.split('T')[0]) ?? ''
+    const [endDate, setEndDate] = useState((holiday.endDate)?.split('T')[0] ?? '')
 
     // tracks if any edits have been made - used to disable/enable buttons
     const [isUpdated, setIsUpdated] = useState(false)
