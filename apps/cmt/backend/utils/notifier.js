@@ -55,6 +55,38 @@ export async function deleteNotification(id){
     })
 }
 
+function getReminderDate(holiday){
+    const reminder_date = new Date(holiday.date.getTime());
+    // make the sendAt date for these notifications be a week before as a placeholder
+    // woudl need to update this later but keep for now
+    reminder_date.setDate(reminder_date.getDate() - 7); 
+    return reminder_date;
+}
+
+export async function scheduleHolidayReminders(course){
+    for (const holiday of course.holidays){
+        const exists = await prisma.notification.findFirst({
+            where: {courseId: course.id, triggerId: holiday.id, event: 'holiday'}
+        })
+        if (exists) continue;
+
+        await addNotification(course.id, {
+            event: 'holiday',
+            triggerId: holiday.id,
+            context: {
+                subject: "Holiday Reminder",
+                courseName: course.name,
+                holidayName: holiday.name,
+                date: holiday.date,
+                endDate: holiday.endDate
+                // add default note if needs be
+            },
+            recipients: ['prof1@rit.edu'], // replace with proper class list when we get one in the future
+            sendAt: getReminderDate(holiday)
+        })
+    }
+}
+
 export async function sendDueNotifications(userId, courseId){
     courseId = parseInt(courseId);
     const notifs = await prisma.notification.findMany({
