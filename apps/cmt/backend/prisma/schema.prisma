@@ -51,10 +51,13 @@ model Session {
   sessionNum  Int
   courseId    Int
   completed   Boolean    @default(false)  // TODO Needs to be added for workflow actions too
+  canceled    Boolean    @default(false)
+  canceledAt  DateTime?
   asid        String?                     // TODO add workflow actions here
   date        String?
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
+  blocks      SessionBlock[]
 }
 
 model SessionMaterial {
@@ -65,7 +68,21 @@ model SessionMaterial {
   active      Boolean   @default(true)
   sessionId   Int
   sessionNum  Int
+  blockId     Int?
   session     Session @relation(fields: [sessionId], references: [id])
+  block       SessionBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+}
+
+model SessionBlock {
+  id        Int                @id @default(autoincrement())
+  name      String
+  status    session_block_status @default(NOT_STARTED)
+  position  Int                @default(0)
+  sessionId Int
+  session   Session            @relation(fields: [sessionId], references: [id])
+  material  SessionMaterial[]
+
+  @@index([sessionId, position])
 }
 
 model TBEnrollment {
@@ -166,14 +183,14 @@ model Notification {
   context       Json        // details of the thing the notification is about - shape depends on templates. 
   note          String?     // aditional information, optional
   recipients    Json        // Json array of emails
-  status        NotificationStatus @default(SCHEDULED)
+  status        notification_status @default(SCHEDULED)
   sendAt        DateTime    
   createdAt     DateTime    @default(now())
 
   @@index([courseId])
 }
 
-enum NotificationStatus {
+enum notification_status {
   SCHEDULED
   SENT 
   FAILED 
@@ -184,4 +201,10 @@ enum tbteamset_status {
   DRAFT
   PUBLISHED
   ARCHIVED
+}
+
+enum session_block_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
 }

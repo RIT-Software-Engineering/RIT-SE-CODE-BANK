@@ -285,7 +285,8 @@ router.post('/:templateId', async (req, res) => {
             include: {
                 sessions: {
                     include: {
-                        material: true
+                        material: true,
+                        blocks: true
                     }
                 },
                 Resource: true,
@@ -375,6 +376,19 @@ router.post('/:templateId', async (req, res) => {
                         courseId: Number(newCourse.id)
                     },
                 });
+
+                const blockIds = new Map();
+                for (const block of (course.sessions[i]?.blocks ?? []).sort((a, b) => a.position - b.position)) {
+                    const copiedBlock = await prisma.sessionBlock.create({
+                        data: {
+                            name: block.name,
+                            status: toBeTemplate ? "NOT_STARTED" : block.status,
+                            position: block.position,
+                            sessionId: session.id
+                        }
+                    });
+                    blockIds.set(block.id, copiedBlock.id);
+                }
             
                 // Go through all of the session materials now and upload them
                 if (course.sessions[i]?.material.length > 0){
@@ -405,7 +419,8 @@ router.post('/:templateId', async (req, res) => {
                                 type: material.type,
                                 body: actualBody,
                                 label: actualLabel,
-                                active: material.active
+                                active: material.active,
+                                blockId: material.blockId ? blockIds.get(material.blockId) : null
                             }
                         })
                     })
@@ -469,7 +484,8 @@ router.put('/:id', async (req, res) => {
         ),
         ...(updateData.active !== undefined
             && {active: updateData.active}
-        ), ...(updateData.holidays !== undefined
+        ), 
+        ...(updateData.holidays !== undefined
             && {holidays: updateData.holidays}
         ),
     }
@@ -505,39 +521,35 @@ router.put('/:id', async (req, res) => {
         console.error('Error sending notification:', error)
     }
    
-    if (updatedCourse.startDate && updatedCourse.days){
-        const emptyDaySessions = await prisma.session.findMany({
-            where: {date: null, courseId: Number(id)}
+    if (updatedCourse.startDate && updatedCourse.days && (updateData.startDate !== undefined || updateData.days !== undefined)){
+        const sessions = await prisma.session.findMany({
+            where: { courseId: Number(id) }
         });
-        if (emptyDaySessions.length > 0){
-            const courseDays = updatedCourse.days.split(", ");
-            const courseStartDate = new Date(updatedCourse.startDate);
-            const allDays = ['Mo', 'Tu', 'We', 'Tr', 'Fr', 'Sa', 'Su'];
+        const courseDays = updatedCourse.days.split(", ");
+        const courseStartDate = new Date(updatedCourse.startDate);
+        const allDays = ['Mo', 'Tu', 'We', 'Tr', 'Fr', 'Sa', 'Su'];
 
-            // AI - generated code
-            let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
+        // AI - generated code
+        let sessionDate = new Date(courseStartDate.setDate(courseStartDate.getDate() + ((allDays.indexOf(courseDays[0]) + 7 - courseStartDate.getDay()) % 7)-1));
 
-            console.log(sessionDate)
+        const holidays = updatedCourse.holidays ?? [];
 
-            const holidays = updatedCourse.holidays ?? [];
+        await Promise.all(sessions.map(async session => {
+            sessionDate.setDate(sessionDate.getDate() + 1);
 
-            emptyDaySessions.forEach(async session => {
+            const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
+
+            // if date is a holiday or within a holiday period, skip it 
+            // until the next non-holiday course date
+            while (!courseDays.includes(allDays[sessionDate.getDay()]) || isHoliday(sessionDate)) {
                 sessionDate.setDate(sessionDate.getDate() + 1);
+            }
 
-                const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
-
-                // if date is a holiday or within a holiday period, skip it 
-                // until the next non-holiday course date
-                while (!courseDays.includes(allDays[sessionDate.getDay()]) || isHoliday(sessionDate)) {
-                    sessionDate.setDate(sessionDate.getDate() + 1);
-                }
-
-                await prisma.session.update({
-                    where: {id: session.id},
-                    data: {date: sessionDate.toISOString().split('T')[0]}
-                })
+            await prisma.session.update({
+                where: {id: session.id},
+                data: {date: sessionDate.toISOString().split('T')[0]}
             })
-        }
+        }))
     }
 
     const { uid: _userId, asid: actionStateId } = req.query

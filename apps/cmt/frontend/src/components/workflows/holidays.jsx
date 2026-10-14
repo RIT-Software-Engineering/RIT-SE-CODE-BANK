@@ -17,7 +17,7 @@ function HolidayCard({ holiday, onChange, onDelete }) {
     // local state from holiday prop
     const [name, setName] = useState(holiday.name)
     const [date, setDate] = useState((holiday.date).split('T')[0])
-    const [endDate, setEndDate] = useState((holiday.endDate)?.split('T')[0]) ?? ''
+    const [endDate, setEndDate] = useState((holiday.endDate)?.split('T')[0] ?? '')
 
     // tracks if any edits have been made - used to disable/enable buttons
     const [isUpdated, setIsUpdated] = useState(false)
@@ -75,6 +75,8 @@ function HolidayCard({ holiday, onChange, onDelete }) {
 
 }
 
+export const HOLIDAYS_CHANGED = "cmt:holidays-changed"
+
 /**
  * Holiday component for managing course-level holiday information
  */
@@ -95,6 +97,7 @@ export function Holidays() {
             endDate: endDate ? new Date(endDate).toISOString() : null, id: parseInt(id)
         }).then(() => {
             loadHolidays()
+            window.dispatchEvent(new Event(HOLIDAYS_CHANGED)) // trigger an event when there is a change to holidays so the holidays in session.jsx isn't stale
             setHolidayName('')
             setDate('')
             setEndDate('')
@@ -108,12 +111,14 @@ export function Holidays() {
             endDate: updatedHoliday.endDate ? new Date(updatedHoliday.endDate).toISOString() : null
         }).then(() => {
             loadHolidays()
+            window.dispatchEvent(new Event(HOLIDAYS_CHANGED))
         })
     }
 
     const onDelete = (holidayId) => {
         CMTJsonFetch('DELETE', `holidays/${holidayId}`).then(() => {
             loadHolidays()
+            window.dispatchEvent(new Event(HOLIDAYS_CHANGED))
         })
     }
 
