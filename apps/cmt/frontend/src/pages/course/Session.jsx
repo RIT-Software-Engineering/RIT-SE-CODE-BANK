@@ -110,8 +110,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     }, [courseId, setSessionCount])
     useEffect(() => void update(), [courseId, update])
 
-    const setCanceled = useCallback((session, canceled) => {
-        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled})
+    const setCanceled = useCallback((session, canceled, notify = "none") => {
+        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled, notify})
             .then(json => {
                 setSessions(sessions.map(currentSession =>
                     currentSession.id === session.id ? json.session : currentSession
@@ -139,8 +139,8 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
             session={sessionToCancel}
             onClose={() => setSessionToCancel(null)}
             onConfirm={(notificationOption) => {
-                void notificationOption;
-                return setCanceled(sessionToCancel, true);
+                // void notificationOption;
+                return setCanceled(sessionToCancel, true, notificationOption);
             }}
         />
         {conflicts.map(conflict => (

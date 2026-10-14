@@ -79,12 +79,27 @@ export async function scheduleHolidayReminders(course){
                 holidayName: holiday.name,
                 date: holiday.date,
                 endDate: holiday.endDate
-                // add default note if needs be
             },
             recipients: ['prof1@rit.edu'], // replace with proper class list when we get one in the future
             sendAt: getReminderDate(holiday)
         })
     }
+}
+
+export async function notifyOfCancellation(user, session){
+    await addNotification(session.courseId, {
+        event: 'class_cancelled',
+        triggerId: session.id,
+        context: {
+            subject: `Class Cancelled on ${session.date}`,
+            courseName: session.course.name,
+            date: session.date
+        },
+        recipients: [user.email],
+        sendAt: courseNow()
+    });
+
+    await sendDueNotifications(user.uid, session.courseId);
 }
 
 export async function sendDueNotifications(userId, courseId){

@@ -1,6 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
+import { notifyOfCancellation } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -243,7 +244,7 @@ router.put("/:sessionId", async (req, res) => {
  */
 router.patch("/:sessionId/cancellation", async (req, res) => {
     const {sessionId} = req.params;
-    const {canceled} = req.body;
+    const {canceled, notify} = req.body;
 
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
     if (typeof canceled !== "boolean") return res.status(400).json({error: "canceled must be a boolean"});
@@ -252,7 +253,8 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
         where: {
             id: Number(sessionId),
             course: {professorId: req.user.uid}
-        }
+        },
+        include: {course: true}
     });
     if (!existingSession) return res.status(404).json({error: "Session not found for this instructor"});
 
@@ -263,6 +265,14 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
             canceledAt: canceled ? new Date() : null
         }
     });
+
+    try{
+        if (canceled && notify === "now"){
+            await notifyOfCancellation(req.user, existingSession);
+        }
+    } catch(error){
+        console.error("Failed to send out notification of cancellation:", error)
+    }
 
     res.json({session})
 })
