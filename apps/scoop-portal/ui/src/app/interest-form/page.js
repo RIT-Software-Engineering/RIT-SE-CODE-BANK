@@ -144,11 +144,57 @@ function InterestFormPage() {
                     headers: { "Content-Type": "application/json" },
                     }
                 );
-                if (!response.ok) throw new Error("Failed to create user");
+                if (!response.ok) {throw new Error("Failed to create user")}
+                else {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            date: new Date().toISOString(),
+                            sender_id: user_id,
+                            notes: `${formValues.firstName} ${formValues.lastName} submitted an interest form for SCOOP.`,
+                            recipient_ids: [],
+                            topic_id: user_id,
+                            semester_GroupId: null,
+                            previous_entryid: null,
+                            entry_type: "AUTOMATED",
+                            visibility_level: 1,
+                            privacy_level: "PUBLIC",
+                        }),
+                    });
+                }
                 return response.json();
                 } catch (error) {
                 console.error("Error creating prospect user:", error);
                 throw error;
+            }
+        }
+        else {
+            try {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/journal`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        date: new Date().toISOString(),
+                        sender_id: user_id,
+                        notes: `${formValues.firstName} ${formValues.lastName} submitted an interest form for SCOOP.`,
+                        recipient_ids: [],
+                        topic_id: user_id,
+                        semester_GroupId: null,
+                        previous_entryid: null,
+                        entry_type: "AUTOMATED",
+                        visibility_level: 1,
+                        privacy_level: "PUBLIC",
+                    }),
+                });
+                if (response.ok) {
+                    setModalOpen(MODAL_STATUS.SUCCESS);
+                } else {
+                    setModalOpen(MODAL_STATUS.FAIL);
+                }
+            } catch (err) {
+                console.error(err);
+                setModalOpen(MODAL_STATUS.FAIL);
             }
         }
         
