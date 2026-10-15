@@ -224,7 +224,7 @@ const workflows = [
       },
       {
         title: "Open Communications Journal",
-        roles: ["scoopdinator","scoopervisor", "advisor", "scooployee"],
+        roles: ["scoopdinator","scoopervisor", "advisor", "scooployee", "applicant", "prospect"],
         description:
           "View your past communications with others and leave notes.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/journal",

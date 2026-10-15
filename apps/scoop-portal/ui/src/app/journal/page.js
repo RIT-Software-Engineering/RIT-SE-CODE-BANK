@@ -454,9 +454,10 @@ export default function Journal() {
                         <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
                           Edit
                         </IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteEntry(entry)} sx={{ color: '#FF6A00' }}>
+                        {/*Delete button*/
+                        /* <IconButton size="small" onClick={() => handleDeleteEntry(entry)} sx={{ color: '#FF6A00' }}>
                           Delete
-                        </IconButton>
+                        </IconButton> */}
                       </span>
                     )}
                   </Box>

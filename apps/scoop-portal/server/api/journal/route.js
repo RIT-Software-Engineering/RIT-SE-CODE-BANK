@@ -226,7 +226,7 @@ router.get("/:id", async (req, res) => {
 
     let entries = [];
 
-    if(user.type == "scooployee"){
+    if(user.type == "scooployee" || user.type == "applicant" || user.type == "prospect"){
       const scooployeeEntries = await prisma.journalEntry.findMany({
         where: {
           OR: [
