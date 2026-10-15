@@ -7,6 +7,7 @@ import assessmentRoutes from "./routes/assessments";
 import formRoutes from "./routes/forms";
 import journalRoutes from "./routes/journals";
 import notificationRoutes from "./routes/notifications";
+import { startAssessmentReminderScheduler } from "./utils/assessmentReminderScheduler";
 
 const app = express();
 const PORT = process.env.PORT || 3006;
@@ -29,6 +30,7 @@ app.use("/assessments", assessmentRoutes);
 app.use("/forms", formRoutes);
 app.use("/journals", journalRoutes);
 app.use("/notifications", notificationRoutes);
+startAssessmentReminderScheduler();
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });

@@ -13,6 +13,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum AssessmentReminderType {
+  DUE_SOON
+  OVERDUE
+}
+
 // Wraps shib user
 model User {
   id    String @id @default(uuid()) @db.Char(36)
@@ -20,13 +25,14 @@ model User {
   email String @unique
 
   // Required for relations
-  projectsAsOverseer      Project[]      @relation("overseer")
-  projectsAsPeers         Project[]      @relation("peers")
-  peerResponseAsResponder FormResponse[] @relation("responderInFormResponse")
-  peerResponseAsRespondee FormResponse[] @relation("respondeeInFormResponse")
-  inAssessments           Assessment[]   @relation("receiversInAssessment")
-  outAssessments          Assessment[]   @relation("responderInAssessment")
+  projectsAsOverseer      Project[]            @relation("overseer")
+  projectsAsPeers         Project[]            @relation("peers")
+  peerResponseAsResponder FormResponse[]       @relation("responderInFormResponse")
+  peerResponseAsRespondee FormResponse[]       @relation("respondeeInFormResponse")
+  inAssessments           Assessment[]         @relation("receiversInAssessment")
+  outAssessments          Assessment[]         @relation("responderInAssessment")
   journal                 Journal[]
+  assessmentReminders     AssessmentReminder[] @relation("AssessmentReminderResponder")
 }
 
 // ---------------------------------------
@@ -60,8 +66,9 @@ model Assessment {
   dueDate        DateTime
 
   // Required for relations
-  peerResponses FormResponse[]
-  projectId     String         @db.Char(36)
+  peerResponses   FormResponse[]
+  reminderRecords AssessmentReminder[]
+  projectId       String               @db.Char(36)
 }
 
 model FormResponse {
@@ -94,6 +101,23 @@ model InquiryResponse {
   inquiryId      String @db.Char(36)
 
   @@unique([formResponseId, inquiryId])
+}
+
+model AssessmentReminder {
+  id           String                 @id @default(uuid()) @db.Char(36)
+  assessmentId String                 @db.Char(36)
+  responderId  String                 @db.Char(36)
+  type         AssessmentReminderType
+  createdAt    DateTime               @default(now())
+  sentAt       DateTime?
+
+  assessment Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  responder User @relation("AssessmentReminderResponder", fields: [responderId], references: [id], onDelete: Cascade)
+
+  // Prevent duplicate records for the same reminder type
+  @@unique([assessmentId, responderId, type])
+  @@index([sentAt])
 }
 
 // ---------------------------------------
