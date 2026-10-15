@@ -50,5 +50,3 @@ node_modules/
 
 .nx/cache
 .nx/workspace-data
-
-package-lock.json
