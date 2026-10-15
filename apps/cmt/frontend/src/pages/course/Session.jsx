@@ -223,6 +223,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                         </Accordion.Header>
                         <Accordion.Body>
                             <SessionBlocks
+                                showNotify={started}
                                 session={currentSession}
                                 sessions={sessions}
                                 blocks={sessionBlocks}

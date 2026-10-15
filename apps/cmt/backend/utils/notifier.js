@@ -121,6 +121,26 @@ export async function notifyOfCancellation(user, session){
     await sendDueNotifications(user.uid, session.courseId);
 }
 
+export async function notifyOfMovedBlock(user, block, from, to, course){
+    await addNotification(course.id, {
+        event: "content_moved",
+        triggerId: block.id,
+        context: {
+            subject: 'Content Moved in the Schedule',
+            courseName: course.name,
+            blockName: block.name,
+            from: from.sessionNum,
+            fromDate: from.date,
+            to: to.sessionNum,
+            toDate: to.date,
+        },
+        recipients: [user.email],
+        sendAt: courseNow()
+    });
+
+    await sendDueNotifications(user.uid, course.id);
+}
+
 // returns whether the course has started
 export async function hasStarted(course){
     if (!course?.execWorkflowStateId) return false;

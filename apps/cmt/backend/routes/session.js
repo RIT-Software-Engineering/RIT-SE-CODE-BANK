@@ -1,7 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { hasStarted, notifyOfCancellation } from "../utils/notifier.js";
+import { hasStarted, notifyOfCancellation, notifyOfMovedBlock } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -169,12 +169,12 @@ router.patch("/blocks/:blockId", async (req, res) => {
  */
 router.patch("/blocks/:blockId/move", async (req, res) => {
     const {blockId} = req.params;
-    const {targetSessionId, targetPosition} = req.body;
+    const {targetSessionId, targetPosition, notify} = req.body;
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const block = await prisma.sessionBlock.findFirst({
         where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}},
-        include: {session: true}
+        include: {session: {include: {course: true}}}
     });
     const targetSession = await prisma.session.findFirst({
         where: {
@@ -184,6 +184,8 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
         }
     });
     if (!block || !targetSession) return res.status(404).json({error: "Block or target session not found"});
+
+    const fromSession = block.session;
 
     const sourceBlocks = await prisma.sessionBlock.findMany({
         where: {sessionId: block.sessionId, id: {not: block.id}},
@@ -215,6 +217,15 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
             data: {sessionId: targetSession.id, sessionNum: targetSession.sessionNum - 1}
         });
     });
+
+    try{
+        const movedSessions = block.sessionId !== targetSession.id;
+        if (notify === "now" && movedSessions && await hasStarted(fromSession.course)){
+            await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course);
+        }
+    } catch(error){
+        console.error("Failed to send notification of moved block:", error);
+    }
 
     res.json({success: true});
 });
