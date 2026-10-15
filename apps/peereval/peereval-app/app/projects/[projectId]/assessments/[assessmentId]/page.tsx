@@ -98,7 +98,9 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     }, [activePeer]);
 
     const handleSwitchTab = (idx: number) => {
-        submitForm();
+        void submitForm().catch((err) => {
+            console.error("Failed to save assessment responses:", err);
+        });
 
         setActiveTab(idx);
         setActivePeer(peersToEval[idx]);
@@ -134,24 +136,31 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        submitForm();
-        setShowSnack(true);
+        try {
+            await submitForm(true);
+            setShowSnack(true);
+        } catch (err) {
+            console.error("Failed to save assessment responses:", err);
+        }
     };
 
-    const submitForm = () => {
-        sendAssessmentResponses(
+    const submitForm = (submitted = false) => {
+        return sendAssessmentResponses(
             assessmentId,
             currentUser!.id,
             activePeer!.id,
-            responses
+            responses,
+            submitted
         );
     };
 
     const handleBack = () => {
-        submitForm();
+        void submitForm().catch((err) => {
+            console.error("Failed to save assessment responses:", err);
+        });
         window.history.back();
     };
 

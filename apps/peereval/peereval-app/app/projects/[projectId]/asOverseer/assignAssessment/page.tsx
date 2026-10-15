@@ -105,7 +105,7 @@ function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
     }
 }
 
-export function ReuseAssessmentModal({
+function ReuseAssessmentModal({
     assessments,
     isOpen,
     onClose,

@@ -58,10 +58,12 @@ export async function getAssessmentInquiriesById(
 }
 
 export async function getAssessmentResponses(
-    id: string
+    id: string,
+    requesterId: string
 ): Promise<PeerFormResponse[]> {
     const res = await fetch(`${BASE_URL}/assessments/${id}/responses`, {
         credentials: "include",
+        headers: { "x-user-id": requesterId },
     });
 
     return handleResponse(
@@ -94,18 +96,16 @@ export async function sendAssessmentResponses(
     assessmentId: string,
     responderId: string,
     respondeeId: string,
-    responses: Record<string, string>
+    responses: Record<string, string>,
+    submitted = false
 ): Promise<PeerFormResponse[]> {
-    console.log(`responderId: ${responderId}`);
-    console.log(`respondeeId: ${respondeeId}`);
-
     const res = await fetch(
         `${BASE_URL}/assessments/${assessmentId}/addFeedback/${responderId}/${respondeeId}`,
         {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",
-            body: JSON.stringify({ answers: responses }),
+            body: JSON.stringify({ answers: responses, submitted }),
         }
     );
 
@@ -122,12 +122,14 @@ export async function sendAssessmentResponses(
 
 export async function getReceivedAssessmentResponses(
     assessmentId: string,
-    respondeeId: string
+    respondeeId: string,
+    requesterId: string
 ): Promise<PeerFormResponse[]> {
     const res = await fetch(
         `${BASE_URL}/assessments/${assessmentId}/responses/in/${respondeeId}`,
         {
             credentials: "include",
+            headers: { "x-user-id": requesterId },
         }
     );
 
@@ -150,5 +152,29 @@ export async function getAssessmentPeers(
     return handleResponse(
         res,
         "Couldn't get peers assigned to assessment " + id
+    );
+}
+
+export async function releaseAssessmentResponse(
+    assessmentId: string,
+    responderId: string,
+    respondeeId: string,
+    overseerId: string
+): Promise<{ message: string; releasedAt?: string }> {
+    const res = await fetch(
+        `${BASE_URL}/assessments/${assessmentId}/responses/${responderId}/${respondeeId}/release`,
+        {
+            method: "POST",
+            credentials: "include",
+            headers: { "x-user-id": overseerId },
+        }
+    );
+
+    return handleResponse(
+        res,
+        "Couldn't release response for responder " +
+            responderId +
+            " and recipient " +
+            respondeeId
     );
 }

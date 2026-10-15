@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { $Enums, PrismaClient } from "@prisma/client";
-import { dispatchNotification } from "../utils/notifications";
+import { PrismaClient } from "@prisma/client";
+import { dispatchTemplated } from "../utils/notifications";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -101,13 +101,44 @@ router.get("/byProject/:id", async (req, res) => {
 // /assessments/:id/responses
 router.get("/:id/responses", async (req, res) => {
     const { id: assessmentId } = req.params;
+    const requesterId = req.header("x-user-id");
 
-    const rs = await prisma.formResponse.findMany({
+    if (!requesterId) {
+        res.status(400).json({
+            message: "Missing user identity",
+        });
+        return;
+    }
+
+    const assessment = await prisma.assessment.findUnique({
+        where: { id: assessmentId },
+        select: {
+            project: {
+                select: { overseerId: true },
+            },
+        },
+    });
+
+    if (!assessment) {
+        res.status(404).json({
+            message: "Assessment not found",
+        });
+        return;
+    }
+
+    if (assessment.project.overseerId !== requesterId) {
+        res.status(403).json({
+            message: "You are not authorized to view this assessment's responses",
+        });
+        return;
+    }
+
+    const responses = await prisma.formResponse.findMany({
         where: { assessmentId },
         include: { responses: true },
     });
 
-    res.json(rs);
+    res.json(responses);
 });
 
 // Get peer's assessment responses
@@ -135,12 +166,13 @@ router.post(
     "/:assessmentId/addFeedback/:responderId/:respondeeId",
     async (req, res) => {
         const { assessmentId, responderId, respondeeId } = req.params;
-        const { answers } = req.body as {
+        const { answers = {}, submitted = false } = req.body as {
             answers: Record<string, string>;
+            submitted?: boolean;
         };
 
-        // Get the form response
-        const formRes = await prisma.formResponse.upsert({
+        // Find the exisitng response and its saved answers
+        const existingFormResponse = await prisma.formResponse.findUnique({
             where: {
                 assessmentId_responderId_respondeeId: {
                     assessmentId,
@@ -148,15 +180,31 @@ router.post(
                     respondeeId,
                 },
             },
-            update: {},
-            create: {
+            include: { responses: true },
+        });
+
+        // Get the response record if this is the first save
+        const formRes = existingFormResponse ?? (await prisma.formResponse.create({
+            data: {
                 assessmentId,
                 responderId,
                 respondeeId,
             },
-        });
+        }));
 
-        // Upsert answers
+        // Check whether any answer actually changed.
+        // Editing previously approved feedback invalidates its approval
+        const oldAnswers = new Map<string, string>();
+
+        for (const response of existingFormResponse?.responses ?? []) {
+            oldAnswers.set(response.inquiryId, response.answer);
+        }
+
+        const answersChanged = Object.entries(answers).some(
+            ([inquiryId, answer]) => oldAnswers.get(inquiryId) !== answer
+        );
+
+        // Save the answers
         const inqRess = await Promise.all(
             Object.entries(answers).map(([inquiryId, answer]) =>
                 prisma.inquiryResponse.upsert({
@@ -178,46 +226,95 @@ router.post(
             )
         );
 
-        // Get assessment and user information for notification
-        try {
-            const assessment = await prisma.assessment.findUnique({
-                where: { id: assessmentId },
-                include: {
-                    project: true,
-                    responders: {
-                        where: { id: responderId },
-                    },
-                    receivers: {
-                        where: { id: respondeeId },
-                    },
+        if (submitted === true) {
+            await prisma.formResponse.update({
+                where: { id: formRes.id },
+                data: {
+                    submittedAt: new Date(),
+                    releasedAt: null,
                 },
             });
+        } else if (answersChanged) {
+            await prisma.formResponse.update({
+                where: { id: formRes.id },
+                data: {
+                    submittedAt: null,
+                    releasedAt: null,
+                },
+            });
+        }
 
-            const responder = assessment?.responders[0];
-            const respondee = assessment?.receivers[0];
-
-            if (assessment && responder && respondee) {
-                await dispatchNotification(null, {
-                    userEmail: respondee.email,
-                    subject: `PeerEval Feedback Updated: ${assessment.name}`,
-                    message:
-                        `You have received new peer evaluation feedback.\n\n` +
-                        `Assessment: ${assessment.name}\n` +
-                        `Project: ${assessment.project.name}\n` +
-                        `Feedback submitted by: ${responder.name}\n\n` +
-                        `Log in to PeerEval to view your feedback.`,
+        if (submitted === true) {
+            try {
+                const assessment = await prisma.assessment.findUnique({
+                    where: { id: assessmentId },
+                    include: {
+                        project: {
+                            include: {
+                                overseer: true,
+                            },
+                        },
+                        responders: {
+                            where: { id: responderId },
+                        },
+                    },
                 });
 
-                console.log(
-                    `[notifications] Sent feedback notification to ${respondee.email} for assessment ${assessment.name}`
+                const responder = assessment?.responders[0];
+                const overseer = assessment?.project.overseer;
+
+                if (assessment && responder && overseer) {
+                    await dispatchTemplated(overseer.id, {
+                        event: "assessment_submitted",
+                        role: "overseer",
+                        userEmail: overseer.email,
+                        subject: `Peer Assessment Submitted: ${assessment.name}`,
+                        context: {
+                            recipient: {
+                                name: overseer.name,
+                                email: overseer.email,
+                            },
+                            submittedBy: {
+                                name: responder.name,
+                                email: responder.email,
+                            },
+                            item: {
+                                id: assessment.id,
+                                title: assessment.name,
+                                description: assessment.description,
+                                projectId: assessment.project.id,
+                                projectName: assessment.project.name,
+                                dueDate: assessment.dueDate.toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                }),
+                            },
+                            cta: {
+                                url: `${
+                                    (process.env.PEEREVAL_BASE_URL || "http://localhost:3000")
+                                        .replace(/\/$/, "")
+                                }/projects/${encodeURIComponent(assessment.project.id)}/asOverseer`,
+                            },
+                            appName: "PeerEval",
+                        },
+                    });
+
+                    console.log(
+                        `[notifications] Sent assessment_submitted notification to ${overseer.email}`
+                    );
+                } else {
+                    console.error(
+                        `[notifications] Could not find assessment, responder, or overseer for submission ${assessmentId}`
+                    );
+                }
+            } catch (err) {
+                // A notification failure must not undo saved responses
+                console.error(
+                    `[notifications] Failed to notify overseer about assessment submission:`,
+                    err
                 );
             }
-        } catch (err) {
-            // Notification failure should not undo a successfully saved response.
-            console.error(
-                `[notifications] Failed to send feedback notification:`,
-                err
-            );
         }
 
         res.status(201).json(inqRess);
@@ -228,18 +325,35 @@ router.post(
 // /assessments/:assessmentId/responses/in/:respondeeId
 router.get("/:assessmentId/responses/in/:respondeeId", async (req, res) => {
     const { respondeeId, assessmentId } = req.params;
+    const requesterId = req.header("x-user-id");
 
-    const rs = await prisma.formResponse.findMany({
+    if (!requesterId) {
+        res.status(400).json({
+            message: "Missing user identity",
+        });
+        return;
+    }
+
+    if (requesterId !== respondeeId) {
+        res.status(403).json({
+            message: "You are not authorized to view this peer's responses",
+        });
+        return;
+    }
+
+    // Until feedback is released, the recipient sees no records of the feedback given to them
+    const response = await prisma.formResponse.findMany({
         where: {
             assessmentId,
             respondeeId,
+            releasedAt: { not: null },
         },
         include: {
             responses: true,
         },
     });
 
-    res.json(rs);
+    res.json(response);
 });
 
 // Get peers assigned to an assessment
@@ -256,6 +370,126 @@ router.get("/:id/peers", async (req, res) => {
     });
 
     res.json(peers);
+});
+
+router.post("/:assessmentId/responses/:responderId/:respondeeId/release", async (req, res) => {
+    const { assessmentId, responderId, respondeeId } = req.params;
+    const requesterId = req.header("x-user-id");
+
+    if (!requesterId) {
+        res.status(400).json({
+            message: "Missing user identity",
+        });
+        return;
+    }
+
+    const assessment = await prisma.assessment.findUnique({
+        where: { id: assessmentId },
+        include: { project: true },
+    });
+
+    if (!assessment) {
+        res.status(404).json({
+            message: "Assessment not found",
+        });
+        return;
+    }
+
+    if (assessment.project.overseerId !== requesterId) {
+        res.status(403).json({
+            message: "You are not authorized to release this peer's responses",
+        });
+        return;
+    }
+
+    const formResponse = await prisma.formResponse.findUnique({
+        where: {
+            assessmentId_responderId_respondeeId: {
+                assessmentId,
+                responderId,
+                respondeeId,
+            },
+        },
+        include: {
+            responder: true,
+            respondee: true,
+        },
+    });
+    
+    if (!formResponse) {
+        res.status(404).json({
+            message: "Feedback response not found",
+        });
+        return;
+    }
+
+    if (!formResponse.submittedAt) {
+        res.status(400).json({
+            message: "Cannot release feedback that has not been submitted",
+        });
+        return;
+    }
+
+    if (formResponse.releasedAt) {
+        res.status(400).json({
+            message: "Feedback has already been released",
+            releasedAt: formResponse.releasedAt,
+        });
+        return;
+    }
+
+    const releasedAt = new Date();
+
+    await prisma.formResponse.update({
+        where: { id: formResponse.id },
+        data: { releasedAt },
+    });
+
+    try {
+        const baseUrl = (process.env.PEEREVAL_BASE_URL || "http://localhost:3000").replace(/\/$/, "");
+        await dispatchTemplated(formResponse.respondeeId, {
+            event: "feedback_released",
+            role: "peer",
+            userEmail: formResponse.respondee.email,
+            subject: `PeerEval Feedback Available: ${assessment.name}`,
+            context: {
+                recipient: {
+                    name: formResponse.respondee.name,
+                    email: formResponse.respondee.email,
+                },
+                submittedBy: {
+                    name: formResponse.responder.name,
+                    email: formResponse.responder.email,
+                },
+                item: {
+                    id: assessment.id,
+                    title: assessment.name,
+                    description: assessment.description,
+                    projectId: assessment.project.id,
+                    projectName: assessment.project.name,
+                },
+                cta: {
+                    url: `${baseUrl}/projects/${encodeURIComponent(assessment.project.id)}/assessments/${encodeURIComponent(assessment.id)}/received`,
+                },
+                appName: "PeerEval",
+            },
+        });
+
+        console.log(
+            `[notifications] Sent feedback_released notification to ${formResponse.respondee.email}`
+        );
+    } catch (err) {
+        // A notification failure must not undo the release of feedback
+        console.error(
+            `[notifications] Feedback was released, but the availability email failed to send:`,
+            err
+        );
+    }
+
+    res.json({
+        message: "Feedback released successfully",
+        releasedAt,
+    });
 });
 
 export default router;

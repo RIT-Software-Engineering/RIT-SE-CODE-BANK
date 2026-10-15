@@ -65,6 +65,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             // Get assessment responses
             const rs = await getReceivedAssessmentResponses(
                 assessmentId,
+                currentUser.id,
                 currentUser.id
             );
 

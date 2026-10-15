@@ -71,6 +71,10 @@ model FormResponse {
   respondee  User              @relation("respondeeInFormResponse", fields: [respondeeId], references: [id])
   responses  InquiryResponse[]
 
+  // Feedback review workflow
+  submittedAt DateTime?
+  releasedAt  DateTime?
+
   // Required for relations
   assessmentId String @db.Char(36)
   responderId  String @db.Char(36)

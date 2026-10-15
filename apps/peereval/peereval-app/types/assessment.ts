@@ -54,6 +54,8 @@ export type PeerFormResponse = {
     responderId: string;
     respondeeId: string;
     responses: PeerInquiryResponse[];
+    submittedAt: string | null;
+    releasedAt: string | null;
 };
 
 export type PeerInquiryResponse = {
