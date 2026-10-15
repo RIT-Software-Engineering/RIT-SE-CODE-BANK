@@ -80,7 +80,7 @@ export async function scheduleHolidayReminders(course){
                 date: holiday.date,
                 endDate: holiday.endDate
             },
-            recipients: ['prof1@rit.edu'], // replace with proper class list when we get one in the future
+            recipients: ['student@rit.edu'], // replace with proper class list when we get one in the future
             sendAt: getReminderDate(holiday)
         })
     }
@@ -180,7 +180,7 @@ export async function sendDueNotifications(userId, courseId){
                 where: {id: notif.id},
                 data: {status: 'FAILED'}
             })
-            console.error('Failed to send notification:', error.message);
+            console.error('Failed to send notification:', error.message, error.cause);
         }
     }
 }

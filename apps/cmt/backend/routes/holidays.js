@@ -97,7 +97,6 @@ router.put("/course/:courseId", async (req, res) => {
     const { holidayName, date, endDate } = req.body;
     const { asid: actionStateId } = req.query;
 
-    console.log(date)
     await prisma.holiday.create({
         data: {
             name: holidayName, 

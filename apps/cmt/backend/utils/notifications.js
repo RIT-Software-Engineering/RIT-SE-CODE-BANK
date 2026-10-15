@@ -85,12 +85,21 @@ export async function dispatchTemplated(userId, { event, context = {}, role, sub
     ...(role ? { role } : {}),
     ...(subject ? { subject } : {})
   };
-  
-  const res = await fetch(url, {
+
+  const request = {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
-  });
+  }
+  let res;
+  
+  try{
+    res = await fetch(url, request);
+  }catch(error){
+    console.error('dispatch attempt failed. trying again', error);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    res = await fetch(url, request);
+  }
   
   if (!res.ok) {
     throw new Error(`dispatchTemplated failed: ${res.status}`);
