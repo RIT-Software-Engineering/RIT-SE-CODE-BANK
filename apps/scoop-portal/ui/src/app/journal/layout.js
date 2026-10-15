@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 
 export default function journalLayout({ children }) {
   return (
-    <ProtectedRoute requiredRoles={["scoopdinator", "scoopervisor", "scooployee", "advisor"]}>
+    <ProtectedRoute requiredRoles={["scoopdinator", "scoopervisor", "scooployee", "advisor", "applicant", "prospect"]}>
         {children}
     </ProtectedRoute>
   );
