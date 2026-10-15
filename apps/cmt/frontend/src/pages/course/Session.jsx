@@ -16,12 +16,17 @@ import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holida
  */
 
 // look for sessions that land on/during holidays and return them.
-function sessionConflicts(sessions, blocks, holidays){
+function sessionConflicts(sessions, blocks, materials, holidays){
     const conflicts = [];
 
     for (const session of sessions){
         const blockCount = blocks.filter(block => block.sessionId === session.id).length;
-        if (blockCount === 0) continue;
+        const materialCount = materials.filter(material => 
+            material.sessionNum === session.sessionNum - 1 
+            && material.type !== "Personal Notes"
+        ).length
+
+        if (blockCount === 0 && materialCount === 0) continue;
 
         if (session.canceled){
             conflicts.push({session, blockCount, reason:'canceled'});
@@ -124,7 +129,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     if (error) return <CMTDangerAlert error={error} />
 
-    const conflicts = sessionConflicts(sessions, sessionBlocks, holidays);
+    const conflicts = sessionConflicts(sessions, sessionBlocks, sessionData, holidays);
     const started = (execState != null) && (execState !== "notStarted");
 
     return (
@@ -152,7 +157,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                     ? `Session ${conflict.session.sessionNum} is canceled and has content! `
                     : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
                 }
-                Move the blocks to another available session.
+                Move the content to another available session.
             </Alert>
         ))}
         {
