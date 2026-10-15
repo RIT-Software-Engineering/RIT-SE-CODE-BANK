@@ -107,6 +107,7 @@ export default function Journal() {
   // const [selectedEntry, setSelectedEntry] = useState(null);
 
   const { user } = useUser();
+  const canEdit = user.type == "advisor" || user.type == "scoopdinator" || user.type == "scoopervisor"; 
   
   useEffect(() => {
     async function fetchEntries () {
@@ -451,9 +452,11 @@ export default function Journal() {
                     
                     {isSender && (
                       <span>
-                        <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
-                          Edit
-                        </IconButton>
+                        {canEdit && entry.entry_type !== "AUTOMATED" && (
+                          <IconButton size="small" onClick={() => handleEditClick(entry)} sx={{ color: '#FF6A00' }}>
+                            Edit
+                          </IconButton>
+                        )}
                         {/*Delete button*/
                         /* <IconButton size="small" onClick={() => handleDeleteEntry(entry)} sx={{ color: '#FF6A00' }}>
                           Delete
