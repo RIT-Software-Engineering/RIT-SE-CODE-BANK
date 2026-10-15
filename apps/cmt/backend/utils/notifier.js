@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
  * @param {*} details - the information surrounding the notification
  */
 export async function addNotification(courseId, details){
-    await prisma.notification.create({
+    return await prisma.notification.create({
         data: {
             courseId: parseInt(courseId),
             event: details.event,
@@ -57,8 +57,7 @@ export async function deleteNotification(id){
 
 function getReminderDate(holiday){
     const reminder_date = new Date(holiday.date.getTime());
-    // make the sendAt date for these notifications be a week before as a placeholder
-    // woudl need to update this later but keep for now
+    // TODO: update this to a more acceptable reminder date or accommodate professor preference
     reminder_date.setDate(reminder_date.getDate() - 7); 
     return reminder_date;
 }
@@ -80,14 +79,14 @@ export async function scheduleHolidayReminders(course){
                 date: holiday.date,
                 endDate: holiday.endDate
             },
-            recipients: ['student@rit.edu'], // replace with proper class list when we get one in the future
+            recipients: ['student@rit.edu'], // TODO: replace with proper class list when we get students in the future
             sendAt: getReminderDate(holiday)
         })
     }
 }
 
 export async function notifyOfHoliday(user, holiday, event, course){
-    await addNotification(holiday.courseId, {
+    const notifRow = await addNotification(holiday.courseId, {
         event: event,
         triggerId: holiday.id,
         context: {
@@ -97,16 +96,17 @@ export async function notifyOfHoliday(user, holiday, event, course){
             date: holiday.date.toISOString().split('T')[0],
             endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
         },
-        recipients: [user.email], // in the future, when we have students, we'll replace this with a class list or soemthing
+        recipients: [user.email], // TODO: replace this with a class list or soemthing
         sendAt: courseNow()
     })
 
-    // for now we're sending notifications immedaitely but we'll want to have a schedule feature later
-    await sendDueNotifications(user.uid, holiday.courseId);
+    // TODO: have a case for scheduled notifs
+    const results = await sendDueNotifications(user.uid, holiday.courseId);
+    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
 }
 
 export async function notifyOfCancellation(user, session){
-    await addNotification(session.courseId, {
+    const notifRow = await addNotification(session.courseId, {
         event: 'class_cancelled',
         triggerId: session.id,
         context: {
@@ -118,11 +118,12 @@ export async function notifyOfCancellation(user, session){
         sendAt: courseNow()
     });
 
-    await sendDueNotifications(user.uid, session.courseId);
+    const results = await sendDueNotifications(user.uid, session.courseId);
+    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
 }
 
 export async function notifyOfMovedBlock(user, block, from, to, course){
-    await addNotification(course.id, {
+    const notifRow = await addNotification(course.id, {
         event: "content_moved",
         triggerId: block.id,
         context: {
@@ -138,7 +139,8 @@ export async function notifyOfMovedBlock(user, block, from, to, course){
         sendAt: courseNow()
     });
 
-    await sendDueNotifications(user.uid, course.id);
+    const results = await sendDueNotifications(user.uid, course.id);
+    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
 }
 
 // returns whether the course has started
@@ -154,9 +156,10 @@ export async function sendDueNotifications(userId, courseId){
         where: {courseId: courseId, status: 'SCHEDULED', sendAt: {lte: courseNow()} } 
     })
     
+    const notifStatuses = [];
     const course = await prisma.course.findUnique({where: {id: courseId}})
     const started = await hasStarted(course);
-    if (!started) return null;
+    if (!started) return notifStatuses;
 
     for (const notif of notifs){
         try{
@@ -175,12 +178,15 @@ export async function sendDueNotifications(userId, courseId){
                 where: {id: notif.id},
                 data: {status: 'SENT'}
             })
+            notifStatuses.push({id: notif.id, status: 'SENT'});
         } catch(error){
             await prisma.notification.update({
                 where: {id: notif.id},
                 data: {status: 'FAILED'}
             })
             console.error('Failed to send notification:', error.message, error.cause);
+            notifStatuses.push({id: notif.id, status: 'FAILED'});
         }
     }
+    return notifStatuses;
 }

@@ -60,7 +60,7 @@ router.post("/", async (req, res) => {
 router.post('/:holidayId/notify', async (req, res) => {
     const {holidayId} = req.params;
     const {change, notifyOption} = req.body;
-
+    let notified = null;
     const holiday = await prisma.holiday.findUnique({
         where: {id: parseInt(holidayId)},
         include: {course: true}
@@ -83,9 +83,14 @@ router.post('/:holidayId/notify', async (req, res) => {
 
     const event = (change === 'add') ? 'holiday' : 'holiday_update'
     
-    await notifyOfHoliday(req.user, holiday, event, holiday?.course);
+    try{
+        notified = await notifyOfHoliday(req.user, holiday, event, holiday?.course);
+    } catch(error){
+        notified = false; // notif didn't go through
+        console.error('Notification failed:', error.message, error.cause);
+    }
 
-    res.json({success: true});
+    res.json({success: true, notified});
 });
 
 /**

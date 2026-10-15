@@ -170,6 +170,7 @@ router.patch("/blocks/:blockId", async (req, res) => {
 router.patch("/blocks/:blockId/move", async (req, res) => {
     const {blockId} = req.params;
     const {targetSessionId, targetPosition, notify} = req.body;
+    let notified = null;
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const block = await prisma.sessionBlock.findFirst({
@@ -221,13 +222,13 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
     try{
         const movedSessions = block.sessionId !== targetSession.id;
         if (notify === "now" && movedSessions && await hasStarted(fromSession.course)){
-            await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course);
+            notified = await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course);
         }
     } catch(error){
         console.error("Failed to send notification of moved block:", error);
     }
 
-    res.json({success: true});
+    res.json({success: true, notified});
 });
 
 /** PUT /api/cmt/session/:sessionId
@@ -278,15 +279,16 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
         }
     });
 
+    let notified = null;
     try{
         if (canceled && notify === "now" && await hasStarted(existingSession.course)){
-            await notifyOfCancellation(req.user, existingSession);
+            notified = await notifyOfCancellation(req.user, existingSession);
         }
     } catch(error){
         console.error("Failed to send out notification of cancellation:", error)
     }
 
-    res.json({session})
+    res.json({session, canceled, notified})
 })
 
 /** DELETE /api/cmt/session/material/:materialId

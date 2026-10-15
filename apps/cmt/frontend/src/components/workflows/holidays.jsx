@@ -4,6 +4,7 @@ import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { CMTJsonFetch } from '../../utils/api'
 import { useParams } from 'react-router-dom'
+import { NotifyMessage, toNotifyResult } from '../NotifyMessage'
 
 /**
  * Card representing a single holiday entry from the database
@@ -90,6 +91,7 @@ export function Holidays() {
     const [endDate, setEndDate] = useState('')
 
     const [notifyHoliday, setNotifyHoliday] = useState(null)
+    const [notifyResult, setNotifyResult] = useState(null);
 
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
@@ -134,6 +136,7 @@ export function Holidays() {
 
     return (
         <div>
+            <NotifyMessage notifyResult={notifyResult} onClose={() => setNotifyResult(null)} />
             {/* appears only if course is running */}
             <HolidayModal
                 notifyHoliday = {notifyHoliday}
@@ -141,7 +144,10 @@ export function Holidays() {
                     CMTJsonFetch('POST', `holidays/${notifyHoliday.holidayId}/notify`, {
                         change: notifyHoliday.change,
                         notifyOption: notificationOption
-                    }).then(() => setNotifyHoliday(null))
+                    }).then(json => {
+                        setNotifyResult(toNotifyResult(json.notified));
+                        setNotifyHoliday(null);
+                    })
                 }
             />
             <div className='flex gap-4 py-2 mb-4 border-b items-center'>

@@ -4,6 +4,7 @@ import { Button, Form, Modal } from "react-bootstrap";
 import { ReadOnlyEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CMTJsonFetch } from "../../utils/api";
 import { createErrorHandler } from "../../utils/error";
+import { toNotifyResult } from "../../components/NotifyMessage";
 
 const STATUS_LABELS = {
     NOT_STARTED: "Not started",
@@ -17,7 +18,7 @@ const STATUS_CLASSES = {
     COMPLETED: "bg-success text-white"
 };
 
-export function SessionBlocks({session, sessions, blocks, materials, refresh, onEditMaterial, setError, createOpen, onCreateClose, showNotify}) {
+export function SessionBlocks({session, sessions, blocks, materials, refresh, onEditMaterial, setError, createOpen, onCreateClose, showNotify, onNotifyResult}) {
     const [blockName, setBlockName] = useState("");
     const [blockToMove, setBlockToMove] = useState(null);
     const [targetSessionId, setTargetSessionId] = useState("");
@@ -62,7 +63,8 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
             targetPosition: position,
             notify
         })
-            .then(() => {
+            .then(json => {
+                onNotifyResult(toNotifyResult(json.notified));
                 setBlockToMove(null);
                 setNotificationOption("none");
                 return refresh();

@@ -9,6 +9,7 @@ import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
 import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
+import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -83,6 +84,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [sessionToCancel, setSessionToCancel] = useState(null);
     const [blockSessionIdForCreate, setBlockSessionIdForCreate] = useState(null);
     const [error, setError] = useState(null)
+    const [notifyResult, setNotifyResult] = useState(null);
 
     // We only work with 1 session date at a time, and it gets reset regardless.
     // Probably not the best system and could be improved
@@ -122,6 +124,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 setSessions(sessions.map(currentSession =>
                     currentSession.id === session.id ? json.session : currentSession
                 ));
+                setNotifyResult(toNotifyResult(json.notified));
                 setSessionToCancel(null);
             })
             .catch(createErrorHandler("Failed to update session cancellation.", setError));
@@ -142,12 +145,12 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
+        <NotifyMessage notifyResult={notifyResult} onClose={() => setNotifyResult(null)} />
         <CancelSessionModal
             showNotify={started}
             session={sessionToCancel}
             onClose={() => setSessionToCancel(null)}
             onConfirm={(notificationOption) => {
-                // void notificationOption;
                 return setCanceled(sessionToCancel, true, notificationOption);
             }}
         />
@@ -236,6 +239,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     setCurMaterialId(materialId);
                                     setIsEditOpen(true);
                                 }}
+                                onNotifyResult={setNotifyResult}
                             />
                             { sessionData.find(data => data.sessionNum === i) ?
                             <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
