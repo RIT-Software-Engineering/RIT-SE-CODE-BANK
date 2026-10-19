@@ -513,8 +513,8 @@ router.put('/:id', async (req, res) => {
 
         await Promise.all(sessions.map(async session => {
             sessionDate.setDate(sessionDate.getDate() + 1);
-
-            const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
+            const dayOf = date => new Date(date).toISOString().split('T')[0];
+            const isHoliday = date => holidays.find(holiday => dayOf(date) >= dayOf(holiday.date) && dayOf(date) <= dayOf(holiday.endDate ?? holiday.date));
 
             // if date is a holiday or within a holiday period, skip it 
             // until the next non-holiday course date

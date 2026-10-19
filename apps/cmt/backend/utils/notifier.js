@@ -63,6 +63,7 @@ function getReminderDate(holiday){
 }
 
 export async function scheduleHolidayReminders(course){
+    const courseName = courseLabel(course);
     for (const holiday of course.holidays){
         const exists = await prisma.notification.findFirst({
             where: {courseId: course.id, triggerId: holiday.id, event: 'holiday'}
@@ -73,11 +74,11 @@ export async function scheduleHolidayReminders(course){
             event: 'holiday',
             triggerId: holiday.id,
             context: {
-                subject: "Holiday Reminder",
-                courseName: course.name,
+                subject: `${courseName}: Holiday Reminder`,
+                courseName: courseName,
                 holidayName: holiday.name,
-                date: holiday.date,
-                endDate: holiday.endDate
+                date: holiday.date.toISOString().split('T')[0],
+                endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
             },
             recipients: ['student@rit.edu'], // TODO: replace with proper class list when we get students in the future
             sendAt: getReminderDate(holiday)
@@ -86,17 +87,18 @@ export async function scheduleHolidayReminders(course){
 }
 
 export async function notifyOfHoliday(user, holiday, event, course){
+    const courseName = courseLabel(course);
     const notifRow = await addNotification(holiday.courseId, {
         event: event,
         triggerId: holiday.id,
         context: {
-            subject: event === 'holiday' ? "Holiday Added" : "Holiday Updated",
-            courseName: course.name,
+            subject: event === 'holiday' ? `${courseName}: Holiday Added` : `${courseName}: Holiday Updated`,
+            courseName: courseName,
             holidayName: holiday.name,
             date: holiday.date.toISOString().split('T')[0],
             endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
         },
-        recipients: [user.email], // TODO: replace this with a class list or soemthing
+        recipients: ['student@rit.edu'], // TODO: replace this with a class list when we have students in the db
         sendAt: courseNow()
     })
 
@@ -106,15 +108,16 @@ export async function notifyOfHoliday(user, holiday, event, course){
 }
 
 export async function notifyOfCancellation(user, session){
+    const courseName = courseLabel(session.course);
     const notifRow = await addNotification(session.courseId, {
         event: 'class_cancelled',
         triggerId: session.id,
         context: {
-            subject: `Class Cancelled on ${session.date}`,
-            courseName: session.course.name,
+            subject: `${courseName}: Class Cancelled on ${session.date}`,
+            courseName: courseName,
             date: session.date
         },
-        recipients: [user.email],
+        recipients: ['student@rit.edu'],
         sendAt: courseNow()
     });
 
@@ -123,19 +126,20 @@ export async function notifyOfCancellation(user, session){
 }
 
 export async function notifyOfMovedBlock(user, block, from, to, course){
+    const courseName = courseLabel(course);
     const notifRow = await addNotification(course.id, {
         event: "content_moved",
         triggerId: block.id,
         context: {
-            subject: 'Content Moved in the Schedule',
-            courseName: course.name,
+            subject: `${courseName}: Content Moved in the Schedule`,
+            courseName: courseName,
             blockName: block.name,
             from: from.sessionNum,
             fromDate: from.date,
             to: to.sessionNum,
             toDate: to.date,
         },
-        recipients: [user.email],
+        recipients: ['student@rit.edu'],
         sendAt: courseNow()
     });
 
@@ -148,6 +152,10 @@ export async function hasStarted(course){
     if (!course?.execWorkflowStateId) return false;
     const state = await workflowsFetch('GET', `states/workflow/${course?.execWorkflowStateId}`);
     return state?.baseActionState?.stateType !== "notStarted";
+}
+
+export function courseLabel(course){
+    return course.section ? `${course.classId}-${course.section}` : course.classId;
 }
 
 export async function sendDueNotifications(userId, courseId){

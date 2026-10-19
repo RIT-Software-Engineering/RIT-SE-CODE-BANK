@@ -1,6 +1,6 @@
 import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip, Badge } from "react-bootstrap";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
@@ -15,6 +15,14 @@ import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  * @import { SetStateAction } from "react"
  */
+
+function holidayOnDate(date, holidays){
+    if (!date) return null;
+    const day = date.split('T')[0];
+    return holidays.find(hol =>
+        day >= hol.date.split('T')[0] && day <= (hol.endDate ?? hol.date).split('T')[0]
+    ) ?? null;
+}
 
 // look for sessions that land on/during holidays and return them.
 function sessionConflicts(sessions, blocks, materials, holidays){
@@ -168,6 +176,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
                 let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
                 const currentSession = sessions.find(session => session.sessionNum === i+1);
+                const holiday = holidayOnDate(currentSession?.date, holidays);
 
                 return (
                     <Accordion.Item eventKey={`${i}`} key={i} onClick={()=>setSessionNum(i)}>
@@ -221,6 +230,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
                                         : "No materials"})
                                     </span>
+                                    {holiday && <Badge bg="warning" text="dark" className="ms-3 fs-6">Holiday: {holiday.name}</Badge>}
                                 </span>
                             </div>
                         </Accordion.Header>
@@ -363,7 +373,7 @@ function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
                         <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
                             <option value="none">Do not send a notification</option>
                             <option value="now">Send a notification now</option>
-                            {isFutureSession && <option value="scheduled">Schedule a notification</option>}
+                            {/* {isFutureSession && <option value="scheduled">Schedule a notification</option>} */}
                         </Form.Select>
                     </Form.Group>
                 )}
