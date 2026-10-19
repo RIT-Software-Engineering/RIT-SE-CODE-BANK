@@ -16,6 +16,7 @@ import { BuilderPageAdmin } from "./pages/WorkflowBuilderPage.jsx";
 import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
 import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
 import { serializeError } from "@se-code-bank/cmt-shared-utilities";
+import { allRoles } from "./utils/userRoles.js";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -46,7 +47,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Route
           path="/"
           element={
-            <RequireAuth>
+            <RequireAuth roles={allRoles}>
               <App />
             </RequireAuth>
           }

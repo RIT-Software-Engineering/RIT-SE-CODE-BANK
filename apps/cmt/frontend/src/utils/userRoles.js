@@ -1,6 +1,17 @@
 // src/utils/userRoles.js
 
 /**
+ * A list of the different CMT roles. Update as needed.
+ */
+export const allRoles = [
+  'admin',
+  'professor',
+  'instructor',
+  'student',
+  'ta'
+]
+
+/**
  * Check if user has a specific role
  */
 export function hasRole(user, role) {

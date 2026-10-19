@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getUserFromCookie } from "../utils/auth.js";
+import { hasAnyRole } from "../utils/userRoles.js";
 import LoginWrapper from "../utils/LoginWrapper.js";
+import UnauthorizedPage from "../pages/UnauthorizedPage.jsx";
 
 /**
  * @param {Object} props
@@ -8,7 +10,7 @@ import LoginWrapper from "../utils/LoginWrapper.js";
  * @param {import("react").ReactNode} props.children 
  * @returns 
  */
-export default function RequireAuth({ children, roles }) {
+export default function RequireAuth({ children, roles = [] }) {
   const [checked, setChecked] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -23,10 +25,16 @@ export default function RequireAuth({ children, roles }) {
     return null; // or <div>Loading...</div>
   }
 
+  // Redirect to login page if not logged in
   if (!user) {
     return <LoginWrapper loginMode="" />;
   }
 
-  // User exists → render protected content
+  // If user does not have permission, route to error page
+  if (!hasAnyRole(user, roles)) {
+    return <UnauthorizedPage></UnauthorizedPage>
+  }
+
+  // User exists & has permission → render protected content
   return children;
 }
