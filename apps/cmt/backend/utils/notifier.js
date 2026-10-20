@@ -108,14 +108,15 @@ export async function notifyOfHoliday(user, holiday, event, course){
 }
 
 export async function notifyOfCancellation(user, session){
+    const onCancelledDate = session.date ? `on ${session.date}` : '';
     const courseName = courseLabel(session.course);
     const notifRow = await addNotification(session.courseId, {
         event: 'class_cancelled',
         triggerId: session.id,
         context: {
-            subject: `${courseName}: Class Cancelled on ${session.date}`,
+            subject: `${courseName}: Class Cancelled ${onCancelledDate}`,
             courseName: courseName,
-            date: session.date
+            date: session.date ?? null
         },
         recipients: ['student@rit.edu'],
         sendAt: courseNow()

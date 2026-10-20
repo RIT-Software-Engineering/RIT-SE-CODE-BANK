@@ -866,8 +866,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 <Form.Label>Student notification</Form.Label>
                                 <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
                                     <option value="none">Do not notify students</option>
-                                    <option value="students">Prompt to notify students</option>
-                                    <option value="personal">Create a personal reminder</option>
+                                    {/* <option value="students">Prompt to notify students</option> */}
+                                    {/* <option value="personal">Create a personal reminder</option> */}
                                 </Form.Select>
                             </Form.Group>
                         </Modal.Body>

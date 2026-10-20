@@ -10,7 +10,7 @@
   <tr>
     <td>
       <h2 style="font-size:24px;line-height:32px;font-weight:700;margin-bottom:16px;">
-        {{courseName}}: Class Cancelled on {{date}}
+        {{courseName}}: Class Cancelled{{#if date}} on {{date}}{{/if}}
       </h2>
 
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
@@ -18,7 +18,7 @@
       </p>
 
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
-        This email serves to inform you that class will be cancelled on <strong>{{date}}</strong>.
+        This email serves to inform you that class will be cancelled{{#if date}} on <strong>{{date}}</strong>{{/if}}.
       </p>
 
       <p style="font-size:16px;line-height:24px;margin-bottom:16px;">
