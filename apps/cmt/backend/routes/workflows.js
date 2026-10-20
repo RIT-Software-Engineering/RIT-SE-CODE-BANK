@@ -151,7 +151,7 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
 // workflow/workflowTemplate/:workflowId
 router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     const {workflowId} = req.params;
-    const msg = workflowsFetch("DELETE", `workflows/${workflowId}`);
+    const msg = await workflowsFetch("DELETE", `workflows/${workflowId}`);
     return res.status(200).json({message: msg})
 });
 
@@ -178,7 +178,7 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
     let safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata) : {} ;
     if (safeMetadata && Object.keys(safeMetadata).length === 0)
         safeMetadata = null;
-    const action = workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
+    const action = await workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
     return res.status(200).json({action: action})
 });
 
@@ -186,21 +186,21 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
 router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     const {workflowId} = req.params;
     const {name, description} = req.body;
-    const workflow = workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
+    const workflow = await workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
     return res.status(200).json({action: workflow});
 });
 
 // workflow/actionTemplate/action/:actionId
 router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     const {actionId} = req.params;
-    const msg = workflowsFetch("DELETE", `/actions/${actionId}`);
+    const msg = await workflowsFetch("DELETE", `/actions/${actionId}`);
     return res.status(200).json({message: msg});
 });
 
 // workflow/actionTemplate/workflow/:workflowId
 router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     const {workflowId} = req.params;
-    const msg = workflowsFetch("DELETE", `/actions/${workflowId}`);
+    const msg = await workflowsFetch("DELETE", `/actions/${workflowId}`);
     return res.status(200).json({message: msg});
 })
 
@@ -221,7 +221,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     );
 
     const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
-        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE"].filter(
+        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS"].filter(
         code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
     );
 
