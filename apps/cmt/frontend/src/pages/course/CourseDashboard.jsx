@@ -64,6 +64,11 @@ export function CourseDashboard() {
         [actionsWithContexts]
     )
 
+    const startCourseButton = (!course?.isTemplate && execState != null) 
+        ? (execState === "notStarted"
+            ? <Button onClick={startCourse}>Start Course</Button> : <Button disabled>Course in Progress</Button>) 
+        : null; 
+                    
     return (
         <>
             <div className='flex items-center mb-4'>
@@ -74,7 +79,7 @@ export function CourseDashboard() {
                 : course === null
                 ? <p> Loading </p>
                 : <>
-                    <CourseInfo course={course} />
+                    <CourseInfo course={course} action={startCourseButton} />
                     <div className="h-10"></div>
                     <div className="flex justify-center">
                         <div className="max-w-screen-xl w-full">
@@ -84,12 +89,6 @@ export function CourseDashboard() {
                         </div>
                     </div>
                     
-                    {(!course.isTemplate && execState != null) 
-                    ? (execState === "notStarted") ?
-                    <Button onClick={startCourse}>Start Course</Button> 
-                    : <Button disabled>Course in Progress</Button> 
-                    : <></> 
-                    }
                     <div className="h-10"></div>
                     <ResourceManager courseId={course.id} />
                     <div className='mb-5 border-b mt-10'>
@@ -126,7 +125,7 @@ export function CourseDashboard() {
     )
 }
 
-function CourseInfo({ course }) {
+function CourseInfo({ course, action }) {
     return (
         <>
             <div className="flex items-end gap-14 mt-2 w-100 p-6 pb-4 rounded-t-lg text-xl" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
@@ -144,6 +143,7 @@ function CourseInfo({ course }) {
                     {/* TODO maybe remove? Students are kinda silly to have and a pain to update */}
                     <p className={`mb-0 ${course.students ?? "hidden"}`}>Number of Students: {course.students ?? "TBD"}</p>
                 </div>
+                {action && <div className="ml-auto">{action}</div>}
             </div>
         </>
     )

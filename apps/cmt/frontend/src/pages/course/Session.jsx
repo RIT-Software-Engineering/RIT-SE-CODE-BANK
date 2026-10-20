@@ -148,7 +148,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
         isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
         blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
-        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
+        <SessionEditModal showNotify={started} sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
@@ -666,11 +666,12 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
  * @param {Number} props.sessionCount 
  * @param {Array} props.sessions
  * @param {Array} props.blocks
+ * @param {Boolean} props.showNotify - whether to show the notification option in the modal
  * @returns {React.ReactElement} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, 
     isEditOpen, setIsEditOpen, courseId, 
-    setDeleteOpen, setMaterialId, sessionCount, sessions, blocks }){
+    setDeleteOpen, setMaterialId, sessionCount, sessions, blocks, showNotify }){
     const curMaterial = sessionData.find(material => material.id === materialId);
     
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
@@ -725,7 +726,9 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 
     function requestMaterialUpdate() {
         if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, ""))
-            setUpdatePromptOpen(true);
+            if (showNotify) 
+                setUpdatePromptOpen(true);
+            else updateMaterial();
         else
             setWarningVisible(true);
     }

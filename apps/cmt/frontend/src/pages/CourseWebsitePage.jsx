@@ -413,7 +413,17 @@ export default function CourseWebsitePage() {
                     <tr key={`holiday-${row.data.id}`} className="bg-orange-100">
                       <td className="border border-orange-300 p-3 text-center text-lg font-bold">
                         <p>Break</p>
-                        <p>{row.data.date?.split('T')[0] ?? "TBD"}</p>
+                        <p>{row.data.date?.split('T')[0] ? (
+                            <>
+                                <span className="block">{row.data.date.split('T')[0]}</span>
+                                {row.data.endDate && (
+                                    <>
+                                        <span className="block">-</span>
+                                        <span className="block">{row.data.endDate.split('T')[0]}</span>
+                                    </>
+                                )}
+                            </>
+                        ) : "TBD"}</p>
                       </td>
                       <td colSpan={totalColumns} className="border border-orange-300 p-3 text-center text-lg align-top">
                         <p className="font-bold text-3xl">{row.data.name}</p>
