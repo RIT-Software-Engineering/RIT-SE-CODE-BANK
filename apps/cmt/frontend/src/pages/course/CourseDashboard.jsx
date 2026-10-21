@@ -26,6 +26,7 @@ export function CourseDashboard() {
     const [execState, setExecState] = useState(null);
     const [execWorkflow, setExecWorkflow] = useState(null);
     const [execActionsWithContexts, setExecActionsWithContexts] = useState([]);
+    const [started, setStarted] = useState(false);
 
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
@@ -38,6 +39,7 @@ export function CourseDashboard() {
             setExecState(json.execState)
             setExecWorkflow(json.execWorkflow)
             setExecActionsWithContexts(json.execActionsWithContexts ?? [])
+            setStarted(json.started)
         }).catch(createErrorHandler("Failed to fetch course details.", setError)),
         [id]
     )
@@ -69,8 +71,8 @@ export function CourseDashboard() {
     )
 
     const startCourseButton = (!course?.isTemplate && execState != null) 
-        ? (execState === "notStarted"
-            ? <Button onClick={startCourse}>Start Course</Button> : <Button disabled>Course in Progress</Button>) 
+        ? (started ? 
+            <Button disabled>Course in Progress</Button> : <Button onClick={startCourse}>Start Course</Button>)
         : null; 
                     
     return (
@@ -112,7 +114,7 @@ export function CourseDashboard() {
                                 updateWorkflow={update}
                                 fetchToCallback={fetchToCallback}
                                 courseId={course.id}
-                                execState={execState}
+                                started={started}
                             />
                             <div className='flex justify-end pt-4 mb-4'>
                                 <Button onClick={() => {

@@ -2,6 +2,7 @@ import {dispatchTemplated} from './notifications.js'
 import {PrismaClient} from '../prisma/generated/client/index.js'
 import {workflowsFetch} from '../../shared-utilities/cmtFetch.js';
 import courseNow from './courseClock.js';
+import { isStarted } from './courseExecution.js';
 
 const prisma = new PrismaClient();
 
@@ -152,7 +153,7 @@ export async function notifyOfMovedBlock(user, block, from, to, course){
 export async function hasStarted(course){
     if (!course?.execWorkflowStateId) return false;
     const state = await workflowsFetch('GET', `states/workflow/${course?.execWorkflowStateId}`);
-    return state?.baseActionState?.stateType !== "notStarted";
+    return isStarted(state);
 }
 
 export function courseLabel(course){

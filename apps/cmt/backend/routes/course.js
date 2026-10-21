@@ -6,6 +6,7 @@ import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 import { scheduleHolidayReminders } from '../utils/notifier.js'
+import { findStartChild, isStarted } from '../utils/courseExecution.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -87,7 +88,7 @@ router.get('/:id', async (req, res) => {
     const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
    
     // get execution state and return it along with everything else
-    let execWorkflow = null, execActionsWithContexts = [], execState = null, execWorkflowState;
+    let execWorkflow = null, execActionsWithContexts = [], execState = null, started=false, execWorkflowState;
     if (course.execWorkflowStateId){
         let execActions;
         [execWorkflow, execActions, execWorkflowState] = await Promise.all([
@@ -96,11 +97,12 @@ router.get('/:id', async (req, res) => {
             workflowsFetch('GET', `states/workflow/${course.execWorkflowStateId}`)
         ])
         execState = execWorkflowState.baseActionState.stateType
+        started = isStarted(execWorkflowState)
         execActionsWithContexts = execActions.map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
     }
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState, execState, execWorkflow, execActionsWithContexts})
+    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState, execState, started, execWorkflow, execActionsWithContexts})
 })
 
 // helper function to load the metaworkflow based on the workflow string (either course creation or course execution workflow)
@@ -567,12 +569,9 @@ router.put('/:id/start', async (req, res) =>{
     const state = await workflowsFetch('GET', `/states/workflow/${course.execWorkflowStateId}`)
     const execStateType = state.baseActionState.stateType
     
-    if (execStateType !== 'notStarted') return res.json({execState: execStateType})
+    if (isStarted(state)) return res.json({execState: execStateType})
         
-    const startChild = state.baseActionState.children.find(child => {
-        const row = child.action.metadata.find(m => m.key === 'code') // do this to find the code cuz metadata wasn't parsed (is a database row)
-        return row && JSON.parse(row.value) === 'START_COURSE'
-    })
+    const startChild = findStartChild(state)
 
     if (!startChild) throw new CMTError({ userFacingMessage: 'Start course action not found.' })
     await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: startChild.id, stateType: 'completed' })

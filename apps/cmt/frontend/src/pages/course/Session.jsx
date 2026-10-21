@@ -70,10 +70,10 @@ function sessionConflicts(sessions, blocks, materials, holidays){
  * @param {() => void} props.updateWorkflow 
  * @param {FetchToCallback} props.fetchToCallback 
  * @param {string} props.courseId - the identifier for which sessionData to obtain
- * @param {string | null} [props.execState] - the course's execution state ("notStarted" | "inProgress" | "completed" | null)
+ * @param {boolean} props.started - whether the course has been started
  * @returns {React.ReactElement} the session accordion as HTML
  */
-export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId, execState}) {
+export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId, started}) {
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -141,7 +141,6 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     if (error) return <CMTDangerAlert error={error} />
 
     const conflicts = sessionConflicts(sessions, sessionBlocks, sessionData, holidays);
-    const started = (execState != null) && (execState !== "notStarted");
 
     return (
         <Accordion>
