@@ -4,14 +4,6 @@ const prisma = new PrismaClient();
 
 async function main() {
 
-    // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
-    // This is to allow start scripts to remain idempotent.
-    // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
-    const doesSeedDataExist = await prisma.action.findFirst({ where: { name: "Create Course" } }) 
-    if (doesSeedDataExist) {
-        console.log("WARNING: Skipping seeding as workflow with name 'create course' already exists.");
-        return
-    }
 
   ///////////
   // Users //
@@ -221,15 +213,44 @@ async function main() {
             ],
         },
     ]
-  }];
+    },
+    {
+    name: 'Start Course',
+    description: 'These steps carry out different actions in the running of the course!',
+    tags: ["WorkflonyFirstTheRestNowhere_CMT_Template"],
+    userId: users[0].id,
+    metadata: {code: "Course Execution Workflow"},
+    actions: [
+        {
+            name: 'Start Course',
+            description: 'Starts course execution!',
+            actionType: 'simple',
+            metadata: {
+                code: 'START_COURSE',
+            },
+        }
+    ]}
+];
+
+    // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
+    // This is to allow start scripts to remain idempotent.
+    // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
+    // Guard per workflow by metadata code
+  for (const workflow of workflowData){
+    const code = workflow.metadata.code;
+    const exists = await prisma.metadata.findFirst({
+        where: {key: "code", value: JSON.stringify(code)}
+    });
+
+    if (exists){
+        console.log(`WARNING: Skipping ${code} as it is already seeded.`);
+        continue;
+    }
 
   // Create all workflows from workflowData
-  await Promise.all(
-    workflowData.map(async (w) => {
-      // Create the workflow
-      await createWorkflow(w);
-    })
-  );
+    await createWorkflow(workflow);
+    console.log(`Seeded workflow with code: ${code}`);
+  }
 
   console.log("🌱 Seed data created successfully!");
 }

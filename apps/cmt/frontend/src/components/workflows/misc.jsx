@@ -40,10 +40,16 @@ export function CheckmarkAction(props) {
 	let variantComplete; 
 	let labelComplete;
 	let labelIncomplete; 
+	const code = props.actionWithContexts.processedAction?.parsedMetadata?.code;
 	switch (props.actionWithContexts.processedAction?.parsedMetadata?.code) {
 		case 'PUBLISH_TEMPLATE':
 			labelIncomplete = "Publish";
 			labelComplete = "Published";
+			break;
+
+		case 'START_COURSE':
+			labelIncomplete = "Start";
+			labelComplete = "Started";
 			break;
 	
 		default:
@@ -56,7 +62,7 @@ export function CheckmarkAction(props) {
 	return <Button
 		variant={props.checked ? variantComplete : variantIncomplete}
 		onClick={props.onClick}
-		disabled={props.disabled}
+		disabled={props.disabled || (code === 'START_COURSE' && props.checked)}
 	>
 		{props.checked ? labelComplete : labelIncomplete}
 	</Button>

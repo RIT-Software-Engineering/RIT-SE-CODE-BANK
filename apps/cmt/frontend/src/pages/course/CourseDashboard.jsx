@@ -24,6 +24,8 @@ export function CourseDashboard() {
     const [sessions, setSessions] = useState([]);
     const [error, setError] = useState(null)
     const [execState, setExecState] = useState(null);
+    const [execWorkflow, setExecWorkflow] = useState(null);
+    const [execActionsWithContexts, setExecActionsWithContexts] = useState([]);
 
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
@@ -34,6 +36,8 @@ export function CourseDashboard() {
                 setWorkflow(json.workflow)
             })
             setExecState(json.execState)
+            setExecWorkflow(json.execWorkflow)
+            setExecActionsWithContexts(json.execActionsWithContexts ?? [])
         }).catch(createErrorHandler("Failed to fetch course details.", setError)),
         [id]
     )
@@ -86,6 +90,10 @@ export function CourseDashboard() {
                             {workflow && (
                                 <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
                             )}
+                            {/* displays course execution workflow & actions on page. decide whether to have on the page or on a separate page */}
+                            {/* {execWorkflow && (
+                                <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={execActionsWithContexts} course={course} workflow={execWorkflow}/>
+                            )} */}
                         </div>
                     </div>
                     

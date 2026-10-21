@@ -63,18 +63,16 @@ router.get('/templates', async (_, res) => {
  * ```
  * {
  *  course: CMT course object
- *  workflow: Workflows workflow object
- *  actionsWithCallbacks: {
- *    action: Workflows action object
- *    callback: CMT callback url to complete action
- *  }
+ *  workflow: Workflows workflow object for the course creation workflow
+ *  actionsWithContexts: Array of creation actions with their contexts
  *  actionStates: Workflows actionStates array
  *  execState: string | null
+ *  execWorkflow: Workflows workflow object for the execution workflow
+ *  execActionsWithContexts: Array of execution actions with their contexts
  * }
  * ```
  */
 router.get('/:id', async (req, res) => {
-    // TODO: check perms/if prof owns course
     const course = await prisma.course.findUnique({
         where: { id: parseInt(req.params.id), professorId: req.user.uid },
         include: {sessions: true, holidays: true}
@@ -89,14 +87,20 @@ router.get('/:id', async (req, res) => {
     const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
    
     // get execution state and return it along with everything else
-    let execState;
+    let execWorkflow = null, execActionsWithContexts = [], execState = null, execWorkflowState;
     if (course.execWorkflowStateId){
-        const execWorkflowState = await workflowsFetch('GET', `states/workflow/${course.execWorkflowStateId}`)
+        let execActions;
+        [execWorkflow, execActions, execWorkflowState] = await Promise.all([
+            workflowsFetch('GET', `workflows/${course.execWorkflowId}`),
+            workflowsFetch('GET', `actions?workflowId=${course.execWorkflowId}`),
+            workflowsFetch('GET', `states/workflow/${course.execWorkflowStateId}`)
+        ])
         execState = execWorkflowState.baseActionState.stateType
-    } else execState = null
+        execActionsWithContexts = execActions.map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
+    }
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState, execState })
+    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState, execState, execWorkflow, execActionsWithContexts})
 })
 
 // helper function to load the metaworkflow based on the workflow string (either course creation or course execution workflow)
