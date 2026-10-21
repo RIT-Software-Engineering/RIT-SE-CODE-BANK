@@ -1,6 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
+import { hasStarted, notifyOfCancellation, notifyOfMovedBlock } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -168,12 +169,13 @@ router.patch("/blocks/:blockId", async (req, res) => {
  */
 router.patch("/blocks/:blockId/move", async (req, res) => {
     const {blockId} = req.params;
-    const {targetSessionId, targetPosition} = req.body;
+    const {targetSessionId, targetPosition, notify} = req.body;
+    let notified = null;
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const block = await prisma.sessionBlock.findFirst({
         where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}},
-        include: {session: true}
+        include: {session: {include: {course: true}}}
     });
     const targetSession = await prisma.session.findFirst({
         where: {
@@ -183,6 +185,8 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
         }
     });
     if (!block || !targetSession) return res.status(404).json({error: "Block or target session not found"});
+
+    const fromSession = block.session;
 
     const sourceBlocks = await prisma.sessionBlock.findMany({
         where: {sessionId: block.sessionId, id: {not: block.id}},
@@ -215,7 +219,16 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
         });
     });
 
-    res.json({success: true});
+    try{
+        const movedSessions = block.sessionId !== targetSession.id;
+        if (notify === "now" && movedSessions && await hasStarted(fromSession.course)){
+            notified = await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course);
+        }
+    } catch(error){
+        console.error("Failed to send notification of moved block:", error);
+    }
+
+    res.json({success: true, notified});
 });
 
 /** PUT /api/cmt/session/:sessionId
@@ -240,10 +253,11 @@ router.put("/:sessionId", async (req, res) => {
 /** PATCH /api/cmt/session/:sessionId/cancellation
  * Marks a session as canceled or restores it without changing its date,
  * completion state, or materials.
+ * Triggers a notifcation if the course has started
  */
 router.patch("/:sessionId/cancellation", async (req, res) => {
     const {sessionId} = req.params;
-    const {canceled} = req.body;
+    const {canceled, notify} = req.body;
 
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
     if (typeof canceled !== "boolean") return res.status(400).json({error: "canceled must be a boolean"});
@@ -252,7 +266,8 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
         where: {
             id: Number(sessionId),
             course: {professorId: req.user.uid}
-        }
+        },
+        include: {course: true}
     });
     if (!existingSession) return res.status(404).json({error: "Session not found for this instructor"});
 
@@ -264,7 +279,16 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
         }
     });
 
-    res.json({session})
+    let notified = null;
+    try{
+        if (canceled && notify === "now" && await hasStarted(existingSession.course)){
+            notified = await notifyOfCancellation(req.user, existingSession);
+        }
+    } catch(error){
+        console.error("Failed to send out notification of cancellation:", error)
+    }
+
+    res.json({session, canceled, notified})
 })
 
 /** DELETE /api/cmt/session/material/:materialId

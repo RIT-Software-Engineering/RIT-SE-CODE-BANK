@@ -39,6 +39,8 @@ model Course {
   tbteamset       TBTeamSet[]
   workflowId      String
   workflowStateId String
+  execWorkflowId  String? // for course execition meta-workflow
+  execWorkflowStateId String? // for course execution meta-workflow state
   syllabusName        String?       // The actual syllabus is found in resources
   Resource        Resource[]
   isTemplate      Boolean       @default(false)
@@ -170,6 +172,29 @@ model Holiday {
 
   @@index([courseId])
   @@map("holidays")
+}
+
+// notification entity
+model Notification {
+  id            Int         @id @default(autoincrement())
+  courseId      Int
+  event         String      // event for notif templates: class_cancelled, holiday_updated, materials_moved, etc    
+  triggerId     Int?        // the thing the notif is about (holiday, session, course, material, etc). null if it was deleted
+  context       Json        // details of the thing the notification is about - shape depends on templates. 
+  note          String?     // aditional information, optional
+  recipients    Json        // Json array of emails
+  status        notification_status @default(SCHEDULED)
+  sendAt        DateTime    
+  createdAt     DateTime    @default(now())
+
+  @@index([courseId])
+}
+
+enum notification_status {
+  SCHEDULED
+  SENT 
+  FAILED 
+  CANCELLED
 }
 
 enum tbteamset_status {

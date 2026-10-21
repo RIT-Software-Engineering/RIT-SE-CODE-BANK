@@ -5,6 +5,8 @@ import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
+import { scheduleHolidayReminders } from '../utils/notifier.js'
+import { findStartChild, isStarted } from '../utils/courseExecution.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -62,17 +64,16 @@ router.get('/templates', async (_, res) => {
  * ```
  * {
  *  course: CMT course object
- *  workflow: Workflows workflow object
- *  actionsWithCallbacks: {
- *    action: Workflows action object
- *    callback: CMT callback url to complete action
- *  }
+ *  workflow: Workflows workflow object for the course creation workflow
+ *  actionsWithContexts: Array of creation actions with their contexts
  *  actionStates: Workflows actionStates array
+ *  execState: string | null
+ *  execWorkflow: Workflows workflow object for the execution workflow
+ *  execActionsWithContexts: Array of execution actions with their contexts
  * }
  * ```
  */
 router.get('/:id', async (req, res) => {
-    // TODO: check perms/if prof owns course
     const course = await prisma.course.findUnique({
         where: { id: parseInt(req.params.id), professorId: req.user.uid },
         include: {sessions: true, holidays: true}
@@ -85,11 +86,59 @@ router.get('/:id', async (req, res) => {
     /** @type {WorkflowsAction[]} */
     const actions = await workflowsFetch('GET', `actions?workflowId=${course.workflowId}`)
     const workflowState = await workflowsFetch('GET', `states/workflow/${course.workflowStateId}`)
-    
+   
+    // get execution state and return it along with everything else
+    let execWorkflow = null, execActionsWithContexts = [], execState = null, started=false, execWorkflowState;
+    if (course.execWorkflowStateId){
+        let execActions;
+        [execWorkflow, execActions, execWorkflowState] = await Promise.all([
+            workflowsFetch('GET', `workflows/${course.execWorkflowId}`),
+            workflowsFetch('GET', `actions?workflowId=${course.execWorkflowId}`),
+            workflowsFetch('GET', `states/workflow/${course.execWorkflowStateId}`)
+        ])
+        execState = execWorkflowState.baseActionState.stateType
+        started = isStarted(execWorkflowState)
+        execActionsWithContexts = execActions.map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
+    }
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState })
+    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState, execState, started, execWorkflow, execActionsWithContexts})
 })
+
+// helper function to load the metaworkflow based on the workflow string (either course creation or course execution workflow)
+async function loadMetaWorkflow(workflowValue){
+    let metaWorkflow;
+    const response = await workflowsFetch('GET', `workflows/metadata?key=code&value=${JSON.stringify(workflowValue)}`);
+    const workflowBase = response.length > 0 ? response[0] : null;
+    const workflowType = workflowValue.replace("Workflow", "").trim().toLowerCase();
+    
+    if (!workflowBase)
+        throw new CMTError({ userFacingMessage: `Unable to find the standard ${workflowType} template. Please contact Kenn Martinez so that it can be set.` });
+
+    let actions;
+    if(workflowBase.rootActionId){
+        const actionResponse = await workflowsFetch('GET', `actions?workflowId=${workflowBase.id}`);
+        function parseMetadata(action){
+            action.metadata = compressedMetadataToObject(action.metadata);
+            if (action.childActions) for (action of action.childActions) parseMetadata(action);
+        }
+
+        actionResponse.forEach(action => parseMetadata(action));
+        actions = actionResponse;
+    } else{
+        throw new CMTError({ userFacingMessage: `${workflowValue} must have at least one simple action. Please contact Kenn Martinez so that one can be added.` });
+    }
+
+    const baseAction = workflowBase.baseAction;
+    metaWorkflow = {
+        name: baseAction.name,
+        description: baseAction.description,
+        tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
+        childActions: actions
+    };
+
+    return metaWorkflow;
+}
 
 /**
  * POST /api/cmt/course
@@ -107,32 +156,9 @@ router.post('/', async (req, res) => {
 
         const {courseCode, courseName, color, season, isTemplate} = req.body;
 
-        let metaCourseWorkflow
+        let metaCourseWorkflow = await loadMetaWorkflow("Course Creation Workflow");
+        let metaExecWorkflow;
         let sessionActions;
-        const response = await workflowsFetch("GET", `workflows/metadata?key=code&value=${JSON.stringify('Course Creation Workflow')}`,)
-        const workflowBase = response.length > 0 ? response[0] : null;
-        if (!workflowBase)
-            throw new CMTError({ userFacingMessage: "Unable to find the standard course creation template. Please contact Kenn Martinez so that it can be set." })
-        let actions;
-        if (workflowBase.rootActionId){
-            const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
-            function parseMetadata(action) {
-                action.metadata = compressedMetadataToObject(action.metadata)
-                if (action.childActions) for (action of action.childActions) parseMetadata(action)
-            }
-            actionResponse.forEach(action => parseMetadata(action))
-            actions = actionResponse 
-        }
-        else
-            throw new CMTError({ userFacingMessage: "Course creation workflow must have at least one simple action. Please contact Kenn Martinez so that one can be added." })
-        const baseAction = workflowBase.baseAction;
-        // TODO: baseAction is an empty object 
-        metaCourseWorkflow = {
-            name: baseAction.name,
-            description: baseAction.description,
-            tags: workflowBase.tags?.filter(tag => tag !== "WorkflonyFirstTheRestNowhere_CMT_Template"),
-            childActions: actions
-        };
         if (isTemplate){ // basically if we're working with templates we append this to the end of our workflow
             metaCourseWorkflow.childActions.push({
                 name: 'Publish Your Template',
@@ -144,13 +170,22 @@ router.post('/', async (req, res) => {
             })
         }
 
+        if (!isTemplate){
+            metaExecWorkflow = await loadMetaWorkflow("Course Execution Workflow");
+        }
+
         // The regex here is basically the same as an .includes
         sessionActions = findActionsByCode(metaCourseWorkflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
 
         // Do everything in a transaction so if one thing fails it reverts the DB
         await prisma.$transaction(async () => {
             const createdWorkflow = await objectToNewWorkflow(metaCourseWorkflow, professorId)
-
+            let createdExecWorkflow, execState;
+            if (!isTemplate){
+                createdExecWorkflow = await objectToNewWorkflow(metaExecWorkflow, professorId)
+                execState = await workflowsFetch('POST', 'states/workflow', {userId: professorId, workflowId: createdExecWorkflow.id })
+            }
+            
             const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
             console.log(`Created workflow action state with id ${createdState.id}`)
 
@@ -164,6 +199,8 @@ router.post('/', async (req, res) => {
                     holidays: {},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
+                    execWorkflowId: createdExecWorkflow?.id,
+                    execWorkflowStateId: execState?.id,
                     isTemplate: isTemplate,
                 },
             });
@@ -204,7 +241,7 @@ router.post('/:templateId', async (req, res) => {
         const {color, workflowId, name, code, toBeTemplate} = req.body;
 
         let sessionActions;
-        let workflow;
+        let workflow, execWorkflow;
         let actionResponse;
         // We use the specific workflow chosen from the template
         await workflowsFetch("GET", `workflows/${workflowId}`).then(async response => {
@@ -244,6 +281,10 @@ router.post('/:templateId', async (req, res) => {
             sessionActions = findActionsByCode(workflow.childActions, "SESSION", new RegExp(`^SESSION_.*`));
         });
 
+        if (!toBeTemplate){
+            execWorkflow = await loadMetaWorkflow("Course Execution Workflow");
+        }
+
         // templates are technically courses, so we get all the sessions, session material, and resources from it
         const course = await prisma.course.findUnique({
             where: {id: parseInt(templateId)},
@@ -266,11 +307,18 @@ router.post('/:templateId', async (req, res) => {
             const createdState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdWorkflow.id }) // Create state
             console.log(`Created workflow action state with id ${createdState.id}`)
             
+            let createdExecWorkflow, execState;
+
             // We only want to clone the workflow state if we're not creating a template
             if (!toBeTemplate) {
                 // the created workflow doesn't return all the child actions so we have to get them here
                 const fullCreatedWorkflow = await workflowsFetch("GET", `/actions/?workflowId=${createdWorkflow.id}`);
                 await cloneWorkflowState(actionResponse, fullCreatedWorkflow);
+            }
+
+            if(execWorkflow){
+                createdExecWorkflow = await objectToNewWorkflow(execWorkflow, professorId);
+                execState = await workflowsFetch('POST', 'states/workflow', { userId: professorId, workflowId: createdExecWorkflow.id });
             }
 
             // create the course using the same data as the template
@@ -291,6 +339,8 @@ router.post('/:templateId', async (req, res) => {
                     }))},
                     workflowId: createdWorkflow.id,
                     workflowStateId: createdState.id,
+                    execWorkflowId: createdExecWorkflow?.id,
+                    execWorkflowStateId: execState?.id,
                     isTemplate: toBeTemplate ?? false,
                     syllabusName: course.syllabusName,
                     startDate: course.startDate,
@@ -453,7 +503,7 @@ router.put('/:id', async (req, res) => {
     })
 
     console.log('Course updated successfully:', updatedCourse)
-
+   
     if (updatedCourse.startDate && updatedCourse.days && (updateData.startDate !== undefined || updateData.days !== undefined)){
         const sessions = await prisma.session.findMany({
             where: { courseId: Number(id) }
@@ -469,8 +519,8 @@ router.put('/:id', async (req, res) => {
 
         await Promise.all(sessions.map(async session => {
             sessionDate.setDate(sessionDate.getDate() + 1);
-
-            const isHoliday = date => holidays.find(holiday => date >= new Date(holiday.date) && date <= (holiday.endDate ? new Date(holiday.endDate) : new Date(holiday.date)));
+            const dayOf = date => new Date(date).toISOString().split('T')[0];
+            const isHoliday = date => holidays.find(holiday => dayOf(date) >= dayOf(holiday.date) && dayOf(date) <= dayOf(holiday.endDate ?? holiday.date));
 
             // if date is a holiday or within a holiday period, skip it 
             // until the next non-holiday course date
@@ -492,6 +542,45 @@ router.put('/:id', async (req, res) => {
         success: true,
         data: updatedCourse,
     })
+})
+
+/**
+ * PUT /api/cmt/course/:id/start
+ * Starts course executon by completing the START_COURSE action
+ * 
+ * Returns an object of the following format
+ * ```
+ * {
+ *  execState: string
+ * }
+ * ```
+ */
+router.put('/:id/start', async (req, res) =>{
+    const { id } = req.params
+    const professorId = req.user.uid
+    const course = await prisma.course.findUnique({
+        where: {id: parseInt(id), professorId },
+        include: {holidays: true}
+    })
+
+    if (!course) throw new CMTError({ userFacingMessage: 'Course not found.' })
+    if (!course.execWorkflowStateId) throw new CMTError({ userFacingMessage: 'Course workflow not initialized.' })
+    
+    const state = await workflowsFetch('GET', `/states/workflow/${course.execWorkflowStateId}`)
+    const execStateType = state.baseActionState.stateType
+    
+    if (isStarted(state)) return res.json({execState: execStateType})
+        
+    const startChild = findStartChild(state)
+
+    if (!startChild) throw new CMTError({ userFacingMessage: 'Start course action not found.' })
+    await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: startChild.id, stateType: 'completed' })
+
+    const updatedState = await workflowsFetch('GET', `/states/workflow/${course.execWorkflowStateId}`)
+    res.json({
+        execState: updatedState.baseActionState.stateType
+   })
+    await scheduleHolidayReminders(course)
 })
 
 /**
