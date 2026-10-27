@@ -2,7 +2,7 @@ import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
-import { notifyOfHoliday, hasStarted } from "../utils/notifier.js";
+import { notifyOfHoliday, hasStarted, updateNotification, getReminderDate, deleteNotification } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -142,8 +142,23 @@ router.put("/:holidayId", async (req, res) => {
         include: {course: true}
     });
     const started = await hasStarted(updatedHoliday.course)
+
+    const pendingNotice = await prisma.notification.findFirst({
+        where: {courseId: updatedHoliday.courseId, triggerId: updatedHoliday.id, event: 'holiday', status: 'SCHEDULED'},
+    })
+
+    if (pendingNotice){
+        await updateNotification(pendingNotice.id, {
+            context: {...pendingNotice.context, 
+                holidayName: updatedHoliday.name, 
+                date: updatedHoliday.date.toISOString().split('T')[0], 
+                endDate: updatedHoliday.endDate ? updatedHoliday.endDate.toISOString().split('T')[0] : null
+            },
+            sendAt: getReminderDate(updatedHoliday)
+        });
+    }
     
-    res.json({ holiday: updatedHoliday, change: 'update', notifyPrompt: started })
+    res.json({ holiday: updatedHoliday, change: 'update', notifyPrompt: started && !pendingNotice})
 });
 
 /** DELETE /api/cmt/holidays/:courseId/:holidayId
@@ -154,6 +169,14 @@ router.delete("/:holidayId", async (req, res) => {
     const holiday = await prisma.holiday.delete({
         where: {id: parseInt(holidayId)}
     });
+
+    const pendingNotice = await prisma.notification.findFirst({
+        where: {courseId: holiday.courseId, triggerId: holiday.id, event: 'holiday', status: 'SCHEDULED'}
+    })
+
+    if (pendingNotice){
+        await deleteNotification(pendingNotice.id);
+    }
 
     res.json({ holiday })
 });
