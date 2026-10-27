@@ -221,7 +221,8 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     );
 
     const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
-        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", "START_COURSE"].filter(
+        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", 
+        "START_COURSE", "SEND_HOLIDAY_NOTICE", "SEND_HOLIDAY_CHANGE", "SEND_CANCELLED_CLASS", "SEND_MOVED_CONTENT"].filter(
         code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
     );
 

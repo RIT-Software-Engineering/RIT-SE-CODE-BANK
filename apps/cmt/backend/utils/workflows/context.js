@@ -35,6 +35,8 @@ function CMTDetermineCallbackFactory(courseId, userId) {
             return `holidays/course/${courseId}?uid=${userId}&asid=${asid}`
         } if (code === 'START_COURSE') {
             return `course/${courseId}/start`
+        } if (['SEND_HOLIDAY_NOTICE', 'SEND_HOLIDAY_CHANGE', 'SEND_CANCELLED_CLASS','SEND_MOVED_CONTENT'].includes(code)){
+            return 
         }
         
         throw Error('Unrecognized action metadata code ' + code)

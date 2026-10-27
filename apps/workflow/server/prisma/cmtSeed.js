@@ -228,6 +228,46 @@ async function main() {
             metadata: {
                 code: 'START_COURSE',
             },
+        },
+        {
+            name: 'Notifications',
+            description: 'Send notifications to students',
+            actionType: 'workflow',
+            userId: users[0].id,
+            actions: [
+                {
+                    name: 'Send Holiday Notice',
+                    description: 'Send a notice of the upcoming holiday to students',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_HOLIDAY_NOTICE',
+                    },
+                },
+                {
+                    name: 'Send Holiday Change Notification',
+                    description: 'Notify students of a change to a holiday',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_HOLIDAY_CHANGE',
+                    },
+                },
+                {
+                    name: 'Send Cancelled Class Notification',
+                    description: 'Notify students of a cancelled class',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_CANCELLED_CLASS',
+                    },
+                },
+                {
+                    name: 'Send Moved Content Notification',
+                    description: 'Notify students of content moved in the schedule',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_MOVED_CONTENT',
+                    },
+                }
+            ]
         }
     ]}
 ];
