@@ -1,9 +1,12 @@
 import express from 'express';
+import {PrismaClient} from '../prisma/generated/client/index.js'
 import * as notificationClient from '../utils/notifications.js';
-import {addNotification, sendDueNotifications } from '../utils/notifier.js';
+import {sendDueNotifications } from '../utils/notifier.js';
 
 // server/routing/notifications_api.js
 const router = express.Router();
+
+const prisma = new PrismaClient();
 
 // Require that a user is logged in (authMiddleware should set req.user)
 function requireUser(req, res) {
@@ -14,22 +17,44 @@ function requireUser(req, res) {
     return req.user;
 }
 
-/**
- * POST /api/cmt/notifications/notify
- */
-router.post('/notify', async (req, res) => {
-    const user = requireUser(req, res);
-    const {courseId, details} = req.body;
+// Require that the course belongs to the user
+async function requireCourse(req, res, courseId){
+    const id = parseInt(courseId);
 
-    if (!user) return null;
-    if (!courseId || !details) {
-        return res.status(400).json({error: 'Missing required fields'});
+    const course = await prisma.course.findUnique({where: {id}});
+
+    if (!course){
+        res.status(404).json({success: false, error: "Course not found"});
+        return null;
     }
-    await addNotification(courseId, details);
-    await sendDueNotifications(user.uid, courseId);
 
-    res.json({success: true});
-});
+    if (course.professorId !== req.user.uid){
+        res.status(403).json({success: false, error: "Unauthorized access"});
+        return null;
+    }
+    return course;
+}
+
+// /**
+//  * POST /api/cmt/notifications/notify
+//  */
+// router.post('/notify', async (req, res) => {
+//     const user = requireUser(req, res);
+//     const {courseId, details} = req.body;
+
+//     if (!user) return null;
+//     if (!courseId || !details) {
+//         return res.status(400).json({error: 'Missing required fields'});
+//     }
+
+//     const course = await requireCourse(req, res, courseId);
+//     if (!course) return null;
+
+//     await addNotification(courseId, details);
+//     await sendDueNotifications(user.uid, courseId);
+
+//     res.json({success: true});
+// });
 
 /**
  * POST /api/cmt/notifications/send-due
@@ -40,9 +65,16 @@ router.post('/send-due', async (req, res) => {
     const {courseId} = req.body;
     if (!user) return null;
 
-    await sendDueNotifications(user.uid, courseId);
+    if (!courseId) {
+        return res.status(400).json({error: 'Missing courseId'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+
+    const {id, status} = await sendDueNotifications(user.uid, courseId);
     res.json({
-        success: true
+        success: true, id, status
     });
 });
 
