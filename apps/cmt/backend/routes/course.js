@@ -6,7 +6,7 @@ import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 import { scheduleHolidayReminders } from '../utils/notifier.js'
-import { findStartChild, isStarted } from '../utils/courseExecution.js'
+import { findChildByCode, isStarted } from '../utils/courseExecution.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -571,7 +571,7 @@ router.put('/:id/start', async (req, res) =>{
     
     if (isStarted(state)) return res.json({execState: execStateType})
         
-    const startChild = findStartChild(state)
+    const startChild = findChildByCode(state, 'START_COURSE')
 
     if (!startChild) throw new CMTError({ userFacingMessage: 'Start course action not found.' })
     await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: startChild.id, stateType: 'completed' })

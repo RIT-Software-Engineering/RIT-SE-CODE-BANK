@@ -2,7 +2,7 @@ import {dispatchTemplated} from './notifications.js'
 import {PrismaClient} from '../prisma/generated/client/index.js'
 import {workflowsFetch} from '../../shared-utilities/cmtFetch.js';
 import courseNow from './courseClock.js';
-import { isStarted } from './courseExecution.js';
+import { actionCodeForEvent, eventsForCode, getActionState, isStarted } from './courseExecution.js';
 
 const prisma = new PrismaClient();
 
@@ -50,13 +50,28 @@ export async function updateNotification(id, changed_details){
  * @param {*} id 
  */
 export async function deleteNotification(id){
+    const row = await prisma.notification.findUnique({
+        where: {id}, select: {courseId:true, event:true}
+    })
+
     await prisma.notification.updateMany({
         where: {id, status: 'SCHEDULED'},
         data: {status: 'CANCELLED'}
     })
+
+    if (!row) return;
+    const course = await prisma.course.findUnique({
+        where: {id: row.courseId}
+    })
+
+    try{
+        await syncActionState(course, actionCodeForEvent[row.event]);
+    } catch (error){
+        console.error('Failed to update action:', error.message, error.cause);
+    }
 }
 
-function getReminderDate(holiday){
+export function getReminderDate(holiday){
     const reminder_date = new Date(holiday.date.getTime());
     // TODO: update this to a more acceptable reminder date or accommodate professor preference
     reminder_date.setDate(reminder_date.getDate() - 7); 
@@ -84,6 +99,11 @@ export async function scheduleHolidayReminders(course){
             recipients: ['student@rit.edu'], // TODO: replace with proper class list when we get students in the future
             sendAt: getReminderDate(holiday)
         })
+    }
+    try{
+        await syncActionState(course, 'SEND_HOLIDAY_NOTICE');
+    } catch (error){
+        console.error('Failed to update action:', error.message, error.cause);
     }
 }
 
@@ -160,6 +180,27 @@ export function courseLabel(course){
     return course.section ? `${course.classId}-${course.section}` : course.classId;
 }
 
+export async function syncActionState(course, code){
+    if (!code) return;
+    const actionState = await getActionState(course, code);
+
+    if (!actionState || actionState.stateType === 'completed') return;
+
+    const rows = await prisma.notification.findMany({
+        where: {courseId: course.id, event: {in: eventsForCode(code)}},
+        select: {status: true}
+    })
+
+    const anySent = rows.some(row => row.status === 'SENT');
+    const anyWaiting = rows.some(row => row.status === 'SCHEDULED' || row.status === 'FAILED');
+
+    const expectedState = anySent ? 'completed' : anyWaiting ? 'inProgress' : 'notStarted';
+
+    if (expectedState !== actionState.stateType){
+        await workflowsFetch('POST', `states/handleSubmit`, {actionStateId: actionState.id, stateType: expectedState});
+    }
+}
+
 export async function sendDueNotifications(userId, courseId){
     courseId = parseInt(courseId);
     const notifs = await prisma.notification.findMany({
@@ -171,6 +212,7 @@ export async function sendDueNotifications(userId, courseId){
     const started = await hasStarted(course);
     if (!started) return notifStatuses;
 
+    const codesToCheck = new Set();
     for (const notif of notifs){
         try{
             if (!Array.isArray(notif.recipients)) notif.recipients = [notif.recipients];
@@ -189,6 +231,8 @@ export async function sendDueNotifications(userId, courseId){
                 data: {status: 'SENT'}
             })
             notifStatuses.push({id: notif.id, status: 'SENT'});
+            const code = actionCodeForEvent[notif.event];
+            if(code) codesToCheck.add(code);
         } catch(error){
             await prisma.notification.update({
                 where: {id: notif.id},
@@ -196,6 +240,16 @@ export async function sendDueNotifications(userId, courseId){
             })
             console.error('Failed to send notification:', error.message, error.cause);
             notifStatuses.push({id: notif.id, status: 'FAILED'});
+            const code = actionCodeForEvent[notif.event];
+            if(code) codesToCheck.add(code);
+        }
+    }
+
+    for (const code of codesToCheck){
+        try{
+            await syncActionState(course, code);
+        } catch(error){
+            console.error('Failed to update action:', error.message, error.cause);
         }
     }
     return notifStatuses;
