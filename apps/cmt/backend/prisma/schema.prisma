@@ -192,6 +192,7 @@ model Notification {
 
 enum notification_status {
   SCHEDULED
+  PROCESSING
   SENT 
   FAILED 
   CANCELLED

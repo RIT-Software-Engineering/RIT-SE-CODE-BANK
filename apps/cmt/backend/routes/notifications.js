@@ -72,9 +72,9 @@ router.post('/send-due', async (req, res) => {
     const course = await requireCourse(req, res, courseId);
     if (!course) return null;
 
-    const {id, status} = await sendDueNotifications(user.uid, courseId);
+    const result = await sendDueNotifications(user.uid, courseId);
     res.json({
-        success: true, id, status
+        success: true, result
     });
 });
 

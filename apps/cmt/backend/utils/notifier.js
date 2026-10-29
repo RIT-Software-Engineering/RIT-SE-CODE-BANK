@@ -192,7 +192,7 @@ export async function syncActionState(course, code){
     })
 
     const anySent = rows.some(row => row.status === 'SENT');
-    const anyWaiting = rows.some(row => row.status === 'SCHEDULED' || row.status === 'FAILED');
+    const anyWaiting = rows.some(row => ['SCHEDULED', 'PROCESSING', 'FAILED'].includes(row.status));
 
     const expectedState = anySent ? 'completed' : anyWaiting ? 'inProgress' : 'notStarted';
 
@@ -201,56 +201,63 @@ export async function syncActionState(course, code){
     }
 }
 
-export async function sendDueNotifications(userId, courseId){
+export async function claimNotification(notifId){
+    const result = await prisma.notification.updateMany({
+        where: {id: notifId, status: 'SCHEDULED'},
+        data: {status: 'PROCESSING'}
+    });
+    return result.count === 1;
+}
+
+export async function deliverNotification(notif, userId, course){
+    let status;
+
+    try{
+        if (!Array.isArray(notif.recipients)) notif.recipients = [notif.recipients];
+        for (const recipient of notif.recipients){
+            await dispatchTemplated(userId, {
+                event: notif.event,
+                context: (notif.context && typeof notif.context === 'object') 
+                    ? {...notif.context, note: notif.note} : notif.note 
+                    ? {note: notif.note} : undefined, 
+                role: 'student',
+                subject: notif.context.subject,
+                userEmail: recipient
+            });
+        }
+        status = 'SENT';
+    }catch(error){
+        console.error('Failed to send notification:', error.message, error.cause);
+        status = 'FAILED';
+    }
+
+    await prisma.notification.update({
+        where: {id: notif.id}, data: {status: status}
+    });
+
+    try{
+        await syncActionState(course, actionCodeForEvent[notif.event]);
+    } catch(error){
+        console.error('Failed to update action:', error.message, error.cause);
+    }
+
+    return {id: notif.id, status};
+}
+
+export async function sendDueNotifications(userId, courseId, now=courseNow()){
     courseId = parseInt(courseId);
+    const course = await prisma.course.findUnique({where: {id: courseId}})
+    if (!course || !await hasStarted(course)) return [];
+
     const notifs = await prisma.notification.findMany({
-        where: {courseId: courseId, status: 'SCHEDULED', sendAt: {lte: courseNow()} } 
+        where: {courseId: courseId, status: 'SCHEDULED', sendAt: {lte: now}},
+        orderBy: {sendAt: 'asc'}
     })
     
     const notifStatuses = [];
-    const course = await prisma.course.findUnique({where: {id: courseId}})
-    const started = await hasStarted(course);
-    if (!started) return notifStatuses;
-
-    const codesToCheck = new Set();
     for (const notif of notifs){
-        try{
-            if (!Array.isArray(notif.recipients)) notif.recipients = [notif.recipients];
-            for (const recipient of notif.recipients){
-                await dispatchTemplated(userId, {
-                    event: notif.event,
-                    context: (notif.context && typeof notif.context === 'object') ? {...notif.context, note: notif.note} : notif.note ? {note: notif.note} : undefined, // make the type checker happy by ensuring notif.context is explicitely an object
-                    role: 'student',
-                    subject: notif.context.subject,
-                    userEmail: recipient
-                })
-            }
-
-            await prisma.notification.update({
-                where: {id: notif.id},
-                data: {status: 'SENT'}
-            })
-            notifStatuses.push({id: notif.id, status: 'SENT'});
-            const code = actionCodeForEvent[notif.event];
-            if(code) codesToCheck.add(code);
-        } catch(error){
-            await prisma.notification.update({
-                where: {id: notif.id},
-                data: {status: 'FAILED'}
-            })
-            console.error('Failed to send notification:', error.message, error.cause);
-            notifStatuses.push({id: notif.id, status: 'FAILED'});
-            const code = actionCodeForEvent[notif.event];
-            if(code) codesToCheck.add(code);
-        }
-    }
-
-    for (const code of codesToCheck){
-        try{
-            await syncActionState(course, code);
-        } catch(error){
-            console.error('Failed to update action:', error.message, error.cause);
-        }
+        if (!await claimNotification(notif.id)) continue;
+        notifStatuses.push(await deliverNotification(notif, userId, course));
     }
     return notifStatuses;
 }
