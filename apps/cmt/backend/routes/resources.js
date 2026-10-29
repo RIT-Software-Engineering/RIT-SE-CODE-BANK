@@ -264,7 +264,10 @@ router.delete('/:id', async (req, res) => {
         return res.status(404).json({ error: new CMTError({ userFacingMessage: `Resource with ID ${id} not found` }) })
     }
 
-    if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
+    const otherReferences = await req.prisma.resource.count({
+        where: {filePath: resource.filePath, id: {not: resource.id}}
+    });
+    if (otherReferences === 0 && fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
 
     await req.prisma.resource.delete({
         where: { id: id },

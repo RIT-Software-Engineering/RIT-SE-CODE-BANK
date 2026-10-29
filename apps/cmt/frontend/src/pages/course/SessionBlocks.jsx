@@ -1,9 +1,10 @@
-import { ArrowDown, ArrowUp, Edit, Move } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Edit, Move, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { ReadOnlyEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CMTJsonFetch } from "../../utils/api";
-import { createErrorHandler } from "../../utils/error";
+import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
+import { SectionApplyScope, useSectionSync } from "./CourseSections";
 
 const STATUS_LABELS = {
     NOT_STARTED: "Not started",
@@ -19,7 +20,12 @@ const STATUS_CLASSES = {
 
 export function SessionBlocks({session, sessions, blocks, materials, refresh, onEditMaterial, setError, createOpen, onCreateClose}) {
     const [blockName, setBlockName] = useState("");
+    const [applyToAll, setApplyToAll] = useState(false);
+    const {refreshSync, hasRelatedSections} = useSectionSync();
     const [blockToMove, setBlockToMove] = useState(null);
+    const [blockToRemove, setBlockToRemove] = useState(null);
+    const [removing, setRemoving] = useState(false);
+    const [removeError, setRemoveError] = useState(null);
     const [targetSessionId, setTargetSessionId] = useState("");
     const [notificationOption, setNotificationOption] = useState("none");
 
@@ -38,10 +44,12 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
     }
 
     function createBlock() {
-        return CMTJsonFetch("POST", "/session/blocks", {sessionId: session.id, name: blockName})
+        return CMTJsonFetch("POST", "/session/blocks", {sessionId: session.id, name: blockName, applyToAll})
             .then(() => {
                 setBlockName("");
+                setApplyToAll(false);
                 onCreateClose();
+                void refreshSync();
                 return refresh();
             })
             .catch(handleError("Failed to create session block."));
@@ -49,6 +57,7 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
 
     function updateStatus(block, status) {
         return CMTJsonFetch("PATCH", `/session/blocks/${block.id}`, {status})
+            .then(() => { void refreshSync(); })
             .then(refresh)
             .catch(handleError("Failed to update block status."));
     }
@@ -61,9 +70,26 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
             .then(() => {
                 setBlockToMove(null);
                 setNotificationOption("none");
+                void refreshSync();
                 return refresh();
             })
             .catch(handleError("Failed to move session block."));
+    }
+
+    async function removeBlock() {
+        if (!blockToRemove || removing) return;
+        setRemoving(true);
+        setRemoveError(null);
+        try {
+            await CMTJsonFetch("DELETE", `/session/blocks/${blockToRemove.id}`);
+            setBlockToRemove(null);
+            await refresh();
+            void refreshSync();
+        } catch (error) {
+            createErrorHandler("Failed to remove session block.", setRemoveError)(error);
+        } finally {
+            setRemoving(false);
+        }
     }
 
     return (
@@ -85,9 +111,10 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                                             {blockMaterials.length} {blockMaterials.length === 1 ? "item" : "items"}
                                         </p>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2 max-w-full">
                                         <Form.Select
                                             size="sm"
+                                            style={{width: "145px", flex: "0 0 145px"}}
                                             aria-label={`${block.name} status`}
                                             className={STATUS_CLASSES[block.status]}
                                             value={block.status}
@@ -99,6 +126,19 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                                                 </option>
                                             )}
                                         </Form.Select>
+                                        {hasRelatedSections && (
+                                            <Button
+                                                size="sm"
+                                                variant="outline-secondary"
+                                                title="Copy block and material to other sections"
+                                                aria-label={`Copy ${block.name} to other sections`}
+                                                onClick={() => CMTJsonFetch("POST", `/session/blocks/${block.id}/share`, {})
+                                                    .then(() => {void refreshSync(); return refresh();})
+                                                    .catch(handleError("Failed to copy block to other sections."))}
+                                            >
+                                                <Copy size={16} />
+                                            </Button>
+                                        )}
                                         <Button
                                             size="sm"
                                             variant="outline-secondary"
@@ -127,6 +167,15 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                                             onClick={() => setBlockToMove(block)}
                                         >
                                             <Move size={16} />
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="outline-danger"
+                                            title="Remove block"
+                                            aria-label={`Remove ${block.name}`}
+                                            onClick={() => {setRemoveError(null); setBlockToRemove(block);}}
+                                        >
+                                            <Trash2 size={16} />
                                         </Button>
                                     </div>
                                 </div>
@@ -159,6 +208,7 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                     <Modal.Title>Add session block</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                    <SectionApplyScope value={applyToAll} onChange={setApplyToAll} />
                     <Form.Group>
                         <Form.Label>Block name</Form.Label>
                         <Form.Control
@@ -172,6 +222,23 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                 <Modal.Footer>
                     <Button variant="secondary" onClick={onCreateClose}>Cancel</Button>
                     <Button onClick={createBlock} disabled={!blockName.trim()}>Add block</Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal show={Boolean(blockToRemove)} onHide={() => !removing && setBlockToRemove(null)} centered>
+                <Modal.Header closeButton={!removing}>
+                    <Modal.Title>Remove session block</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <CMTDangerAlert error={removeError} />
+                    <p>Remove <strong>{blockToRemove?.name}</strong> from this session?</p>
+                    <p className="mb-0">Its materials will stay in this session without a block. Other sections are not changed.</p>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" disabled={removing} onClick={() => setBlockToRemove(null)}>Keep block</Button>
+                    <Button variant="danger" disabled={removing} onClick={removeBlock}>
+                        {removing ? "Removing..." : "Remove block"}
+                    </Button>
                 </Modal.Footer>
             </Modal>
 

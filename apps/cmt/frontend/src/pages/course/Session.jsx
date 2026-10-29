@@ -8,6 +8,8 @@ import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
+import { SectionApplyScope, useSectionSync } from "./CourseSections";
+import { useSearchParams } from "react-router-dom";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -31,6 +33,16 @@ import { SessionBlocks } from "./SessionBlocks";
  * @returns {React.ReactElement} the session accordion as HTML
  */
 export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId}) {
+    const {refreshSync} = useSectionSync();
+    const [searchParams] = useSearchParams();
+    const reviewSession = Number(searchParams.get("session"));
+    const [activeSession, setActiveSession] = useState(null);
+    useEffect(() => {
+        if (reviewSession > 0) {
+            setActiveSession(String(reviewSession - 1));
+            document.getElementById("sessions")?.scrollIntoView({block: "start"});
+        }
+    }, [reviewSession]);
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -78,14 +90,15 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                     currentSession.id === session.id ? json.session : currentSession
                 ));
                 setSessionToCancel(null);
+                void refreshSync();
             })
             .catch(createErrorHandler("Failed to update session cancellation.", setError));
-    }, [sessions, setSessions]);
+    }, [sessions, setSessions, refreshSync]);
 
     if (error) return <CMTDangerAlert error={error} />
 
     return (
-        <Accordion>
+        <Accordion activeKey={activeSession} onSelect={setActiveSession}>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
         isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
         blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
@@ -348,6 +361,7 @@ const sessionCheckmarkRenderers = {
 function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, setMaterialId,
     materialId, setEditModalOpen, 
     courseId, sessionNum}){
+    const {refreshSync} = useSectionSync();
 
     const deleteSeveral = () => {
          CMTJsonFetch('DELETE', `session/${courseId}/${sessionNum+1}`).then(async json => {
@@ -359,6 +373,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
                 return material;
             });
             setSessionData(sessionDataCopy);
+            void refreshSync();
         });
         setDeleteOpen(false);
     };
@@ -370,6 +385,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
                     return material;
             });
             setSessionData(sessionDataCopy);
+            void refreshSync();
         });
         setEditModalOpen(false);
         setDeleteOpen(false);
@@ -427,6 +443,8 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     const [itemBody, setItemBody] = useState('');
     const [itemType, setItemType] = useState(defaultMaterialType);
     const [blockId, setBlockId] = useState("");
+    const [applyToAll, setApplyToAll] = useState(false);
+    const {refreshSync} = useSectionSync();
     const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -436,6 +454,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
         setItemLabel('');
         setItemBody('');
         setBlockId('');
+        setApplyToAll(false);
         setError('');
     }, [setDefaultMaterialType])
 
@@ -448,15 +467,17 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
             itemLabel,
             itemBody: hasLinksInTitle ? undefined : itemBody,
             sessionNum,
-            blockId: blockId ? Number(blockId) : null
+            blockId: blockId ? Number(blockId) : null,
+            applyToAll
         })
             .then(async json => {
                 setSessionData(sessionData => [...sessionData, json.material])
                 setIsOpen(false)
                 resetForm()
+                void refreshSync();
             })
             .catch(createErrorHandler("Error uploading material", setError))
-    }, [blockId, hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData])
+    }, [applyToAll, blockId, hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData, refreshSync])
 
     function handleClose() {
         setIsOpen(false);
@@ -505,6 +526,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
                             </div>
 
                             <div className="mb-3">
+                                <SectionApplyScope value={applyToAll} onChange={setApplyToAll} disabled={itemType === "Personal Notes"} />
                                 <Form.Label>Session block</Form.Label>
                                 <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
                                     <option value="">No block</option>
@@ -599,6 +621,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
     const [itemType, setItemType] = useState(curMaterial?.type ?? "Topic/Lecture");
     const [sessionNum, setSessionNum] = useState(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
     const [blockId, setBlockId] = useState(curMaterial?.blockId ? String(curMaterial.blockId) : "");
+    const [applyToAll, setApplyToAll] = useState(false);
+    const {refreshSync} = useSectionSync();
     const [updatePromptOpen, setUpdatePromptOpen] = useState(false);
     const [notificationOption, setNotificationOption] = useState("none");
     const [warningVisible, setWarningVisible] = useState(false);
@@ -627,7 +651,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
             itemType,
             sessionNum: realSessionNum,
             sessionId,
-            blockId: blockId ? Number(blockId) : null
+            blockId: blockId ? Number(blockId) : null,
+            applyToAll
         })
             .then(() => {
                 const sessionDataCopy = sessionData.map(material => {
@@ -639,6 +664,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setIsEditOpen(false);
                 setUpdatePromptOpen(false);
                 setNotificationOption("none");
+                void refreshSync();
                 resetForm();
             })
             .catch(createErrorHandler("Error updating resource", setError))
@@ -671,6 +697,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setItemType(curMaterial?.type ?? "Topic/Lecture");
                 setSessionNum(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
                 setBlockId(curMaterial?.blockId ? String(curMaterial.blockId) : "");
+                setApplyToAll(false);
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -717,6 +744,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                     </div>
 
                                     <div className="mb-3">
+                                        <SectionApplyScope value={applyToAll} onChange={setApplyToAll} disabled={itemType === "Personal Notes" || curMaterial?.type === "Personal Notes"} />
                                         <Form.Label>Session block</Form.Label>
                                         <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
                                             <option value="">No block</option>

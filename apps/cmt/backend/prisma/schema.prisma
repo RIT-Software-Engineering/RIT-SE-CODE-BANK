@@ -14,6 +14,7 @@ model Professor {
   lname           String
   email           String
   courses         Course[]
+  offerings       CourseOffering[]
   tbteamset       TBTeamSet[]
 
   @@map("professors")
@@ -41,6 +42,37 @@ model Course {
   syllabusName        String?       // The actual syllabus is found in resources
   Resource        Resource[]
   isTemplate      Boolean       @default(false)
+  offeringId      Int?
+  offering        CourseOffering? @relation(fields: [offeringId], references: [id])
+
+  @@unique([offeringId, section])
+}
+
+model CourseOffering {
+  id          Int      @id @default(autoincrement())
+  name        String
+  classId     String
+  season      String?
+  year        Int?
+  startDate   String?
+  professorId String
+  professor   Professor @relation(fields: [professorId], references: [id])
+  sections    Course[]
+  syncIssues  SectionSyncIssue[]
+}
+
+model SectionSyncIssue {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int
+  issueKey    String   @db.VarChar(191)
+  details     Json
+  resolved    Boolean  @default(false)
+  occurrence  Int      @default(1)
+  dismissedAt DateTime?
+  updatedAt   DateTime @updatedAt
+  offering    CourseOffering @relation(fields: [offeringId], references: [id])
+
+  @@unique([offeringId, issueKey])
 }
 
 model Session {
@@ -55,6 +87,10 @@ model Session {
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
   blocks      SessionBlock[]
+  sharedKey   String? @default(uuid())
+  teachingWeek Int?
+
+  @@index([courseId, sharedKey])
 }
 
 model SessionMaterial {
@@ -68,6 +104,9 @@ model SessionMaterial {
   blockId     Int?
   session     Session @relation(fields: [sessionId], references: [id])
   block       SessionBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  sharedKey   String? @default(uuid())
+
+  @@index([sharedKey])
 }
 
 model SessionBlock {
@@ -78,8 +117,10 @@ model SessionBlock {
   sessionId Int
   session   Session            @relation(fields: [sessionId], references: [id])
   material  SessionMaterial[]
+  sharedKey String? @default(uuid())
 
   @@index([sessionId, position])
+  @@index([sharedKey])
 }
 
 model TBEnrollment {
@@ -152,6 +193,7 @@ model Resource {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isSyllabus Boolean @default(false)
+  sharedKey  String? @default(uuid())
   course    Course   @relation(fields: [courseId], references: [id])
 
   @@index([courseId])

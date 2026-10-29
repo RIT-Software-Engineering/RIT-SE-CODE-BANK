@@ -5,6 +5,9 @@ import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
+import { ensureCourseOffering } from '../utils/courseSections.js';
+import { ownedSection } from '../utils/sectionContent.js';
+import { refreshSectionSync } from '../utils/sectionSync.js';
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -178,6 +181,7 @@ router.post('/', async (req, res) => {
                 skipDuplicates: true,
             })
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
+            if (!newCourse.isTemplate) await ensureCourseOffering(prisma, newCourse.id, professorId);
             res.json({ course: newCourse })
         }, {timeout: 15000});
 
@@ -341,7 +345,7 @@ router.post('/:templateId', async (req, res) => {
             
                 // Go through all of the session materials now and upload them
                 if (course.sessions[i]?.material.length > 0){
-                    course.sessions[i]?.material.forEach(async material => {
+                    await Promise.all(course.sessions[i]?.material.map(async material => {
                         let actualLabel = material.label;
                         let actualBody = material.body;
                         
@@ -372,12 +376,13 @@ router.post('/:templateId', async (req, res) => {
                                 blockId: material.blockId ? blockIds.get(material.blockId) : null
                             }
                         })
-                    })
+                    }))
                 }
             }
 
 
             // For simplicity of the frontend, return minimal information, since the GET for courses will contain all the info needed, and will be called much more often.
+            if (!newCourse.isTemplate) await ensureCourseOffering(prisma, newCourse.id, professorId);
             res.json({ course: newCourse })
         }, {timeout: 15000});
     } catch (error) {
@@ -397,6 +402,7 @@ router.post('/:templateId', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { id } = req.params
     const updateData = req.body
+    await ownedSection(prisma, id, req.user?.uid);
 
     console.log('PUT /api/cmt/course/:id called with:', id, updateData)
 
@@ -441,6 +447,14 @@ router.put('/:id', async (req, res) => {
         data: mappedData
     })
 
+    if (updatedCourse.offeringId) {
+        const shared = {name: updatedCourse.name, classId: updatedCourse.classId, season: updatedCourse.season, year: updatedCourse.year};
+        await prisma.$transaction([
+            prisma.courseOffering.update({where: {id: updatedCourse.offeringId}, data: shared}),
+            prisma.course.updateMany({where: {offeringId: updatedCourse.offeringId, professorId: req.user.uid}, data: shared})
+        ]);
+    }
+
     console.log('Course updated successfully:', updatedCourse)
 
     if (updatedCourse.startDate && updatedCourse.days){
@@ -474,6 +488,7 @@ router.put('/:id', async (req, res) => {
     const { uid: _userId, asid: actionStateId } = req.query
     if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
+    await refreshSectionSync(prisma, Number(id));
     res.json({
         success: true,
         data: updatedCourse,
@@ -487,6 +502,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const { id } = req.params
+        await ownedSection(prisma, id, req.user?.uid);
 
         console.log('DELETE /api/cmt/course/:id called with:', Number(id))
 
@@ -496,6 +512,7 @@ router.delete('/:id', async (req, res) => {
             data: {active: false}
         })
 
+        await refreshSectionSync(prisma, Number(id));
         res.json({
             success: true,
             message: 'Course archived.',

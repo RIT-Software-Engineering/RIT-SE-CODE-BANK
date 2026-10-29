@@ -7,6 +7,7 @@ import jwt from "jsonwebtoken";
 import authMiddleware from "./authMiddleware.js";
 
 import courseRoutes from "./routes/course.js";
+import sectionRoutes from "./routes/sections.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
@@ -40,6 +41,7 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${BACKEND_PORT}`;
 
 const allowedOrigins = [
   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
+  "http://localhost:3011",            // Alternate local frontend port
   "http://localhost:3000",            // CRA default
   "http://apps-staging.se.rit.edu",   // staging
   "https://apps-staging.se.rit.edu",   // staging
@@ -185,6 +187,7 @@ app.get("/", (_req, res) => {
 });
 
 // API Routes
+app.use("/api/cmt/course", sectionRoutes);
 app.use("/api/cmt/course", courseRoutes);
 app.use("/api/cmt/team-builder", teamBuilderRoutes);
 app.use("/api/cmt/workflow", workflowRoutes)
