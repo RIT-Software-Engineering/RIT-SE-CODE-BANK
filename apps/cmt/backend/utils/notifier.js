@@ -330,3 +330,12 @@ export async function resetStuckNotifications(){
         console.log(`Reset ${result.count} stuck notifications.`)
     }
 }
+
+export async function previewNotifications(courseId, until, now=courseNow()){
+    const notifs = await findDueNotifications(courseId, until);
+
+    return{
+        dueNow: notifs.filter(notif => notif.sendAt <= now),
+        upcoming: notifs.filter(notif => notif.sendAt > now)
+    }
+}

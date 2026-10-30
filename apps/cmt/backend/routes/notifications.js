@@ -1,7 +1,7 @@
 import express from 'express';
 import {PrismaClient} from '../prisma/generated/client/index.js'
 import * as notificationClient from '../utils/notifications.js';
-import {sendDueNotifications } from '../utils/notifier.js';
+import {deleteNotification, previewNotifications, sendDueNotifications } from '../utils/notifier.js';
 
 // server/routing/notifications_api.js
 const router = express.Router();
@@ -81,6 +81,70 @@ router.get('/preferences/:appId/:identifier', async (req, res) => {
         });
     }
 });
+
+/**
+ * GET /api/cmt/notifications/course/:courseId/pending
+ */
+router.get('/course/:courseId/pending', async (req, res) => {
+    const user = requireUser(req, res);
+    if (!user) return null;
+    const {courseId} = req.params;
+    if (!courseId){
+        return res.status(400).json({error: 'Missing courseId'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+
+    const pending = await prisma.notification.findMany({
+        where: {courseId: course.id, status: {in: ['SCHEDULED', 'FAILED']}},
+        orderBy: {sendAt: 'asc'},
+        select: {id: true, event: true, context: true, sendAt: true, status: true}
+    });
+
+    res.json({success: true, pending});
+});
+
+/**
+ * POST /api/cmt/notifications/:id/cancel
+ * Cancel a scheduled notification
+ */
+router.post('/:id/cancel', async (req, res) => {
+    const user = requireUser(req, res);
+    const {id} = req.params;
+    if (!user) return null;
+
+    const row = await prisma.notification.findUnique({
+        where: {id: parseInt(id)}
+    });
+    if (!row) return res.status(404).json({
+        success: false, error: 'Notification not found'
+    });
+
+    const course = await requireCourse(req, res, row.courseId);
+    if (!course) return null;
+
+    const cancelled = await deleteNotification(row.id);
+    res.json({success: cancelled});
+})
+
+router.post('/preview', async (req, res) => {
+    const user = requireUser(req, res);
+    const {courseId, until} = req.body;
+
+    if (!user) return null;
+    if (!courseId || !until) {
+        return res.status(400).json({error: 'Missing courseId or until'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+    const untilDate = new Date(`${until}T23:59:59.999`);    
+
+    if (isNaN(untilDate.getTime())) return res.status(400).json({error: 'Invalid until date'});
+    const result = await previewNotifications(parseInt(courseId), untilDate)
+    res.json({success: true, ...result});
+})
 
 // PUT /api/notifications/preferences/:appId/:identifier
 router.put('/preferences/:appId/:identifier', async (req, res) => {
