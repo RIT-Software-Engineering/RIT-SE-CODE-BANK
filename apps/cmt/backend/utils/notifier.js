@@ -21,7 +21,8 @@ export async function addNotification(courseId, details){
             context: details.context, // shape depends on template. maybe have a check in the future to ensure it matches the expected format
             note: details.note,
             recipients: details.recipients,
-            sendAt: details.sendAt
+            sendAt: details.sendAt,
+            status: details.status
         }
     })
 }
@@ -107,66 +108,67 @@ export async function scheduleHolidayReminders(course){
     }
 }
 
+export async function sendNow(user, course, details){
+    const started = await hasStarted(course);
+    const notifRow = await addNotification(course.id, {
+        ...details,
+        sendAt: courseNow(),
+        status: started ? 'PROCESSING' : 'SCHEDULED'
+    });
+
+    if (!started) return false;
+
+    const result = await deliverNotification(notifRow, user.uid, course);
+    return result.status === 'SENT';
+}
+
 export async function notifyOfHoliday(user, holiday, event, course){
     const courseName = courseLabel(course);
-    const notifRow = await addNotification(holiday.courseId, {
-        event: event,
-        triggerId: holiday.id,
-        context: {
-            subject: event === 'holiday' ? `${courseName}: Holiday Added` : `${courseName}: Holiday Updated`,
-            courseName: courseName,
-            holidayName: holiday.name,
-            date: holiday.date.toISOString().split('T')[0],
-            endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
-        },
-        recipients: ['student@rit.edu'], // TODO: replace this with a class list when we have students in the db
-        sendAt: courseNow()
-    })
+    const context = {
+        subject: event === 'holiday' ? `${courseName}: Holiday Notice` : `${courseName}: Holiday Updated`,
+        courseName: courseName,
+        holidayName: holiday.name,
+        date: holiday.date.toISOString().split('T')[0],
+        endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null  
+    }
+    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    // TODO: have a case for scheduled notifs
-    const results = await sendDueNotifications(user.uid, holiday.courseId);
-    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
+    return await sendNow(user, course, {
+        event, triggerId: holiday.id, context, recipients
+    });
 }
 
 export async function notifyOfCancellation(user, session){
     const onCancelledDate = session.date ? `on ${session.date}` : '';
     const courseName = courseLabel(session.course);
-    const notifRow = await addNotification(session.courseId, {
-        event: 'class_cancelled',
-        triggerId: session.id,
-        context: {
-            subject: `${courseName}: Class Cancelled ${onCancelledDate}`,
-            courseName: courseName,
-            date: session.date ?? null
-        },
-        recipients: ['student@rit.edu'],
-        sendAt: courseNow()
-    });
+    const context = {
+        subject: `${courseName}: Class Cancelled ${onCancelledDate}`,
+        courseName: courseName,
+        date: session.date ?? null
+    }
+    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    const results = await sendDueNotifications(user.uid, session.courseId);
-    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
+    return await sendNow(user, session.course, {
+        event: 'class_cancelled', triggerId: session.id, context, recipients
+    });
 }
 
 export async function notifyOfMovedBlock(user, block, from, to, course){
     const courseName = courseLabel(course);
-    const notifRow = await addNotification(course.id, {
-        event: "content_moved",
-        triggerId: block.id,
-        context: {
-            subject: `${courseName}: Content Moved in the Schedule`,
-            courseName: courseName,
-            blockName: block.name,
-            from: from.sessionNum,
-            fromDate: from.date,
-            to: to.sessionNum,
-            toDate: to.date,
-        },
-        recipients: ['student@rit.edu'],
-        sendAt: courseNow()
-    });
+    const context = {
+        subject: `${courseName}: Content Moved in the Schedule`,
+        courseName: courseName,
+        blockName: block.name,
+        from: from.sessionNum,
+        fromDate: from.date,
+        to: to.sessionNum,
+        toDate: to.date,
+    }
+    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    const results = await sendDueNotifications(user.uid, course.id);
-    return results.some(result => (result.id === notifRow.id) && result.status === 'SENT');
+    return await sendNow(user, course, {
+        event: 'content_moved', triggerId: block.id, context, recipients
+    });
 }
 
 // returns whether the course has started
@@ -260,4 +262,35 @@ export async function sendDueNotifications(userId, courseId, now=courseNow()){
         notifStatuses.push(await deliverNotification(notif, userId, course));
     }
     return notifStatuses;
+}
+
+export async function runDueNotifications(){
+    const now = courseNow()
+    const rows = await prisma.notification.findMany({
+        where: {status: 'SCHEDULED', sendAt: {lte:now}},
+        select: {courseId: true},
+        distinct: ['courseId']
+    })
+
+    for (const row of rows){
+        const course = await prisma.course.findUnique({where: {id: row.courseId}});
+        
+        if (!course) continue;
+        try{
+            await sendDueNotifications(course.professorId, row.courseId, now);
+        } catch(error){
+            console.log('Failed to send due notifications for course:', row.courseId, error.message);
+            continue;
+        }
+    }
+}
+
+export async function resetStuckNotifications(){
+    const result = await prisma.notification.updateMany({
+        where: {status: 'PROCESSING'}, data: {status: 'SCHEDULED'}
+    });
+
+    if (result.count > 0){
+        console.log(`Reset ${result.count} stuck notifications.`)
+    }
 }

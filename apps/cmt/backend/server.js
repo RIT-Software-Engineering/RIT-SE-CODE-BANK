@@ -20,6 +20,7 @@ import { readFileSync } from "fs";
 import dotenv from "dotenv";
 import { CMTErrorToString, serializeError } from "@se-code-bank/cmt-shared-utilities";
 import { getTimeString } from "../shared-utilities/cmtLogging.js";
+import { startRunner } from "./utils/notifRunner.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -247,4 +248,5 @@ app.listen(BACKEND_PORT, () => {
     `Server running on port ${BACKEND_PORT}
 and URL: ${BASE_URL}/api`
   );
+  startRunner();
 });
