@@ -35,27 +35,6 @@ async function requireCourse(req, res, courseId){
     return course;
 }
 
-// /**
-//  * POST /api/cmt/notifications/notify
-//  */
-// router.post('/notify', async (req, res) => {
-//     const user = requireUser(req, res);
-//     const {courseId, details} = req.body;
-
-//     if (!user) return null;
-//     if (!courseId || !details) {
-//         return res.status(400).json({error: 'Missing required fields'});
-//     }
-
-//     const course = await requireCourse(req, res, courseId);
-//     if (!course) return null;
-
-//     await addNotification(courseId, details);
-//     await sendDueNotifications(user.uid, courseId);
-
-//     res.json({success: true});
-// });
-
 /**
  * POST /api/cmt/notifications/send-due
  * Call this to check for and send due notifications

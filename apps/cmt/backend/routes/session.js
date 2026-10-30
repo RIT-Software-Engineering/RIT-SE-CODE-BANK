@@ -1,7 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { hasStarted, notifyOfCancellation, notifyOfMovedBlock } from "../utils/notifier.js";
+import { deleteNotification, hasStarted, notifyOfCancellation, notifyOfMovedBlock, validateSendDate } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -169,8 +169,9 @@ router.patch("/blocks/:blockId", async (req, res) => {
  */
 router.patch("/blocks/:blockId/move", async (req, res) => {
     const {blockId} = req.params;
-    const {targetSessionId, targetPosition, notify} = req.body;
+    const {targetSessionId, targetPosition, notify, sendAt} = req.body;
     let notified = null;
+    let when = null;
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const block = await prisma.sessionBlock.findFirst({
@@ -201,6 +202,18 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
     const position = Math.max(0, Math.min(Number(targetPosition ?? targetBlocks.length), targetBlocks.length));
     targetBlocks.splice(position, 0, block);
 
+    if (notify === 'later'){
+        let earlierDate = fromSession.date ?? targetSession.date;
+        if (fromSession.date && targetSession.date){
+        earlierDate = fromSession.date < targetSession.date ? fromSession.date : targetSession.date;
+        } 
+        const check = validateSendDate(sendAt, earlierDate);
+        if (check.error){
+            return res.status(400).json({success: false, message: check.error});
+        }
+        when = check.whenToSend;
+    }
+
     await prisma.$transaction(async (tx) => {
         if (block.sessionId !== targetSession.id) {
             await Promise.all(sourceBlocks.map((sourceBlock, index) =>
@@ -219,16 +232,22 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
         });
     });
 
+    let scheduled = false;
     try{
         const movedSessions = block.sessionId !== targetSession.id;
-        if (notify === "now" && movedSessions && await hasStarted(fromSession.course)){
-            notified = await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course);
+        if (['now', 'later'].includes(notify) && movedSessions && await hasStarted(fromSession.course)){
+            const result = await notifyOfMovedBlock(req.user, block, fromSession, targetSession, fromSession.course, when);
+            if (when){
+                scheduled = true;
+            } else{
+                notified = result;
+            }
         }
     } catch(error){
         console.error("Failed to send notification of moved block:", error);
     }
 
-    res.json({success: true, notified});
+    res.json({success: true, notified, scheduled});
 });
 
 /** PUT /api/cmt/session/:sessionId
@@ -257,7 +276,8 @@ router.put("/:sessionId", async (req, res) => {
  */
 router.patch("/:sessionId/cancellation", async (req, res) => {
     const {sessionId} = req.params;
-    const {canceled, notify} = req.body;
+    const {canceled, notify, sendAt} = req.body;
+    let when = null;
 
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
     if (typeof canceled !== "boolean") return res.status(400).json({error: "canceled must be a boolean"});
@@ -271,6 +291,14 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
     });
     if (!existingSession) return res.status(404).json({error: "Session not found for this instructor"});
 
+    if (canceled && notify === 'later'){
+        const check = validateSendDate(sendAt, existingSession.date);
+        if (check.error){
+            return res.status(400).json({success: false, message: check.error});
+        }
+        when = check.whenToSend;
+    }
+
     const session = await prisma.session.update({
         where: {id: Number(sessionId)},
         data: {
@@ -280,15 +308,28 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
     });
 
     let notified = null;
+    let scheduled = false;
     try{
-        if (canceled && notify === "now" && await hasStarted(existingSession.course)){
-            notified = await notifyOfCancellation(req.user, existingSession);
+        if (canceled === false){
+            const scheduledNotif = await prisma.notification.findFirst({
+                where: {triggerId: existingSession.id, event: 'class_cancelled', status: 'SCHEDULED'}
+            })
+            if (scheduledNotif) await deleteNotification(scheduledNotif.id)
+        }
+
+        if (canceled && (notify === "now" || notify === "later") && await hasStarted(existingSession.course)){
+            const result = await notifyOfCancellation(req.user, existingSession, when);
+            if (when){
+               scheduled = true;
+            } else{
+                notified = result;
+            }
         }
     } catch(error){
         console.error("Failed to send out notification of cancellation:", error)
     }
 
-    res.json({session, canceled, notified})
+    res.json({session, canceled, notified, scheduled});
 })
 
 /** DELETE /api/cmt/session/material/:materialId

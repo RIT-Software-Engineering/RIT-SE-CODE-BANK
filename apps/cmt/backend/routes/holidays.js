@@ -2,7 +2,7 @@ import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
-import { notifyOfHoliday, hasStarted, updateNotification, getReminderDate, deleteNotification } from "../utils/notifier.js";
+import { notifyOfHoliday, hasStarted, updateNotification, getReminderDate, deleteNotification, validateSendDate } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
 
@@ -59,8 +59,9 @@ router.post("/", async (req, res) => {
  */
 router.post('/:holidayId/notify', async (req, res) => {
     const {holidayId} = req.params;
-    const {change, notifyOption} = req.body;
+    const {change, notifyOption, sendAt} = req.body;
     let notified = null;
+    let when = null;
     const holiday = await prisma.holiday.findUnique({
         where: {id: parseInt(holidayId)},
         include: {course: true}
@@ -77,20 +78,27 @@ router.post('/:holidayId/notify', async (req, res) => {
         return res.status(400).json({success: false});
     }
 
-    if (notifyOption !== 'now'){
+    if (notifyOption !== 'now' && notifyOption !== 'later'){
         return res.json({success: true})
     }
 
     const event = (change === 'add') ? 'holiday' : 'holiday_update'
-    
-    try{
-        notified = await notifyOfHoliday(req.user, holiday, event, holiday?.course);
-    } catch(error){
-        notified = false; // notif didn't go through
-        console.error('Notification failed:', error.message, error.cause);
+
+    if (notifyOption === 'later'){
+        const check = validateSendDate(sendAt, holiday.date);
+        if (check.error){
+            return res.status(400).json({success: false, message: check.error});
+        }
+        when = check.whenToSend;
     }
 
-    res.json({success: true, notified});
+    try{
+        notified = await notifyOfHoliday(req.user, holiday, event, holiday?.course, when);
+        return res.json({success: true, notified: when ? null : notified, scheduled: when != null});
+    } catch(error){
+        console.error('Notification failed:', error.message, error.cause);
+        return res.json({success: true, notified: false});
+    }
 });
 
 /**

@@ -55,7 +55,7 @@ export async function deleteNotification(id){
         where: {id}, select: {courseId:true, event:true}
     })
 
-    await prisma.notification.updateMany({
+    const result = await prisma.notification.updateMany({
         where: {id, status: 'SCHEDULED'},
         data: {status: 'CANCELLED'}
     })
@@ -70,6 +70,8 @@ export async function deleteNotification(id){
     } catch (error){
         console.error('Failed to update action:', error.message, error.cause);
     }
+
+    return result.count === 1;
 }
 
 export function getReminderDate(holiday){
@@ -122,7 +124,20 @@ export async function sendNow(user, course, details){
     return result.status === 'SENT';
 }
 
-export async function notifyOfHoliday(user, holiday, event, course){
+export async function sendOrSchedule(user, course, details, when){
+    if (!when) return await sendNow(user, course, details);
+
+    await addNotification(course.id, {...details, sendAt: when});
+    try{
+        await syncActionState(course, actionCodeForEvent[details.event]);
+    }catch(error){
+        console.error('Failed to update action:', error.message);
+    }
+
+    return 'scheduled';
+}
+
+export async function notifyOfHoliday(user, holiday, event, course, when=null){
     const courseName = courseLabel(course);
     const context = {
         subject: event === 'holiday' ? `${courseName}: Holiday Notice` : `${courseName}: Holiday Updated`,
@@ -133,12 +148,12 @@ export async function notifyOfHoliday(user, holiday, event, course){
     }
     const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    return await sendNow(user, course, {
+    return await sendOrSchedule(user, course, {
         event, triggerId: holiday.id, context, recipients
-    });
+    }, when);
 }
 
-export async function notifyOfCancellation(user, session){
+export async function notifyOfCancellation(user, session, when=null){
     const onCancelledDate = session.date ? `on ${session.date}` : '';
     const courseName = courseLabel(session.course);
     const context = {
@@ -148,12 +163,12 @@ export async function notifyOfCancellation(user, session){
     }
     const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    return await sendNow(user, session.course, {
+    return await sendOrSchedule(user, session.course, {
         event: 'class_cancelled', triggerId: session.id, context, recipients
-    });
+    }, when);
 }
 
-export async function notifyOfMovedBlock(user, block, from, to, course){
+export async function notifyOfMovedBlock(user, block, from, to, course, when=null){
     const courseName = courseLabel(course);
     const context = {
         subject: `${courseName}: Content Moved in the Schedule`,
@@ -166,9 +181,9 @@ export async function notifyOfMovedBlock(user, block, from, to, course){
     }
     const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
-    return await sendNow(user, course, {
+    return await sendOrSchedule(user, course, {
         event: 'content_moved', triggerId: block.id, context, recipients
-    });
+    }, when);
 }
 
 // returns whether the course has started
@@ -246,15 +261,36 @@ export async function deliverNotification(notif, userId, course){
     return {id: notif.id, status};
 }
 
+export function validateSendDate(sendAt, latest){
+    const whenToSend = new Date(sendAt);
+    const latestDate = latest ? new Date(latest) : null;
+    if (isNaN(whenToSend.getTime())){
+        return {error: 'Invalid send time'};
+    }
+
+    if (whenToSend <= courseNow()){
+        return {error: 'Send time must be in the future'};
+    }
+    if (latestDate && whenToSend > latestDate){
+        return {error: 'Send time must be before the event occurs'};
+    }
+
+    return {whenToSend};
+}
+
+export async function findDueNotifications(courseId, now=courseNow()){
+    return await prisma.notification.findMany({
+        where: {courseId, status: 'SCHEDULED', sendAt: {lte: now}},
+        orderBy: {sendAt: 'asc'}
+    });
+}
+
 export async function sendDueNotifications(userId, courseId, now=courseNow()){
     courseId = parseInt(courseId);
     const course = await prisma.course.findUnique({where: {id: courseId}})
     if (!course || !await hasStarted(course)) return [];
 
-    const notifs = await prisma.notification.findMany({
-        where: {courseId: courseId, status: 'SCHEDULED', sendAt: {lte: now}},
-        orderBy: {sendAt: 'asc'}
-    })
+    const notifs = await findDueNotifications(courseId, now);
     
     const notifStatuses = [];
     for (const notif of notifs){
