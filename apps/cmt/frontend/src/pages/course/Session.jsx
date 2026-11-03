@@ -11,6 +11,7 @@ import { SessionBlocks } from "./SessionBlocks";
 import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
 import { emptyNotifyBody, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
+import { notifyListChanged } from "../../components/PendingNotification";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -134,7 +135,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                     currentSession.id === session.id ? json.session : currentSession
                 ));
                 setNotifyResult(toNotifyResult(json.notified, json.scheduled));
-                setNotifyResult(toNotifyResult(json.notified));
+                notifyListChanged();
                 setSessionToCancel(null);
             })
     }, [sessions, setSessions]);

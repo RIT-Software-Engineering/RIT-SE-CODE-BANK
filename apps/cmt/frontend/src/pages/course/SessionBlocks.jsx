@@ -7,6 +7,7 @@ import { createErrorHandler } from "../../utils/error";
 import { toNotifyResult } from "../../components/NotifyMessage";
 import { emptyNotifyBody, isNotifyReady, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
 import { extractUserFacingError } from "@se-code-bank/cmt-shared-utilities";
+import { notifyListChanged } from "../../components/PendingNotification";
 
 const STATUS_LABELS = {
     NOT_STARTED: "Not started",
@@ -70,7 +71,7 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
         })
             .then(json => {
                 onNotifyResult(toNotifyResult(json.notified, json.scheduled));
-                onNotifyResult(toNotifyResult(json.notified));
+                notifyListChanged();
                 setBlockToMove(null);
                 setNotificationOption(emptyNotifyBody);
                 return refresh();

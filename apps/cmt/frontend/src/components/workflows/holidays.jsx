@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom'
 import { NotifyMessage, toNotifyResult } from '../NotifyMessage'
 import { toNotifyBody, emptyNotifyBody, NotifyOptions, isNotifyReady } from '../NotifyOptions'
 import { extractUserFacingError } from '@se-code-bank/cmt-shared-utilities'
+import { notifyListChanged } from '../PendingNotification'
 
 /**
  * Card representing a single holiday entry from the database
@@ -148,7 +149,7 @@ export function Holidays() {
                         ...toNotifyBody(notificationOption)
                     }).then(json => {
                         setNotifyResult(toNotifyResult(json.notified, json.scheduled));
-                        setNotifyResult(toNotifyResult(json.notified));
+                        notifyListChanged();
                         setNotifyHoliday(null);
                     })
                 }

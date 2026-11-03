@@ -1,7 +1,7 @@
 import express from 'express';
 import {PrismaClient} from '../prisma/generated/client/index.js'
 import * as notificationClient from '../utils/notifications.js';
-import {deleteNotification, previewNotifications, sendDueNotifications } from '../utils/notifier.js';
+import {deleteNotification, previewNotifications, retryNotification,sendDueNotifications } from '../utils/notifier.js';
 import { campusInstant } from '../utils/courseClock.js';
 
 // server/routing/notifications_api.js
@@ -41,7 +41,7 @@ async function requireCourse(req, res, courseId){
 
 /**
  * POST /api/cmt/notifications/send-due
- * Call this to check for and send due notifications
+ * Check for and send due notifications
  */
 router.post('/send-due', async (req, res) => {
     const user = requireUser(req, res);
@@ -61,7 +61,10 @@ router.post('/send-due', async (req, res) => {
     });
 });
 
-// GET /api/notifications/preferences/:appId/:identifier
+/**
+ * GET /api/notifications/preferences/:appId/:identifier
+ * Get notification preferences for a specific user and app
+ */
 router.get('/preferences/:appId/:identifier', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;
@@ -88,6 +91,7 @@ router.get('/preferences/:appId/:identifier', async (req, res) => {
 
 /**
  * GET /api/cmt/notifications/course/:courseId/pending
+ * Get a list of scheduled or failed notifications for a specific course
  */
 router.get('/course/:courseId/pending', async (req, res) => {
     const user = requireUser(req, res);
@@ -130,6 +134,31 @@ router.post('/:id/cancel', async (req, res) => {
 
     const cancelled = await deleteNotification(row.id);
     res.json({success: cancelled});
+})
+
+/**
+ * POST /api/cmt/notifications/:id/retry
+ * Retry sending a failed notification
+ */
+router.post('/:id/retry', async (req, res) => {
+    const user = requireUser(req, res);
+    const {id} = req.params;
+    if (!user) return null;
+
+    const notif = await prisma.notification.findUnique({
+        where: {id: parseInt(id)}
+    });
+    if (!notif) return res.status(404).json({success: false, error: 'Notification not found'});
+
+    const course = await requireCourse(req, res, notif.courseId);
+    if (!course) return null;
+
+    const sent = await retryNotification(user, course, notif.id);
+    if (sent === null){
+        return res.json({success: false, error: 'This notification is no longer waiting to be retried'});
+    }
+
+    res.json({success: true, sent});
 })
 
 /**
