@@ -6,10 +6,11 @@ import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
-import { CMTError } from "@se-code-bank/cmt-shared-utilities";
+import { CMTError, extractUserFacingError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
 import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
+import { emptyNotifyBody, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -126,16 +127,16 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     }, [courseId, setSessionCount])
     useEffect(() => void update(), [courseId, update])
 
-    const setCanceled = useCallback((session, canceled, notify = "none") => {
-        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled, notify})
+    const setCanceled = useCallback((session, canceled, notify = emptyNotifyBody) => {
+        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled, ...toNotifyBody(notify)})
             .then(json => {
                 setSessions(sessions.map(currentSession =>
                     currentSession.id === session.id ? json.session : currentSession
                 ));
+                setNotifyResult(toNotifyResult(json.notified, json.scheduled));
                 setNotifyResult(toNotifyResult(json.notified));
                 setSessionToCancel(null);
             })
-            .catch(createErrorHandler("Failed to update session cancellation.", setError));
     }, [sessions, setSessions]);
 
     if (error) return <CMTDangerAlert error={error} />
@@ -326,7 +327,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         Add block
                                     </Button>
                                     {currentSession?.canceled ?
-                                        <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false)}>Restore session</Button> :
+                                        <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false).catch(createErrorHandler("Failed to restore session.", setError))}>Restore session</Button> :
                                         <Button className="mr-2" variant="outline-danger" onClick={() => setSessionToCancel(currentSession)}>Cancel session</Button>
                                     }
                                     <Button onClick={() => setIsOpen(true)}>Add Material</Button>
@@ -342,21 +343,28 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 }
 
 function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
-    const [notificationOption, setNotificationOption] = useState('none');
+    const [notificationOption, setNotificationOption] = useState(emptyNotifyBody);
+    const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
-    const isFutureSession = Boolean(session?.date && session.date > new Date().toISOString().split('T')[0]);
 
     function close() {
-        setNotificationOption('none');
+        setNotificationOption(emptyNotifyBody);
         setSubmitting(false);
+        setError(null);
         onClose();
     }
 
     async function confirmCancellation() {
         setSubmitting(true);
-        await onConfirm(notificationOption);
-        setNotificationOption('none');
-        setSubmitting(false);
+        setError(null);
+        try{
+            await onConfirm(notificationOption);
+            setNotificationOption(emptyNotifyBody);
+        }catch(error){
+            setError(extractUserFacingError(error));
+        }finally{
+            setSubmitting(false);
+        }
     }
 
     return (
@@ -366,16 +374,10 @@ function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
             </Modal.Header>
             <Modal.Body>
                 <p>This session will remain on the schedule and be marked as canceled.</p>
-                {showNotify && (
-                    <Form.Group>
-                        <Form.Label>Student notification</Form.Label>
-                        <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                            <option value="none">Do not send a notification</option>
-                            <option value="now">Send a notification now</option>
-                            {/* {isFutureSession && <option value="scheduled">Schedule a notification</option>} */}
-                        </Form.Select>
-                    </Form.Group>
-                )}
+                {showNotify && 
+                    <NotifyOptions value={notificationOption} onChange={setNotificationOption}/>
+                }
+                {error && <Alert variant="danger">{error}</Alert>}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={close} disabled={submitting}>Keep session</Button>
@@ -862,7 +864,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                         </Modal.Header>
                         <Modal.Body>
                             <Form.Group>
-                                <Form.Label>Student notification</Form.Label>
+                                <Form.Label>Student Notification</Form.Label>
                                 <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
                                     <option value="none">Do not notify students</option>
                                     {/* <option value="students">Prompt to notify students</option> */}

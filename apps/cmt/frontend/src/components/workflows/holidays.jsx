@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Row, Col, Spinner, Button, Card, Modal, Form } from 'react-bootstrap'
+import { Row, Col, Spinner, Button, Card, Modal, Alert } from 'react-bootstrap'
 import { RefreshCcw } from 'lucide-react'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error'
 import { CMTJsonFetch } from '../../utils/api'
 import { useParams } from 'react-router-dom'
 import { NotifyMessage, toNotifyResult } from '../NotifyMessage'
+import { toNotifyBody, emptyNotifyBody, NotifyOptions, isNotifyReady } from '../NotifyOptions'
+import { extractUserFacingError } from '@se-code-bank/cmt-shared-utilities'
 
 /**
  * Card representing a single holiday entry from the database
@@ -143,8 +145,9 @@ export function Holidays() {
                 onConfirm={(notificationOption) => 
                     CMTJsonFetch('POST', `holidays/${notifyHoliday.holidayId}/notify`, {
                         change: notifyHoliday.change,
-                        notifyOption: notificationOption
+                        ...toNotifyBody(notificationOption)
                     }).then(json => {
+                        setNotifyResult(toNotifyResult(json.notified, json.scheduled));
                         setNotifyResult(toNotifyResult(json.notified));
                         setNotifyHoliday(null);
                     })
@@ -211,16 +214,19 @@ export function Holidays() {
 }
 
 function HolidayModal({notifyHoliday, onConfirm}) {
-    const [notificationOption, setNotificationOption] = useState('none');
+    const [notificationOption, setNotificationOption] = useState(emptyNotifyBody);
     const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState(null);
 
     async function confirmHoliday() {
         setSubmitting(true);
+        setError(null);
         try{
             await onConfirm(notificationOption);
-            setNotificationOption('none');
+            setNotificationOption(emptyNotifyBody);
+            setError(null);
         } catch(error){
-            console.error("Error saving holiday:", error);
+            setError(extractUserFacingError(error));
         } finally{
             setSubmitting(false);
         }
@@ -237,17 +243,11 @@ function HolidayModal({notifyHoliday, onConfirm}) {
             </Modal.Header>
             <Modal.Body>
                 <p>Notify students about this schedule change?</p>
-                <Form.Group>
-                    <Form.Label>Student notification</Form.Label>
-                    <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                        <option value="none">Do not send a notification</option>
-                        <option value="now">Send a notification now</option>
-                        {/* <option value="scheduled">Schedule a notification</option> */}
-                    </Form.Select>
-                </Form.Group>
+                <NotifyOptions value={notificationOption} onChange={setNotificationOption} />
+                {error && <Alert variant="danger" className="mt-2">{error}</Alert>}
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="primary" onClick={confirmHoliday} disabled={submitting}>
+                <Button variant="primary" onClick={confirmHoliday} disabled={submitting || !isNotifyReady(notificationOption)}>
                     {submitting ? 'Adding changes...' : 'Continue'}
                 </Button>
             </Modal.Footer>

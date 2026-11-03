@@ -3,6 +3,7 @@ import express from "express";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
 import { notifyOfHoliday, hasStarted, updateNotification, getReminderDate, deleteNotification, validateSendDate } from "../utils/notifier.js";
+import { latestNotifyTime } from "../utils/courseClock.js";
 
 const prisma = new PrismaClient();
 
@@ -55,11 +56,11 @@ router.post("/", async (req, res) => {
 
 /**
  * POST /api/cmt/holidays/:holidayId/notify
- * Triggers the creation of a notification for the holiday that will either be sent now or later
+ * Create notification for the specific holiday, which can be sent now or later
  */
 router.post('/:holidayId/notify', async (req, res) => {
     const {holidayId} = req.params;
-    const {change, notifyOption, sendAt} = req.body;
+    const {change, notify, sendAt} = req.body;
     let notified = null;
     let when = null;
     const holiday = await prisma.holiday.findUnique({
@@ -78,16 +79,16 @@ router.post('/:holidayId/notify', async (req, res) => {
         return res.status(400).json({success: false});
     }
 
-    if (notifyOption !== 'now' && notifyOption !== 'later'){
+    if (notify !== 'now' && notify !== 'later'){
         return res.json({success: true})
     }
 
     const event = (change === 'add') ? 'holiday' : 'holiday_update'
 
-    if (notifyOption === 'later'){
-        const check = validateSendDate(sendAt, holiday.date);
+    if (notify === 'later'){
+        const check = validateSendDate(sendAt, latestNotifyTime(holiday.date));
         if (check.error){
-            return res.status(400).json({success: false, message: check.error});
+            return res.status(400).json({error: {userFacingMessage: check.error}});
         }
         when = check.whenToSend;
     }
