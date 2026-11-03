@@ -264,6 +264,10 @@ export async function deliverNotification(notif, userId, course){
 export function validateSendDate(sendAt, latest){
     const whenToSend = new Date(sendAt);
     const latestDate = latest ? new Date(latest) : null;
+
+    if (latestDate && latestDate <= courseNow()){
+        return {error: 'It is too late to schedule this. Use "notify now" instead'};
+    }
     if (isNaN(whenToSend.getTime())){
         return {error: 'Invalid send time'};
     }
@@ -272,7 +276,7 @@ export function validateSendDate(sendAt, latest){
         return {error: 'Send time must be in the future'};
     }
     if (latestDate && whenToSend > latestDate){
-        return {error: 'Send time must be before the event occurs'};
+        return {error: 'Send time must be by 8:00pm Eastern time the day before'};
     }
 
     return {whenToSend};

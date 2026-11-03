@@ -2,11 +2,15 @@ import express from 'express';
 import {PrismaClient} from '../prisma/generated/client/index.js'
 import * as notificationClient from '../utils/notifications.js';
 import {deleteNotification, previewNotifications, sendDueNotifications } from '../utils/notifier.js';
+import { campusInstant } from '../utils/courseClock.js';
 
 // server/routing/notifications_api.js
 const router = express.Router();
 
 const prisma = new PrismaClient();
+
+const END_OF_LAST_HOUR_MS = (59 * 60 + 59) * 1000 + 999;
+const HOUR_BEFORE_MIDNIGHT = 23;
 
 // Require that a user is logged in (authMiddleware should set req.user)
 function requireUser(req, res) {
@@ -128,6 +132,10 @@ router.post('/:id/cancel', async (req, res) => {
     res.json({success: cancelled});
 })
 
+/**
+ * POST /api/cmt/notifications/preview
+ * Preview upcoming and due notifications for a specific course up to a given date
+ */
 router.post('/preview', async (req, res) => {
     const user = requireUser(req, res);
     const {courseId, until} = req.body;
@@ -139,9 +147,14 @@ router.post('/preview', async (req, res) => {
 
     const course = await requireCourse(req, res, courseId);
     if (!course) return null;
-    const untilDate = new Date(`${until}T23:59:59.999`);    
+    let untilDate;
+    try {
+        untilDate = campusInstant(until, HOUR_BEFORE_MIDNIGHT);
+        untilDate.setTime(untilDate.getTime() + END_OF_LAST_HOUR_MS);
+    } catch {
+        return res.status(400).json({error: 'Invalid until date'});
+    }
 
-    if (isNaN(untilDate.getTime())) return res.status(400).json({error: 'Invalid until date'});
     const result = await previewNotifications(parseInt(courseId), untilDate)
     res.json({success: true, ...result});
 })

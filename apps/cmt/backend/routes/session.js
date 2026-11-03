@@ -2,6 +2,7 @@ import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { deleteNotification, hasStarted, notifyOfCancellation, notifyOfMovedBlock, validateSendDate } from "../utils/notifier.js";
+import { latestNotifyTime } from "../utils/courseClock.js";
 
 const prisma = new PrismaClient();
 
@@ -166,6 +167,7 @@ router.patch("/blocks/:blockId", async (req, res) => {
 
 /** PATCH /api/cmt/session/blocks/:blockId/move
  * Reorders a block or moves it to another session in the same course.
+ * Triggers a notification if the course has started
  */
 router.patch("/blocks/:blockId/move", async (req, res) => {
     const {blockId} = req.params;
@@ -205,11 +207,12 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
     if (notify === 'later'){
         let earlierDate = fromSession.date ?? targetSession.date;
         if (fromSession.date && targetSession.date){
-        earlierDate = fromSession.date < targetSession.date ? fromSession.date : targetSession.date;
+            earlierDate = fromSession.date < targetSession.date ? fromSession.date : targetSession.date;
         } 
-        const check = validateSendDate(sendAt, earlierDate);
+        const cutoff = earlierDate ? latestNotifyTime(earlierDate) : null;
+        const check = validateSendDate(sendAt, cutoff);
         if (check.error){
-            return res.status(400).json({success: false, message: check.error});
+            return res.status(400).json({error: {userFacingMessage: check.error}});
         }
         when = check.whenToSend;
     }
@@ -272,7 +275,7 @@ router.put("/:sessionId", async (req, res) => {
 /** PATCH /api/cmt/session/:sessionId/cancellation
  * Marks a session as canceled or restores it without changing its date,
  * completion state, or materials.
- * Triggers a notifcation if the course has started
+ * Triggers a notification if the course has started
  */
 router.patch("/:sessionId/cancellation", async (req, res) => {
     const {sessionId} = req.params;
@@ -292,9 +295,10 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
     if (!existingSession) return res.status(404).json({error: "Session not found for this instructor"});
 
     if (canceled && notify === 'later'){
-        const check = validateSendDate(sendAt, existingSession.date);
+        const cutoff = existingSession.date ? latestNotifyTime(existingSession.date) : null;
+        const check = validateSendDate(sendAt, cutoff);
         if (check.error){
-            return res.status(400).json({success: false, message: check.error});
+            return res.status(400).json({error: {userFacingMessage: check.error}});
         }
         when = check.whenToSend;
     }
