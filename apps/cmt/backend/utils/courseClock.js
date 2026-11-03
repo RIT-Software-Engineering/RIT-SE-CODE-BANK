@@ -37,7 +37,7 @@ function dayString(day){
  * Gets the exact moment it is {hour}:00 at the campus' timezone on a given day.
  * It first calculates the reading in UTC and then adjusts it to the campus 
  * timezone (first by the measured offset, then by a rough reading).
- * @param {Date|string} day - calendar day as "YYYY-MM-DD". Date object won't work
+ * @param {string} day - calendar day as "YYYY-MM-DD"
  * @param {number} hour - hour on the campus clock (0-23)
  * @returns {Date} - the instant
  */
