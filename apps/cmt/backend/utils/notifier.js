@@ -56,7 +56,7 @@ export async function deleteNotification(id){
     })
 
     const result = await prisma.notification.updateMany({
-        where: {id, status: 'SCHEDULED'},
+        where: {id, status: {in: ['SCHEDULED', 'FAILED']}},
         data: {status: 'CANCELLED'}
     })
 
@@ -218,35 +218,47 @@ export async function syncActionState(course, code){
     }
 }
 
-export async function claimNotification(notifId){
+export async function claimNotification(notifId, from='SCHEDULED'){
     const result = await prisma.notification.updateMany({
-        where: {id: notifId, status: 'SCHEDULED'},
+        where: {id: notifId, status: from},
         data: {status: 'PROCESSING'}
     });
     return result.count === 1;
 }
 
 export async function deliverNotification(notif, userId, course){
-    let status;
+    if (!Array.isArray(notif.recipients)){
+        notif.recipients = [notif.recipients];
+    }
+        
+    const context = (notif.context && typeof notif.context === 'object') 
+        ? {...notif.context, note: notif.note} : notif.note 
+        ? {note: notif.note} : undefined;
 
-    try{
-        if (!Array.isArray(notif.recipients)) notif.recipients = [notif.recipients];
-        for (const recipient of notif.recipients){
-            await dispatchTemplated(userId, {
+    let sent = 0, skipped = 0, failed = 0;
+
+    for (const entry of notif.recipients){
+        const recipient = typeof entry === 'string' ? {email: entry} : entry;
+        try{
+            await dispatchTemplated(recipient.uid ?? userId, {
                 event: notif.event,
-                context: (notif.context && typeof notif.context === 'object') 
-                    ? {...notif.context, note: notif.note} : notif.note 
-                    ? {note: notif.note} : undefined, 
+                context, 
                 role: 'student',
                 subject: notif.context.subject,
-                userEmail: recipient
+                userEmail: recipient.email
             });
+            sent++;
+        } catch(error){
+            if (error.status === 422){
+                skipped++;
+            } else{
+                console.error('Failed to send notification:', error.message, error.cause);
+                failed++;
+            }
         }
-        status = 'SENT';
-    }catch(error){
-        console.error('Failed to send notification:', error.message, error.cause);
-        status = 'FAILED';
     }
+
+    const status = failed > 0 ? 'FAILED' : 'SENT';
 
     await prisma.notification.update({
         where: {id: notif.id}, data: {status: status}
@@ -258,7 +270,7 @@ export async function deliverNotification(notif, userId, course){
         console.error('Failed to update action:', error.message, error.cause);
     }
 
-    return {id: notif.id, status};
+    return {id: notif.id, status, sent, skipped, failed};
 }
 
 export function validateSendDate(sendAt, latest){
@@ -333,6 +345,17 @@ export async function resetStuckNotifications(){
     if (result.count > 0){
         console.log(`Reset ${result.count} stuck notifications.`)
     }
+}
+
+export async function retryNotification(user, course, notifId){
+    if (!await claimNotification(notifId, 'FAILED')) return null;
+
+    const notif = await prisma.notification.findUnique({
+        where: {id: notifId}
+    });
+    const result = await deliverNotification(notif, user.uid, course);
+    
+    return result.status === 'SENT';
 }
 
 export async function previewNotifications(courseId, until, now=courseNow()){
