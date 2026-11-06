@@ -12,6 +12,9 @@ import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
+import makeStudentRouter from './routes/students.js';
+import requireInstructor, { isInstructor } from './middleware/requireInstructor.js';
+import { isStudentUser, studentForUser } from './utils/students.js';
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -118,11 +121,14 @@ app.post("/api/cmt/dev/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    const student = isStudentUser(user) ? await studentForUser(prisma, user) : null;
+
     // Create JWT token with user data from dev-users.json
     const token = jwt.sign(
       { 
         uid: user.uid,
-        professorId: user.id,
+        professorId: isInstructor(user) ? user.id : undefined,
+        ...(student && {studentProfileId: student.id}),
         email: user.email,
         name: user.name,
         givenName: user.givenName,
@@ -152,6 +158,7 @@ app.post("/api/cmt/dev/login", async (req, res) => {
         email: user.email,
         roles: user.roles,
         affiliations: user.affiliations,
+        ...(student && {studentProfileId: student.id}),
       },
     });
   } catch (error) {
@@ -187,12 +194,12 @@ app.get("/", (_req, res) => {
 });
 
 // API Routes
-app.use("/api/cmt/course", sectionRoutes);
-app.use("/api/cmt/course", courseRoutes);
-app.use("/api/cmt/team-builder", teamBuilderRoutes);
-app.use("/api/cmt/workflow", workflowRoutes)
-app.use("/api/cmt/session", sessionRoutes);
-app.use("/api/cmt/resources", resourceRoutes);
+app.use("/api/cmt/students", makeStudentRouter(prisma));
+app.use("/api/cmt/course", requireInstructor, sectionRoutes, courseRoutes);
+app.use("/api/cmt/team-builder", requireInstructor, teamBuilderRoutes);
+app.use("/api/cmt/workflow", requireInstructor, workflowRoutes)
+app.use("/api/cmt/session", requireInstructor, sessionRoutes);
+app.use("/api/cmt/resources", requireInstructor, resourceRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS

@@ -20,6 +20,16 @@ model Professor {
   @@map("professors")
 }
 
+model Student {
+  id          String         @id @default(uuid()) @db.Char(36)
+  fname       String?
+  lname       String?
+  email       String         @unique @db.VarChar(254)
+  enrollments TBEnrollment[]
+
+  @@map("students")
+}
+
 model Course {
   id              Int            @id @default(autoincrement())
   name            String
@@ -133,10 +143,14 @@ model TBEnrollment {
   createdAt DateTime   @default(now())
   course    Course     @relation(fields: [courseId], references: [id])
   members   TBMember[]
+  studentProfileId String? @db.Char(36)
+  studentProfile Student? @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
 
   @@unique([courseId, email])
   @@unique([courseId, studentId])
+  @@unique([courseId, studentProfileId])
   @@index([courseId])
+  @@index([studentProfileId])
 }
 
 model TBMember {

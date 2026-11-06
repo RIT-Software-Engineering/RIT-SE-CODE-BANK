@@ -1,6 +1,8 @@
 import express from "express";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
+import { isInstructor } from "../middleware/requireInstructor.js";
+import { importStudentRoster } from "../utils/students.js";
 
 // Require that a user is logged in (authMiddleware should set req.user)
 function requireUser(req, res) {
@@ -15,6 +17,10 @@ function requireUser(req, res) {
 async function getProfessorForUser(prisma, req, res) {
   const user = requireUser(req, res);
   if (!user) return null;
+  if (!isInstructor(user)) {
+    res.status(403).json({ success: false, error: "Instructor access required" });
+    return null;
+  }
   
   const professor = await prisma.professor.findFirst({
     where: { email: user.email },
@@ -79,7 +85,7 @@ export default function makeTeamBuilderRouter(prisma) {
     }
   });
 
-  // Upload roster CSV (expected headers: email, studentId, firstName, lastName)
+  // Upload roster CSV (email required; firstName and lastName optional).
   router.post(
     "/courses/:courseId/roster",
     upload.single("file"),
@@ -109,15 +115,15 @@ export default function makeTeamBuilderRouter(prisma) {
         let rows = [];
         try {
           rows = parse(req.file.buffer.toString("utf-8"), {
+            bom: true,
             columns: true,
             skip_empty_lines: true,
             trim: true,
           });
         } catch (e) {
-          console.error("CSV parsing failed:", e);
+          console.error("CSV parsing failed:", e.code || "invalid CSV");
           return res.status(400).json({
             error: "Invalid CSV",
-            detail: String(e.message || e),
           });
         }
 
@@ -125,48 +131,12 @@ export default function makeTeamBuilderRouter(prisma) {
           return res.status(400).json({ error: "CSV is empty or invalid" });
         }
 
-        await prisma.$transaction(async (tx) => {
-          for (let i = 0; i < rows.length; i++) {
-            const line = rows[i];
-
-            const studentId = (line["studentId"] || "").trim();
-            const firstName = (line["firstName"] || "").trim();
-            const lastName = (line["lastName"] || "").trim();
-            const email = (line["email"] || "").trim();
-
-            if (!studentId) {
-              console.warn(`Skipping row ${i + 1}: missing studentId`, line);
-              continue;
-            }
-
-            await tx.TBEnrollment.upsert({
-              where: { courseId_studentId: { courseId, studentId } },
-              update: {
-                firstName: firstName || undefined,
-                lastName: lastName || undefined,
-                email: email || undefined,
-              },
-              create: {
-                courseId,
-                studentId,
-                firstName: firstName || null,
-                lastName: lastName || null,
-                email: email || null,
-              },
-            });
-          }
-        });
-
-        const roster = await prisma.TBEnrollment.findMany({
-          where: { courseId },
-          orderBy: { id: "asc" },
-        });
+        const roster = await importStudentRoster(prisma, courseId, rows);
         res.json({ count: roster.length, roster });
       } catch (e) {
-        console.error("Roster import failed:", e);
-        res.status(500).json({
-          error: "Roster import failed",
-          detail: e.message || e,
+        console.error("Roster import failed:", e.code || e.status || "unexpected error");
+        res.status(e.status || 500).json({
+          error: e.userFacingMessage || "Roster import failed",
         });
       }
     }

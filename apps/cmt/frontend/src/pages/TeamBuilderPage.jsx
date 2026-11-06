@@ -69,7 +69,7 @@ export default function TeamBuilderPage() {
     })();
   }, [courseId]);
 
-  // Upload CSV (headers: email, studentId, firstName, lastName)
+  // Upload CSV (email required; firstName and lastName optional).
   const uploadRoster = async (e) => {
     e.preventDefault();
     if (!file || !courseId) return;
@@ -274,8 +274,7 @@ export default function TeamBuilderPage() {
           </p>
         )}
         <p style={{ fontSize: 12, color: "#777", marginTop: 6 }}>
-          CSV headers accepted: <code>email</code>, <code>studentId</code>,{" "}
-          <code>firstName</code>, <code>lastName</code>
+          Required CSV header: <code>email</code>. Optional: <code>firstName</code>, <code>lastName</code>.
         </p>
       </div>
 
