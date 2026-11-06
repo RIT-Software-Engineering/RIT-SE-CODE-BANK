@@ -4,7 +4,7 @@ echo "Deploying TA Portal to apps-staging.se.rit.edu..."
 
 # Configuration
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
-VM_USER="${TA_PORTAL_DEPLOY_USER:-kjk9042}"
+VM_USER="${TA_PORTAL_DEPLOY_USER:-ant1698}"
 SSH_TARGET="${VM_USER}@${VM_HOST}"
 DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
