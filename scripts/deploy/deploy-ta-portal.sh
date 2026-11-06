@@ -8,7 +8,8 @@ VM_USER="${TA_PORTAL_DEPLOY_USER:-jtd4400}"
 SSH_TARGET="${VM_USER}@${VM_HOST}"
 DEPLOY_PATH="/opt/ta-portal"
 # Get the branch name from GitHub Actions environment
-DEPLOY_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+# DEPLOY_BRANCH="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+DEPLOY_BRANCH="ta-portal-dev"
 # SSH and deploy
 
 ssh -i "$DEPLOY_KEY" "$SSH_TARGET" \
