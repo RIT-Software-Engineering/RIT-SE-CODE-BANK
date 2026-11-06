@@ -36,6 +36,11 @@ export default function ResourcesPage() {
             desc: "Learn about your rights as an worker.",
             link: "https://www.justice.gov/crt/immigrant-and-employee-rights-section"
         },
+        {
+            title: "Workday",
+            desc: "Access RIT's Workday portal to view student employment opportunities and manage your employment information.",
+            link: "https://workday.rit.edu"
+        },
     ];
 
 

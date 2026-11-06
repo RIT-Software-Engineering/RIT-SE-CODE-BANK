@@ -56,4 +56,10 @@ export const generatePositionsFilterConfig = (semesterOptions = []) => [
     type: 'radio',
     options: ['Applied', 'Not Applied', 'Any'],
   },
+    {
+    id: 'favorited',
+    label: 'Favorited',
+    type: 'checkbox',
+    options: ['Favorited'],
+  },
 ];

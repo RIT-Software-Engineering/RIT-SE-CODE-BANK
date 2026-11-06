@@ -1300,3 +1300,23 @@ export async function getComments(tableName, foreignKey) {
   const response = await fetch(url);
   return handleApiResponse(response);
 }
+  export async function getCandidateFavorites(username) {
+    const url =
+      `${BASE_API_URL}${DATABASE_API_EXTENSION}/favorites/` +
+      encodeURIComponent(username);
+
+    const response = await fetch(url, { cache: "no-store" });
+    return handleApiResponse(response);
+  }
+
+  export async function setCandidateFavorite(username, positionId, checked) {
+    const url =
+      `${BASE_API_URL}${DATABASE_API_EXTENSION}/favorites/` +
+      `${encodeURIComponent(username)}/${encodeURIComponent(positionId)}`;
+
+    const response = await fetch(url, {
+      method: checked ? "PUT" : "DELETE",
+    });
+
+    return handleApiResponse(response);
+  }

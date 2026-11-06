@@ -1784,6 +1784,50 @@ async function isJobPositionFull(jobPositionId) {
   );
 }
 
+// Return the candidate's favorite position IDs.
+async function getCandidateFavorites(username) {
+  const candidate = await prisma.candidate.findUnique({
+    where: { username },
+    select: {
+      favoritePositions: {
+        select: { id: true },
+      },
+    },
+  });
+
+  if (!candidate) {
+    throw new Error("Candidate not found.");
+  }
+
+  return candidate.favoritePositions.map((position) => position.id);
+}
+
+  // Add a position to favorites.
+  async function addCandidateFavorite(username, positionId) {
+    await prisma.candidate.update({
+      where: { username },
+      data: {
+        favoritePositions: {
+          connect: { id: positionId },
+        },
+      },
+      select: { username: true },
+    });
+  }
+
+  // Remove a position from favorites.
+  async function removeCandidateFavorite(username, positionId) {
+    await prisma.candidate.update({
+      where: { username },
+      data: {
+        favoritePositions: {
+          disconnect: { id: positionId },
+        },
+      },
+      select: { username: true },
+    });
+}
+
 // =============================================================================
 // USER & PROFILE MANAGEMENT
 // =============================================================================
@@ -2985,7 +3029,10 @@ module.exports = {
   getUserNotificationPreferences,
   upsertUserNotificationPreferences,
   updateApplicationNote,
-  getApplicationNote
+  getApplicationNote,
+  getCandidateFavorites,
+  addCandidateFavorite,
+  removeCandidateFavorite,
 };
 
 // Add process exit handlers to disconnect Prisma Client gracefully.

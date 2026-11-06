@@ -158,16 +158,21 @@ function EmployerPositionsContent() {
       let openJobs;
       let myJobs;
       let otherJobs;
-      let res;
       openJobs = await getOpenJobPositions(currentSearch, currentFilters, null);
       setOpenPositions(openJobs);
       myJobs = await getPositionsByOwner(currentUser.username, currentSearch, currentFilters);
       setMyPositions(myJobs);
 
-      otherJobs = openJobs.filter(item => !myJobs.includes(item))
+      const onlyMyPositions = currentFilters.createdByMe?.includes('My Positions');
+
+      // Compare IDs because separately fetched objects aren't the same object.
+      const myPositionIds = new Set(myJobs.map(job => job.id));
+
+      otherJobs = onlyMyPositions ? [] : openJobs.filter(job => !myPositionIds.has(job.id));
+
       setOtherOpenPositions(otherJobs);
-      res = otherJobs.length + myJobs.length;
-      setResults(res)
+      setResults(otherJobs.length + myJobs.length);
+
     } catch (err) {
       console.error(`Failed to fetch data for tab ${tabId}:`, err);
       setError(`Failed to load positions. Please try again later.`);
@@ -224,6 +229,7 @@ function EmployerPositionsContent() {
    * @param {object | null} job - The job object to edit, or null for creation.
    */
   const handleOpenModal = (job = null) => {
+    setIsCopy(false);
     setSelectedJob(job);
     setIsEdit((job != null));
     setIsModalOpen(true);

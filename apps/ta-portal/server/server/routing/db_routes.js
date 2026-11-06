@@ -64,6 +64,9 @@ const {
   getApplicationNote,
   updateApplicationNote,
   checkUserAvailability,
+  getCandidateFavorites,
+  addCandidateFavorite,
+  removeCandidateFavorite,
 } = require('../database/query_db');
 
 // =============================================================================
@@ -1222,6 +1225,49 @@ router.delete('/resume/:resumeId', async (req, res) => {
   }
 });
 
+
+  // Load a candidate's favorite position IDs.
+  router.get("/favorites/:username", async (req, res) => {
+    try {
+      const favorites = await getCandidateFavorites(req.params.username);
+      res.status(200).json(favorites);
+    } catch (error) {
+      console.error("Failed to load favorites:", error);
+      res.status(500).json({ error: "Failed to load favorites." });
+    }
+  });
+
+  // Add a position to favorites.
+  router.put("/favorites/:username/:positionId", async (req, res) => {
+    try {
+      await addCandidateFavorite(
+        req.params.username,
+        req.params.positionId
+      );
+
+      res.status(200).json({ message: "Position favorited." });
+    } catch (error) {
+      console.error("Failed to add favorite:", error);
+      res.status(500).json({ error: "Failed to add favorite." });
+    }
+  });
+
+  // Remove a position from favorites.
+  router.delete("/favorites/:username/:positionId", async (req, res) => {
+    try {
+      await removeCandidateFavorite(
+        req.params.username,
+        req.params.positionId
+      );
+
+      res.status(200).json({
+        message: "Position removed from favorites.",
+      });
+    } catch (error) {
+      console.error("Failed to remove favorite:", error);
+      res.status(500).json({ error: "Failed to remove favorite." });
+    }
+  });
 // =============================================================================
 // GENERAL & UTILITY ROUTES
 // =============================================================================

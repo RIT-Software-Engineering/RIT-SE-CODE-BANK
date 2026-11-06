@@ -30,8 +30,8 @@ import {
  *
  * @returns A JSX element containing the prerequisites form fields.
  */
-export default function PrerequisiteCheckboxes({ register, control }) {
-  if (!control || !register) {
+export default function PrerequisiteCheckboxes({ control }) {
+  if (!control) {
     return null;
   }
 
@@ -40,15 +40,24 @@ export default function PrerequisiteCheckboxes({ register, control }) {
       <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
         Prerequisites
       </Typography>
+
       <FormGroup>
-        <FormControlLabel
-          control={
-            <Checkbox
-              id="courseTakenRequirement"
-              {...register("courseTakenRequirement")}
-            />
-          }
-          label="Require this course as a prerequisite"
+        <Controller
+        name="courseTakenRequirement"
+        control={control}
+        defaultValue={false} // Default to unchecked
+          render={({ field }) => (
+          <FormControlLabel
+            control={
+              <Checkbox
+                id="courseTakenRequirement"
+                checked={field.value ?? false}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            }
+            label="Require this course as a prerequisite"
+          />
+          )}
         />
         
         <Controller
