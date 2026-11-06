@@ -32,6 +32,7 @@ model Candidate {
   jobPositionApplicationHistory JobPositionApplicationHistory[]
   resumes                       Resume[]
   coverLetters                  CoverLetter[]
+  favoritePositions             JobPosition[]                  @relation("CandidateFavorites")
 }
 
 model Comment {
@@ -177,6 +178,7 @@ model JobPosition {
   jobPositionApplicationHistory JobPositionApplicationHistory[]
   jobPositionHistory            JobPositionHistory[]
   jobSchedules                  JobSchedule[]
+  favoritedBy                   Candidate[]                     @relation("CandidateFavorites")
 
   @@index([courseCode], map: "JobPosition_courseCode_fkey")
   @@index([username], map: "JobPosition_username_fkey")

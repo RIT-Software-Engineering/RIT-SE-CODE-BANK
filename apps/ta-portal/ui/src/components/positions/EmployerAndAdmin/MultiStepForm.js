@@ -104,15 +104,20 @@ export default function MultiStepForm({
             isEditMode={isEditMode}
           />
         )}
-        {currentStep === 2 && (
-          <FormStepTwo register={register} control={control} errors={errors} />
+        {(isEditMode || currentStep === 2) && (
+          <Box sx={{ p: 1.5 }}>
+            <FormStepTwo register={register} control={control} errors={errors} />
+          </Box>
         )}
-        {currentStep === 3 && (
-          <FormStepThree register={register} control={control} errors={errors} />
+        {/* {isEditMode && <Divider sx={{ mb: 3, visibility: 'hidden'}} />} */}
+        {(isEditMode || currentStep === 3) && (
+          <Box sx={{ p: 1.5 }}>
+            <FormStepThree register={register} control={control} errors={errors} />
+          </Box>
         )}
       </Box>
 
-      <Divider sx={{ my: 2 }} />
+      <Divider sx={{ my: 1 }} />
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', pt: 2 }}>
 
@@ -131,7 +136,7 @@ export default function MultiStepForm({
           { (currentStep > 1 && !isEditMode) || currentStep === 3 ? "Back" : "Cancel" }
         </Button>
 
-        {currentStep < 3 ? (
+        {(!isEditMode && currentStep < 3) ? (
           <Button variant="contained" onClick={handleNext}>
             Next
           </Button>

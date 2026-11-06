@@ -210,6 +210,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                                 label="Resume"
                                 {...register("resumeId")}
                                 defaultValue={initialValues.resumeId}
+                                disabled={existingResumes.length === 0}
 
                             >
                                 {existingResumes.map(resume => (
@@ -225,7 +226,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
                             <>
                                 <TextField
                                     fullWidth
-                                    label="New Resume Name"
+                                    label="New Resume Label"
                                     {...register("resumeName", { required: "Resume name is required." })}
                                     error={!!errors.resumeName}
                                     helperText={errors.resumeName?.message}
@@ -339,7 +340,7 @@ export default function EditableApplicationForm({ user, position, onClose, onApp
             </DialogContent>
             <DialogActions sx={{ p: 3 }}>
                 <Button onClick={onClose} disabled={isSubmitting}>Cancel</Button>
-                <Button type="submit" form="application-form" variant="contained" color="primary" disabled={isSubmitting}>
+                <Button type="submit" form="application-form" variant="contained" color="primary" disabled={isSubmitting || (!resumeFile || !resumeFile[0]) && selectedResumeId === 'new'}>
                     {isSubmitting ? <CircularProgress size={24} /> : 'Submit Application'}
                 </Button>
             </DialogActions>

@@ -41,5 +41,11 @@ export const generatePositionsFilterConfig = (semesterOptions = []) => [
     label: 'Location',
     type: 'radio',
     options: ["Remote", "Hybrid", "In-Person"]
+  },
+  {
+    id: 'createdByMe',
+    label: 'Created Positions',
+    type: 'checkbox',
+    options: ['My Positions']
   }
 ];

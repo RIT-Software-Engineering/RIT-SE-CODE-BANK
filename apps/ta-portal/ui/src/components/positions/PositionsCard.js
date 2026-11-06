@@ -17,6 +17,7 @@ import ViewablePositionForm from './EmployerAndAdmin/ViewablePositionForm';
 import { positionStatusEnumToString } from '@/constants/positionStatusConstants';
 
 import {
+  Checkbox,
   Box,
   Button,
   CircularProgress,
@@ -40,6 +41,8 @@ import {
   AccessTime as ClockIcon,
   LocationOn as LocationIcon,
   Person,
+  Star,
+  StarBorder,
 } from '@mui/icons-material';
 import ViewHistoryForm from '../jobHistory/ViewHistoryForm';
 
@@ -81,7 +84,9 @@ export default function PositionsCard({
   showEditAction,
   showApproveRejectActions,
   showTracker,
-  onCopy
+  onCopy,
+  isFavorited = false,
+  onFavoriteToggle
 }) {
   const { currentUser, refreshUserProfile } = useAuth();
   const { showNotification } = useNotification();
@@ -242,6 +247,23 @@ export default function PositionsCard({
             </Box>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {currentUser?.role === 'CANDIDATE' && (
+              <Tooltip title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}>
+                <Checkbox
+                  icon={<StarBorder />}
+                  checkedIcon={<Star />}
+                  checked={isFavorited}
+                  onChange={(event) =>
+                    onFavoriteToggle?.(position.id, event.target.checked)
+                  }
+                  inputProps={{ 'aria-label': 'Favorite position' }}
+                  sx={{
+                    color: 'warning.main',
+                    '&.Mui-checked': { color: 'warning.main' },
+                  }}
+                />
+              </Tooltip>
+            )}
             {(currentUser?.role === 'ADMIN' || currentUser?.role === 'EMPLOYER') && <ActionsMenu />}
             {(currentUser?.role === 'CANDIDATE' || currentUser?.role === 'EMPLOYEE') && renderApplyButton()}
           </Box>

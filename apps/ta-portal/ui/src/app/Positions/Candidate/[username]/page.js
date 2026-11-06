@@ -11,6 +11,8 @@ import React, {
 import {
   getOpenJobPositions,
   getSemesterCodesForOpenPositions,
+  getCandidateFavorites,
+  setCandidateFavorite,
 } from "@/services/db-apis";
 import { useAuth } from "@/contexts/AuthContext";
 import { gradeEnumToStringValue } from "@/constants/gradeConstants";
@@ -72,6 +74,81 @@ function CandidatePositionsContent() {
     });
     return initialState;
   };
+
+const [favoritePositionIds, setFavoritePositionIds] = useState([]);
+const [favoritesLoading, setFavoritesLoading] = useState(true);
+const pendingFavorites = useRef(new Set());
+
+useEffect(() => {
+  let cancelled = false;
+
+  setFavoritePositionIds([]);
+  setFavoritesLoading(true);
+
+  if (!currentUser || currentUser.role !== "CANDIDATE") {
+    return;
+  }
+
+  const loadFavorites = async () => {
+    try {
+      const ids = await getCandidateFavorites(currentUser.username);
+
+      if (!cancelled) {
+        setFavoritePositionIds(ids);
+      }
+    } catch (error) {
+      console.error("Failed to load favorites:", error);
+    } finally {
+      if (!cancelled) {
+        setFavoritesLoading(false);
+      }
+    }
+  };
+
+  loadFavorites();
+
+  return () => {
+    cancelled = true;
+  };
+}, [currentUser?.username, currentUser?.role]);
+
+const handleFavoriteChange = async (positionId, checked) => {
+  if (
+    !currentUser ||
+    favoritesLoading ||
+    pendingFavorites.current.has(positionId)
+  ) {
+    return;
+  }
+
+  pendingFavorites.current.add(positionId);
+
+  try {
+    await setCandidateFavorite(
+      currentUser.username,
+      positionId,
+      checked
+    );
+
+    setFavoritePositionIds((previous) =>
+      checked
+        ? [...new Set([...previous, positionId])]
+        : previous.filter((id) => id !== positionId)
+    );
+  } catch (error) {
+    console.error("Failed to save favorite:", error);
+  } finally {
+    pendingFavorites.current.delete(positionId);
+  }
+};
+
+  const onlyFavorites = appliedFilters.favorited?.includes("Favorited");
+
+  const visiblePositions = onlyFavorites
+    ? openPositions.filter((position) =>
+        favoritePositionIds.includes(position.id)
+      )
+    : openPositions;
 
   // Effect to fetch semester codes and generate the filter configuration on mount.
   useEffect(() => {
@@ -217,7 +294,7 @@ function CandidatePositionsContent() {
     }
 
     // Render the list of position cards.
-    return openPositions.map((position, index) => (
+    return visiblePositions.map((position, index) => (
       <PositionsCard
         key={position.id || index}
         position={position}
@@ -226,6 +303,8 @@ function CandidatePositionsContent() {
         showEditAction={false}
         showApproveRejectActions={false}
         showTracker={false}
+        isFavorited={favoritePositionIds.includes(position.id)}
+        onFavoriteToggle={handleFavoriteChange}
       />
     ));
   };

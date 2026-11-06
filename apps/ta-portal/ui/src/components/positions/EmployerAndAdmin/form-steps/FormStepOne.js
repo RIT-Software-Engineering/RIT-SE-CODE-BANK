@@ -155,7 +155,17 @@ export default function FormStepOne({
           type="number"
           id="semesterCode"
           label="Semester Code"
-          {...register("semesterCode", { required: "Semester Code is required." })}
+          //prevents user from entering non numeric number characrters
+          onKeyDown={(e) => {
+            if (["e", "E", "-", "+", "."].includes(e.key)) {
+              e.preventDefault();
+            }
+          }}
+          {...register("semesterCode", { 
+            required: "Semester Code is required.",
+            minLength: { value: 4, message: "Semester code must be at least 4 characters long (ex. 2261)." },
+            maxLength: { value: 4, message: "Semester code must be a maximum of 4 characters long (ex. 2261)." } 
+          })}
           error={!!errors.semesterCode}
           helperText={errors.semesterCode?.message}
           sx={(theme) => ({
