@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "npx dotenv -e ./../.env -- node --watch server.js",
-    "start-cmt": "npx dotenv -e ./../.env -- npx prisma db push && npx dotenv -e ./../.env -- node prisma/seed.js && npm run start",
+    "start-cmt": "npx dotenv -e ./../.env -- npx prisma migrate deploy && npx dotenv -e ./../.env -- node prisma/seed.js && npm run start",
     "lint": "eslint . || true"
   },
   "dependencies": {
