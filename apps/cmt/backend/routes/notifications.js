@@ -188,7 +188,10 @@ router.post('/preview', async (req, res) => {
     res.json({success: true, ...result});
 })
 
-// PUT /api/notifications/preferences/:appId/:identifier
+/**
+ * PUT /api/cmt/notifications/preferences/:appId/:identifier
+ * Update notification preferences for a specific user and app
+ */
 router.put('/preferences/:appId/:identifier', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;
@@ -222,7 +225,10 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
     }
 });
 
-// GET /api/notifications/preferences/:appId/:identifier/slack-status
+/**
+ * GET /api/cmt/notifications/preferences/:appId/:identifier/slack-status
+ * Check the Slack status for a specific user and app
+ */
 router.get('/preferences/:appId/:identifier/slack-status', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;
