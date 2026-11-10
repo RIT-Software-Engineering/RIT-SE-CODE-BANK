@@ -1,8 +1,0 @@
-name: workflows
-
-services:
-  workflows-backend:
-    build:
-      context: ../../..
-      dockerfile: ./apps/workflow/server/Dockerfile
-    image: workflows-backend:${TAG:-latest}

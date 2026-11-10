@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `Application` MODIFY `status` VARCHAR(191) NOT NULL DEFAULT 'PENDING';
