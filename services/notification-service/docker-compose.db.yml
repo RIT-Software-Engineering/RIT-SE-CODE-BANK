@@ -6,6 +6,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: newPassword
       MYSQL_DATABASE: rit_notifications
+      MYSQL_USER: rit
+      MYSQL_PASSWORD: ritpass
     ports:
       - '3307:3306'
     volumes:

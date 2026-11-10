@@ -42,7 +42,8 @@ export function BuilderPageAdmin({isAdmin}){
     ["COURSE_DAYS", "Course Days"],
     ["COURSE_START_DATE", "Start Date"],
     ["COURSE_HOLIDAYS", "Course Holidays"],
-    ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"]];
+    ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"],
+    ["START_COURSE", "Start Course"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -148,6 +149,7 @@ export function BuilderPageAdmin({isAdmin}){
                         case "COURSE_DAYS":
                             setValidation(Object.values(validation)[0])
                             break;
+                        case "START_COURSE":
                         default:
                             break;
                     }
@@ -216,6 +218,7 @@ export function BuilderPageAdmin({isAdmin}){
             <Form.Select onChange={e=>setMetaWorkflow(e.target.value)} value={metaWorkflow}>
                 <option>None</option>
                 <option>Course Creation Workflow</option>
+                <option>Course Execution Workflow</option>
             </Form.Select>
             </> : <></>}
 
@@ -448,7 +451,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             : <></>}
             </>
             break;
-
+        case "START_COURSE":
         default:
             returnOutput = <></>
     }
@@ -625,7 +628,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 }
             }
             break;
-
+        case "START_COURSE":
         default:
             // We set output to null in case we get something we don't know how to deal with.
             output=null;
