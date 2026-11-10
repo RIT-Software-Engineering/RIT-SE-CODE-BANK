@@ -1,0 +1,40 @@
+name: cmt
+
+services:
+  mariadb:
+    image: mariadb:latest
+    env_file:
+      - ./.env
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    restart: unless-stopped
+
+  backend:
+    image: backend:${TAG:-latest}
+    ports:
+      - ${BACK_HOST_PORT}:${BACK_CONTAINER_PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    image: frontend:${TAG:-latest}
+    ports:
+      - ${FRONT_HOST_PORT}:${FRONT_CONTAINER_PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mariadb_data:

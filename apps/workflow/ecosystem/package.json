@@ -1,0 +1,26 @@
+{
+  "name": "@se-code-bank/workflows-ecosystem",
+  "description": "Build, Contextualize, and Render your Workflows.",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": {
+      "default": "./src/index.js",
+      "types": "./src/index.d.ts"
+    },
+    "./components": {
+      "default": "./src/react.js",
+      "types": "./src/react.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "react": "19.1.1"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "esbuild": "^0.25.0",
+    "typescript": "^6.0.2"
+  },
+  "author": "Scott Happy (Contexts, Components) and Ayden Dazo (Builder)",
+  "license": "ISC"
+}

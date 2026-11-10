@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+  output = "./generated/client" // Prevent prisma from placing client at root level
+} 
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Professor {
+  id              String              @id @default(uuid()) // String for compatibility with Workflows API
+  fname           String
+  lname           String
+  email           String
+  courses         Course[]
+  tbteamset       TBTeamSet[]
+
+  @@map("professors")
+}
+
+model Course {
+  id              Int            @id @default(autoincrement())
+  name            String
+  season          String?
+  year            Int?
+  classId         String
+  color           String
+  students        Int?
+  section         String?
+  days            String?
+  startDate       String?
+  holidays        Holiday[]
+  active          Boolean        @default(true)
+  professorId     String
+  professors      Professor      @relation(fields: [professorId], references: [id])
+  sessions        Session[]
+  tbenrollment    TBEnrollment[]
+  tbteamset       TBTeamSet[]
+  workflowId      String
+  workflowStateId String
+  syllabusName        String?       // The actual syllabus is found in resources
+  Resource        Resource[]
+  isTemplate      Boolean       @default(false)
+}
+
+model Session {
+  id          Int        @id @default(autoincrement())
+  sessionNum  Int
+  courseId    Int
+  completed   Boolean    @default(false)  // TODO Needs to be added for workflow actions too
+  canceled    Boolean    @default(false)
+  canceledAt  DateTime?
+  asid        String?                     // TODO add workflow actions here
+  date        String?
+  course      Course  @relation(fields: [courseId], references: [id])
+  material    SessionMaterial[]
+  blocks      SessionBlock[]
+}
+
+model SessionMaterial {
+  id          Int        @id @default(autoincrement())
+  type        String
+  label       String    @db.Text
+  body        String?   @db.Text
+  active      Boolean   @default(true)
+  sessionId   Int
+  sessionNum  Int
+  blockId     Int?
+  session     Session @relation(fields: [sessionId], references: [id])
+  block       SessionBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+}
+
+model SessionBlock {
+  id        Int                @id @default(autoincrement())
+  name      String
+  status    session_block_status @default(NOT_STARTED)
+  position  Int                @default(0)
+  sessionId Int
+  session   Session            @relation(fields: [sessionId], references: [id])
+  material  SessionMaterial[]
+
+  @@index([sessionId, position])
+}
+
+model TBEnrollment {
+  id        Int        @id @default(autoincrement())
+  courseId  Int
+  studentId String?
+  email     String?
+  firstName String?
+  lastName  String?
+  createdAt DateTime   @default(now())
+  course    Course     @relation(fields: [courseId], references: [id])
+  members   TBMember[]
+
+  @@unique([courseId, email])
+  @@unique([courseId, studentId])
+  @@index([courseId])
+}
+
+model TBMember {
+  id           Int          @id @default(autoincrement())
+  teamId       Int
+  enrollmentId Int
+  role         String?
+  createdAt    DateTime     @default(now())
+  enrollment   TBEnrollment @relation(fields: [enrollmentId], references: [id])
+  tbteam       TBTeam       @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, enrollmentId])
+  @@index([enrollmentId])
+}
+
+model TBTeam {
+  id        Int       @id @default(autoincrement())
+  teamSetId Int
+  name      String
+  maxSize   Int?
+  createdAt DateTime  @default(now())
+  members   TBMember[]
+  teamSet   TBTeamSet @relation(fields: [teamSetId], references: [id])
+
+  @@unique([teamSetId, name])
+}
+
+model TBTeamSet {
+  id                   Int              @id @default(autoincrement())
+  courseId             Int
+  name                 String
+  status               tbteamset_status @default(DRAFT)
+  teamSize             Int?
+  constraints          String?          @db.LongText
+  publishedAt          DateTime?
+  createdByProfessorId String
+  createdAt            DateTime         @default(now())
+  teams                TBTeam[]
+  course               Course           @relation(fields: [courseId], references: [id])
+  professors           Professor        @relation(fields: [createdByProfessorId], references: [id])
+
+  @@unique([courseId, name])
+  @@index([courseId, status])
+  @@index([createdByProfessorId])
+}
+
+model Resource {
+  id        String      @id @default(uuid()) @db.Char(36)
+  name      String
+  filename  String
+  mimeType  String
+  filePath  String
+  courseId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isSyllabus Boolean @default(false)
+  course    Course   @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("resources")
+}
+
+// store holidays
+model Holiday {
+  id       Int       @id @default(autoincrement())
+  name     String
+  date     DateTime
+  endDate  DateTime?
+  courseId Int
+  course   Course    @relation(fields: [courseId], references: [id])
+
+  @@index([courseId])
+  @@map("holidays")
+}
+
+enum tbteamset_status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum session_block_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}

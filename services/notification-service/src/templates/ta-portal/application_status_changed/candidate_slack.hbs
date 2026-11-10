@@ -1,0 +1,26 @@
+🟧 *Application Update*  
+Hi *{{#if recipient.name}}{{recipient.name}}{{else}}Candidate{{/if}}*,
+
+{{#if flags.applied}}
+We've received your application for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+{{else if flags.hired}}
+🎉 Congratulations! You've been *HIRED* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_!
+{{else if flags.acceptedOffer}}
+Thanks for confirming. Your offer acceptance for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_ has been recorded.
+{{else}}
+Your application for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_ is now at status *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}*.
+{{/if}}
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
+
+{{#if item.ownerName}}
+Instructor: *{{item.ownerName}}*
+{{/if}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Open in Portal>
+{{/if}}
+
+Thank you for being part of the RIT Software Engineering program!

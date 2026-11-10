@@ -1,0 +1,21 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noEmit": false,
+    "noEmitOnError": false,
+    "checkJs": false,
+    "rootDir": "./src",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "declarationDir": "./dist"
+  },
+  "exclude": [
+    "node_modules",
+    "src/backend/node_modules",
+    "src/components/examples/**/*",
+    "test/**/*"
+  ]
+}

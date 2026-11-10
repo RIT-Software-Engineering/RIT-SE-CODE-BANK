@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "allowJs": true, // I think this allows Typescript to parse Javascript. This should probably be on.
+    "checkJs": true, // This is what makes Typescript get angry at you. If turning this on makes your project explode with errors, you can turn it off.
+
+    // These things may need to be messed around with, depending on which type of Javascript your project is using. The two options I think are CommonJS and ES Modules, but StackOverflow has all the answers.
+    "target": "ES2020",
+    "module": "esnext",
+    "moduleResolution": "bundler", // bundler might be super important
+
+    // Preference
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+    "noUncheckedIndexedAccess": false,
+    "exactOptionalPropertyTypes": false,
+    "useUnknownInCatchVariables": false,
+    "strict": false,
+    "strictFunctionTypes": false,
+    
+    // Not likely to need changing
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "src/backend/node_modules",
+    "src/components/examples/**/*",
+    "test/**/*"
+  ]
+}

@@ -1,0 +1,14 @@
+name: cmt
+
+services:
+  frontend:
+    build:
+      context: ../..
+      dockerfile: apps/cmt/frontend/Dockerfile
+    image: frontend:${TAG:-latest}
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: apps/cmt/backend/Dockerfile
+    image: backend:${TAG:-latest}

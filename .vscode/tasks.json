@@ -1,0 +1,50 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // Repository-level
+    {
+        "label": "Install Repository Dependencies",
+        "command": "npm i",
+        "type": "shell",
+        "presentation": {
+            "panel": "dedicated"
+        }
+    },
+    // CMT
+    {
+      "label": "Start CMT Frontend",
+      "command": "npm run start --workspace cmt-frontend",
+      "type": "shell",
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Start CMT Backend",
+      "command": "npm run start-cmt --workspace cmt-backend",
+      "type": "shell",
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+    {
+        "label": "_start-cmt-do-not-run",
+        "dependsOn": ["Start CMT Frontend", "Start CMT Backend", "Start Workflows"],
+        "dependsOrder": "parallel"
+    },
+    {
+        "label": "Start CMT",
+        "dependsOn": ["Install Repository Dependencies", "_start-cmt-do-not-run"],
+        "dependsOrder": "sequence"
+    },
+    // Workflows
+    {
+      "label": "Start Workflows",
+      "command": "npm run start-cmt --workspace workflows-server",
+      "type": "shell",
+      "presentation": {
+        "panel": "dedicated"
+      }
+    },
+  ]
+}

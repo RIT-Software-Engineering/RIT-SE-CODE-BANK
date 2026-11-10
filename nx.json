@@ -1,0 +1,12 @@
+{
+  "targetDefaults": {
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "cache": true
+    },
+    "lint": { "cache": true }
+  },
+  "analytics": true
+}

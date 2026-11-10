@@ -1,0 +1,20 @@
+{
+    "targets": {
+        "deploy": {
+            "dependsOn": ["build"],
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    "chmod +x ./scripts/deploy/deploy-workflows.sh",
+                    "./scripts/deploy/deploy-workflows.sh"
+                ]
+            }
+        },
+        "deploy-test": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "echo would deploy workflows here"
+            }
+        }
+    }
+}

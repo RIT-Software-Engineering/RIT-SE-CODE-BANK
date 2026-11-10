@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  smtp4dev:
+    image: rnwood/smtp4dev
+    ports:
+      - "3005:80"
+      - "2525:25"
+  notify:
+  # Previously was "./notification-service" but when running it would try to run "notification-service/notification-service"
+    build: .
+    environment:
+      - SMTP_HOST=smtp4dev
+      - SMTP_PORT=25
+      - SMTP_FROM=se_svc_apps@rit.edu
+      - PORT=4000
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN}
+    ports:
+      - "4000:4000"
+    depends_on:
+      - smtp4dev

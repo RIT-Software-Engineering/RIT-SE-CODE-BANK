@@ -1,0 +1,3 @@
+This package lets the front and backend share code without needing to copy paste it. Because of npm workspaces (Check the Google Drive for more info on those), as long as you run `npm install` at the root of the repository, the code here should be imported just fine.
+
+If you would like to add dependencies to this package, be careful. If any JSX or some other piece of syntax that needs to be transpiled gets introduced, it will break the frontend because babel won't know to transpile it. If we were using Next.js or Vite or ANYTHING ELSE other than CREATE REACT APP, this would not be a problem.

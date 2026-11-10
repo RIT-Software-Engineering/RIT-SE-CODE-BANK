@@ -1,0 +1,25 @@
+🟧 *Application Update*  
+
+{{#if flags.hired}}
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* has been *HIRED* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+{{else if flags.acceptedOffer}}
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* has *ACCEPTED* the offer for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+{{else if flags.applied}}
+New application submitted by *{{#if item.candidateName}}{{item.candidateName}}{{else}}a candidate{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+{{else}}
+Candidate *{{#if item.candidateName}}{{item.candidateName}}{{else}}(candidate){{/if}}* moved to *{{#if status.new}}{{status.new}}{{else}}Updated{{/if}}* for _{{#if item.title}}{{item.title}}{{else}}the position{{/if}}_.
+{{/if}}
+
+{{#if comment}}
+_Note_: {{comment}}
+{{/if}}
+
+{{#if item.ownerName}}
+Instructor: *{{item.ownerName}}*
+{{/if}}
+
+{{#if cta.url}}
+👉 <{{{cta.url}}}|Open in Portal>
+{{/if}}
+
+_Keep your candidate statuses current in the SE Portal to ensure smooth onboarding._
