@@ -26,8 +26,7 @@ replay_pid*
 # vs code individual workspace settings
 .env
 *.code-workspace
-.vscode/*
-!.vscode/tasks.json
+*.vscode
 
 # editor 
 *.nvim.lua
@@ -46,7 +45,3 @@ replay_pid*
 *.node_modules
 node_modules/
 .vite
-
-# nx
-.nx/cache
-.nx/workspace-data
