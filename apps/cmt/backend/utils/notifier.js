@@ -99,7 +99,7 @@ export async function scheduleHolidayReminders(course){
                 date: holiday.date.toISOString().split('T')[0],
                 endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
             },
-            recipients: ['student@rit.edu'], // TODO: replace with proper class list when we get students in the future
+            recipients: ['student@rit.edu', 'student2@rit.edu'], // TODO: replace with proper class list when we get students in the future
             sendAt: getReminderDate(holiday)
         })
     }
@@ -146,7 +146,7 @@ export async function notifyOfHoliday(user, holiday, event, course, when=null){
         date: holiday.date.toISOString().split('T')[0],
         endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null  
     }
-    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, course, {
         event, triggerId: holiday.id, context, recipients
@@ -161,7 +161,7 @@ export async function notifyOfCancellation(user, session, when=null){
         courseName: courseName,
         date: session.date ?? null
     }
-    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, session.course, {
         event: 'class_cancelled', triggerId: session.id, context, recipients
@@ -179,7 +179,7 @@ export async function notifyOfMovedBlock(user, block, from, to, course, when=nul
         to: to.sessionNum,
         toDate: to.date,
     }
-    const recipients = ['student@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, course, {
         event: 'content_moved', triggerId: block.id, context, recipients
@@ -235,28 +235,56 @@ export async function deliverNotification(notif, userId, course){
         ? {...notif.context, note: notif.note} : notif.note 
         ? {note: notif.note} : undefined;
 
-    let sent = 0, skipped = 0, failed = 0;
+    function toRecipient(entry, userId){
+        const recipient = typeof entry === 'string' ? {email: entry} : entry;
+        return {...recipient, uid: recipient.uid ?? recipient.email?.split('@')[0] ?? userId};
+    }
 
     for (const entry of notif.recipients){
-        const recipient = typeof entry === 'string' ? {email: entry} : entry;
+        const recipient = toRecipient(entry, userId);
+        const delivery = await prisma.notificationRecipient.upsert({
+            where: {notificationId_userId: {notificationId: notif.id, userId: recipient.uid}},
+            create: {notificationId: notif.id, userId: recipient.uid, role: 'student'},
+            update: {},
+        });
+
+        if (delivery.status === 'SENT' || delivery.status === 'CANCELLED') continue;
+
         try{
-            await dispatchTemplated(recipient.uid ?? userId, {
+            await dispatchTemplated(recipient.uid, {
                 event: notif.event,
                 context, 
                 role: 'student',
                 subject: notif.context.subject,
                 userEmail: recipient.email
             });
-            sent++;
         } catch(error){
-            if (error.status === 422){
-                skipped++;
-            } else{
+            // student opted out
+            const optedOut = error.status == 422;
+            if (!optedOut){
                 console.error('Failed to send notification:', error.message, error.cause);
-                failed++;
             }
+            await prisma.notificationRecipient.update({
+                where: {id: delivery.id}, 
+                data: {status: optedOut ? 'CANCELLED' : 'FAILED', lastError: optedOut ? null : error.message}
+            });
+            continue;
         }
+
+        await prisma.notificationRecipient.update({
+            where: {id: delivery.id}, 
+            data: {status: 'SENT', sentAt: new Date(), lastError: null}
+        });
     }
+
+    const deliveries = await prisma.notificationRecipient.findMany({
+        where: {notificationId: notif.id},
+        select: {status: true}
+    });
+    const count = (state) => deliveries.filter(delivery => delivery.status === state).length;
+    const failed = count('FAILED');
+    const sent = count('SENT');
+    const skipped = count('CANCELLED');
 
     const status = failed > 0 ? 'FAILED' : 'SENT';
 
