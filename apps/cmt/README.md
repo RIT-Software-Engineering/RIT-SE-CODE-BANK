@@ -65,7 +65,7 @@ Tips for usage:
 
 > If you don't use VSCode, this may not work. I suggest looking into if your IDE has a similar feature, otherwise, you can either vibe code a script to do it generically, or do the manual option.
 
-> If you are getting weird issues, try the reset all data command, in the cmt package.json
+> If you are getting weird issues, try the force-reset-data command, in the cmt package.json
 
 #### 2. (Option 2): Manual
 
@@ -104,13 +104,13 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 ## Keeping Everything in Sync
 As you make changes to the codebase, your development server should detect the changes and restart automatically.
 
-But, **when you make changes to the schema, those will not be automatically reflected**. To update the schema and database, you can re-run the `Start CMT` task, or use prisma commands yourself.
+When you make changes to the schema, run `npx prisma migrate dev --name <what-changed>` to create a migration, then commit the new migration folder.
 
-There is a reset-all-data command in the cmt package.json. Running this can be helpful if your database ever gets into a weird state and you're fine with data loss.
+There is a force-reset-data command in the cmt package.json. Running this can be helpful if your database ever gets into a weird state and you're fine with data loss.
 
-> You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. If you're okay with the warnings, say yes to the prompts.
+> You will likely be prompted with warnings about risky schema changes. In a lot of cases, data will have to be wiped. It's fine to say yes on local throwaway databases, but never on a shared one.
 
-> **Important warning about data**: Likely, you are being handed a version of the project that doesn't have any migrations. We've avoided migrations because we haven't ever needed to store user data across schema changes. In the near future, this may need to be done. Look at the documentation for Prisma migrations to find out more about keeping user data safe across schema changes. Look at other projects, if you'd like examples
+> **Important warning about data**: Never use `db push` on a database that has migrations. It syncs the schema without generating a migration file, which causes schema drift.
 
 ---
 

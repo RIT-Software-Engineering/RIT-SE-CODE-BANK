@@ -6,12 +6,14 @@ on:
       - main
       - dev
       - '*-dev'
+      - '*-dev2'
       - '*-cicd-testing'
   pull_request:
     branches:
       - main
       - dev
       - '*-dev'
+      - '*-dev2'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
