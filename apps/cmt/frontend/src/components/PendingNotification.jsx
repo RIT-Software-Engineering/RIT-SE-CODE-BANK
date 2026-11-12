@@ -8,7 +8,7 @@ export function notifyListChanged(){
     window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
 }
 
-function formatTime(sendAt){
+export function formatTime(sendAt){
     return new Date(sendAt).toLocaleString([], {
         month: 'short', day: 'numeric', year: 'numeric',
         hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
