@@ -17,13 +17,23 @@ export default function ShibbLoginPage() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const cookieUser = getUserFromCookie();
+        var cookieUser = getUserFromCookie();
+        console.log(cookieUser);
 
         if (!cookieUser?.id) {
-          window.location.href = `${AUTH_BASE}/login?returnTo=${encodeURIComponent(
-            "https://apps.se.rit.edu/cmt/"
-          )}`;
-          return;
+          const authRes = await fetch(
+            `${AUTH_BASE}/me`,
+            {
+              credentials: "include"
+            }
+          );
+
+          if (!authRes.ok) {
+            return;
+          }
+
+          const authData = await authRes.json();
+          cookieUser = authData.user;
         }
 
         const dbRes = await fetch(

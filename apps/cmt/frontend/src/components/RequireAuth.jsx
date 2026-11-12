@@ -24,7 +24,7 @@ export default function RequireAuth({ children, roles }) {
   }
 
   if (!user) {
-    return <LoginWrapper loginMode="" />;
+    return <LoginWrapper loginMode={process.env.NODE_ENV === "development" ? "development" : "shibb"}/>;
   }
 
   // User exists → render protected content
