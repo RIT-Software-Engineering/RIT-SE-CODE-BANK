@@ -67,7 +67,7 @@ router.post('/course/:courseId', async (req, res) => {
     const result = await requireCourse(req, res);
     if (!result) return;
     const { course, user } = result;
-
+    const {dueAt} = req.body ?? {};
     const { text } = typeof req.body?.text === 'string' ? { text: req.body.text.trim() } : { text: '' };
 
     if (!text) {
@@ -77,7 +77,12 @@ router.post('/course/:courseId', async (req, res) => {
         return res.status(400).json({error: "Text for note is too long"});
     }
 
-    const note = await createNote(course, user.uid, text);
+    const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
+    if (dueAt != null && !dateFormat.test(dueAt)) {
+        return res.status(400).json({error: "Invalid due date format"});
+    }
+
+    const note = await createNote(course, user.uid, text, dueAt ?? null);
 
     res.status(201).json({note});
 });

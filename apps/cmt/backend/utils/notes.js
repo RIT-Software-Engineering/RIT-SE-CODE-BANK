@@ -27,16 +27,17 @@ function toNote(child){
         text: child.action?.description ?? '',
         status: status,
         createdAt: metaOf(child, "createdAt"),
-        lastUpdatedAt: metaOf(child, "updatedAt")
+        lastUpdatedAt: metaOf(child, "updatedAt"),
+        dueAt: metaOf(child, "dueAt"),
     }
 }
 
-export async function createNote(course, userId, text){
+export async function createNote(course, userId, text, dueAt=null){
     const created = await createAction(
         userId, "Note to Self", text, 'simple',
         {code: NOTE_CODE, ownerId: userId, courseId: course.id,
             createdAt: new Date().toISOString(), 
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(), dueAt
         }, null);
 
     try{
