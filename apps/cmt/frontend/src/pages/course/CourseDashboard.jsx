@@ -8,6 +8,7 @@ import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx'
+import { NotesPanel } from '../../components/NotesPanel.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -131,6 +132,7 @@ export function CourseDashboard() {
                     </div>
                 </>
             }
+            {!course?.isTemplate && execState != null && <NotesPanel courseId={course.id} />}
         </>
     )
 }
