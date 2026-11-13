@@ -7,6 +7,7 @@ import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 import { scheduleHolidayReminders } from '../utils/notifier.js'
 import { findStartChild, isStarted } from '../utils/courseExecution.js'
+import { isNoteAction } from '../utils/notes.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -98,7 +99,7 @@ router.get('/:id', async (req, res) => {
         ])
         execState = execWorkflowState.baseActionState.stateType
         started = isStarted(execWorkflowState)
-        execActionsWithContexts = execActions.map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
+        execActionsWithContexts = execActions.filter(action => !isNoteAction(action)).map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
     }
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
