@@ -1,8 +1,9 @@
 import express from 'express'
 import { PrismaClient } from '../prisma/generated/client/index.js';
-import { createNote, listNotes, setNoteStatus } from '../utils/notes.js';
+import { createNote, editNote, listNotes, setNoteStatus } from '../utils/notes.js';
 
 const MAX_NOTE_LENGTH = 2000;
+const DUE_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
 
 const router = express.Router();
 export default router;
@@ -77,8 +78,7 @@ router.post('/course/:courseId', async (req, res) => {
         return res.status(400).json({error: "Text for note is too long"});
     }
 
-    const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;
-    if (dueAt != null && !dateFormat.test(dueAt)) {
+    if (dueAt != null && !DUE_DATE_PATTERN.test(dueAt)) {
         return res.status(400).json({error: "Invalid due date format"});
     }
 
@@ -109,3 +109,33 @@ router.patch('/course/:courseId/:stateId', async (req, res) => {
     }
     res.json({ note });
 })
+
+/**
+ * PUT api/cmt/course/:courseId/:stateId
+ * Update the text and/or due date of a note for a course
+ */
+router.put('/course/:courseId/:stateId', async (req, res) => {
+    const result = await requireCourse(req, res);
+    if (!result) return;
+    const { course, user } = result;
+    const { text, dueAt } = req.body ?? {};
+
+    if (text === undefined && dueAt === undefined) {
+        return res.status(400).json({error: "Nothing to update"});
+    }
+
+    let cleanText;
+    if (text !== undefined) {
+        cleanText = typeof text === 'string' ? text.trim() : '';
+        if (!cleanText) return res.status(400).json({error: "Missing text for note"});
+        if (cleanText.length > MAX_NOTE_LENGTH) return res.status(400).json({error: "Text for note is too long"});
+    }
+    
+    if (dueAt != null && !DUE_DATE_PATTERN.test(dueAt)) {
+        return res.status(400).json({error: "Invalid due date format"});
+    }
+
+    const note = await editNote(course.execWorkflowStateId, user.uid, req.params.stateId, {text: cleanText, dueAt});
+    if (!note) return res.status(404).json({error: "Note not found"});
+    res.json({ note });
+});

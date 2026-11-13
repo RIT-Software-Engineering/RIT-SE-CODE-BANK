@@ -1,5 +1,5 @@
 import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
-import { createAction } from "./workflows/api.js";
+import { createAction, makeMetadataSafeForWorkflows } from "./workflows/api.js";
 
 export const NOTE_CODE = 'NOTE_TO_SELF';
 const NOTE_STATE_TO_STATUS = {open: 'notStarted', done: 'completed', archived: 'hidden'};
@@ -59,6 +59,28 @@ export async function createNote(course, userId, text, dueAt=null){
         await workflowsFetch('DELETE', `actions/${created.id}`).catch(() => {});
         throw error;
     }
+}
+
+export async function editNote(execStateId, userId, stateId, {text, dueAt}){
+    const state = await workflowsFetch('GET', `states/workflow/${execStateId}`);
+    const child = state?.baseActionState?.children?.find(child => child.id === stateId);
+    if (!child || metaOf(child, 'code') !== NOTE_CODE || metaOf(child, 'ownerId') !== userId) return null;
+
+    const metadata = Object.fromEntries(child.action.metadata.map(row => [row.key, JSON.parse(row.value)]));
+    metadata.updatedAt = new Date().toISOString();
+    if (dueAt !== undefined) metadata.dueAt = dueAt;
+
+    await workflowsFetch('PUT', `actions/${child.actionId}`, {
+        ...(text !== undefined ? {description: text} : {}),
+        metadata: makeMetadataSafeForWorkflows(metadata),
+    });
+
+    return {
+        ...toNote(child),
+        text: text ?? child.action.description,
+        dueAt: metadata.dueAt ?? null,
+        lastUpdatedAt: metadata.updatedAt,
+    };
 }
 
 export async function listNotes(execStateId, userId, includeArchived=false){

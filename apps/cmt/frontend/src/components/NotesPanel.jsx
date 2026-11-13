@@ -19,7 +19,10 @@ export function NotesPanel({ courseId }) {
     const [busy, setBusy] = useState(false)
     const [dueAt, setDueAt] = useState('');
     const [, setSeconds] = useState(0);
-    const [tab, setTab] = useState('notes')
+    const [tab, setTab] = useState('notes');
+    const [editingId, setEditingId] = useState(null);
+    const [draftText, setDraftText] = useState('');
+    const [draftDue, setDraftDue] = useState('');
 
     useEffect(() => {
         const timer = setInterval(() => setSeconds(prevSec => prevSec + 1), 60000);
@@ -56,6 +59,26 @@ export function NotesPanel({ courseId }) {
             await load()
         } catch {
             setError('Could not update the note.')
+        }
+    }
+
+    function startEdit(note) {
+        setEditingId(note.id)
+        setDraftText(note.text)
+        setDraftDue(note.dueAt ?? '')
+    }
+
+    async function saveEdit(note) {
+        if (!draftText.trim() || (isReminders && !draftDue)) return
+        try {
+            await CMTJsonFetch('PUT', `notes/course/${courseId}/${note.id}`, {
+                text: draftText,
+                ...(isReminders ? { dueAt: draftDue } : {}),
+            })
+            setEditingId(null)
+            await load()
+        } catch {
+            setError('Could not save your changes.')
         }
     }
 
@@ -125,22 +148,36 @@ export function NotesPanel({ courseId }) {
                                 onChange={() => setStatus(note, note.status === 'done' ? 'open' : 'done')}
                                 aria-label="Mark done"
                             />
-                            <span className={`flex-1 whitespace-pre-wrap break-words ${note.status !== 'open' ? 'text-gray-500' : ''} ${note.status === 'done' ? 'line-through' : ''}`}>
-                                {note.text}
-                            </span>
+                            {editingId === note.id ? (
+                                <div className="flex-1">
+                                    <textarea className="mb-1 w-full rounded border p-1" rows={3} maxLength={2000}
+                                        value={draftText} onChange={e => setDraftText(e.target.value)} />
+                                    {isReminders && (
+                                        <input type="datetime-local" required className="mb-1 w-full rounded border p-1"
+                                            value={draftDue} onChange={e => setDraftDue(e.target.value)} />
+                                    )}
+                                    <Button size="sm" onClick={() => saveEdit(note)}>Save</Button>{' '}
+                                    <Button size="sm" variant="secondary" onClick={() => setEditingId(null)}>Cancel</Button>
+                                </div>
+                            ) : (
+                                <span className={`flex-1 whitespace-pre-wrap break-words ${note.status !== 'open' ? 'text-gray-500' : ''} ${note.status === 'done' ? 'line-through' : ''}`}>
+                                    {note.text}
+                                </span>
+                            )}
                             {note.dueAt && (
                                 <div className={`text-sm ${isDue(note) ? 'font-semibold text-red-600' : 'text-gray-500'}`}>
                                     Due: {formatDue(note.dueAt)}
                                 </div>
                             )}
                         </div>
+
                         <div className="mt-1 text-right">
-                            <button
-                                className="text-sm underline"
-                                onClick={() => setStatus(note, note.status === 'archived' ? 'open' : 'archived')}
-                            >
+                            <button className="text-sm underline" onClick={() => setStatus(note, note.status === 'archived' ? 'open' : 'archived')}>
                                 {note.status === 'archived' ? 'Restore' : 'Archive'}
                             </button>
+                            {note.status !== 'archived' && editingId !== note.id && (
+                                <button className="mr-3 text-sm underline" onClick={() => startEdit(note)}>Edit</button>
+                            )}
                         </div>
                     </li>
                 ))}
