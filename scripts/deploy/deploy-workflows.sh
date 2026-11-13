@@ -5,10 +5,10 @@ echo "Deploying Workflows to apps-staging.se.rit.edu..."
 
 # Configuration
 VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
-VM_USER="${CMT_DEPLOY_USER:-fjg5149}"
+VM_USER="${CMT_DEPLOY_USER:-kag8074}"
 
 # Get the branch name from GitHub Actions environment
-DEPLOY_BRANCH="${GITHUB_REF_NAME:-dev}"
+DEPLOY_BRANCH="cmt-dev2"
 # SSH and deploy
 
 ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
