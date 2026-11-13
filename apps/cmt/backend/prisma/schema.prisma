@@ -183,6 +183,7 @@ model Notification {
   context       Json        // details of the thing the notification is about - shape depends on templates. 
   note          String?     // aditional information, optional
   recipients    Json        // Json array of emails
+  deliveries    NotificationRecipient[]
   status        notification_status @default(SCHEDULED)
   sendAt        DateTime    
   createdAt     DateTime    @default(now())
@@ -190,8 +191,25 @@ model Notification {
   @@index([courseId])
 }
 
+model NotificationRecipient {
+  id              Int                 @id @default(autoincrement())  
+  notificationId  Int
+  userId          String 
+  role            String              @default("student")
+  status          notification_status @default(SCHEDULED)          
+  sentAt          DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  lastError       String?
+  notification    Notification        @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@unique([notificationId, userId])
+  @@index([userId])
+}
+
 enum notification_status {
   SCHEDULED
+  PROCESSING
   SENT 
   FAILED 
   CANCELLED

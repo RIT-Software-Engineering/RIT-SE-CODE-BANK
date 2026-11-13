@@ -1,9 +1,16 @@
 import express from 'express';
+import {PrismaClient} from '../prisma/generated/client/index.js'
 import * as notificationClient from '../utils/notifications.js';
-import {addNotification, sendDueNotifications } from '../utils/notifier.js';
+import {deleteNotification, previewNotifications, retryNotification,sendDueNotifications } from '../utils/notifier.js';
+import { campusInstant } from '../utils/courseClock.js';
 
 // server/routing/notifications_api.js
 const router = express.Router();
+
+const prisma = new PrismaClient();
+
+const END_OF_LAST_HOUR_MS = (59 * 60 + 59) * 1000 + 999;
+const HOUR_BEFORE_MIDNIGHT = 23;
 
 // Require that a user is logged in (authMiddleware should set req.user)
 function requireUser(req, res) {
@@ -14,39 +21,50 @@ function requireUser(req, res) {
     return req.user;
 }
 
-/**
- * POST /api/cmt/notifications/notify
- */
-router.post('/notify', async (req, res) => {
-    const user = requireUser(req, res);
-    const {courseId, details} = req.body;
+// Require that the course belongs to the user
+async function requireCourse(req, res, courseId){
+    const id = parseInt(courseId);
 
-    if (!user) return null;
-    if (!courseId || !details) {
-        return res.status(400).json({error: 'Missing required fields'});
+    const course = await prisma.course.findUnique({where: {id}});
+
+    if (!course){
+        res.status(404).json({success: false, error: "Course not found"});
+        return null;
     }
-    await addNotification(courseId, details);
-    await sendDueNotifications(user.uid, courseId);
 
-    res.json({success: true});
-});
+    if (course.professorId !== req.user.uid){
+        res.status(403).json({success: false, error: "Unauthorized access"});
+        return null;
+    }
+    return course;
+}
 
 /**
  * POST /api/cmt/notifications/send-due
- * Call this to check for and send due notifications
+ * Check for and send due notifications
  */
 router.post('/send-due', async (req, res) => {
     const user = requireUser(req, res);
     const {courseId} = req.body;
     if (!user) return null;
 
-    await sendDueNotifications(user.uid, courseId);
+    if (!courseId) {
+        return res.status(400).json({error: 'Missing courseId'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+
+    const result = await sendDueNotifications(user.uid, courseId);
     res.json({
-        success: true
+        success: true, result
     });
 });
 
-// GET /api/notifications/preferences/:appId/:identifier
+/**
+ * GET /api/notifications/preferences/:appId/:identifier
+ * Get notification preferences for a specific user and app
+ */
 router.get('/preferences/:appId/:identifier', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;
@@ -71,7 +89,109 @@ router.get('/preferences/:appId/:identifier', async (req, res) => {
     }
 });
 
-// PUT /api/notifications/preferences/:appId/:identifier
+/**
+ * GET /api/cmt/notifications/course/:courseId/pending
+ * Get a list of scheduled or failed notifications for a specific course
+ */
+router.get('/course/:courseId/pending', async (req, res) => {
+    const user = requireUser(req, res);
+    if (!user) return null;
+    const {courseId} = req.params;
+    if (!courseId){
+        return res.status(400).json({error: 'Missing courseId'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+
+    const pending = await prisma.notification.findMany({
+        where: {courseId: course.id, status: {in: ['SCHEDULED', 'FAILED']}},
+        orderBy: {sendAt: 'asc'},
+        select: {id: true, event: true, context: true, sendAt: true, status: true}
+    });
+
+    res.json({success: true, pending});
+});
+
+/**
+ * POST /api/cmt/notifications/:id/cancel
+ * Cancel a scheduled notification
+ */
+router.post('/:id/cancel', async (req, res) => {
+    const user = requireUser(req, res);
+    const {id} = req.params;
+    if (!user) return null;
+
+    const row = await prisma.notification.findUnique({
+        where: {id: parseInt(id)}
+    });
+    if (!row) return res.status(404).json({
+        success: false, error: 'Notification not found'
+    });
+
+    const course = await requireCourse(req, res, row.courseId);
+    if (!course) return null;
+
+    const cancelled = await deleteNotification(row.id);
+    res.json({success: cancelled});
+})
+
+/**
+ * POST /api/cmt/notifications/:id/retry
+ * Retry sending a failed notification
+ */
+router.post('/:id/retry', async (req, res) => {
+    const user = requireUser(req, res);
+    const {id} = req.params;
+    if (!user) return null;
+
+    const notif = await prisma.notification.findUnique({
+        where: {id: parseInt(id)}
+    });
+    if (!notif) return res.status(404).json({success: false, error: 'Notification not found'});
+
+    const course = await requireCourse(req, res, notif.courseId);
+    if (!course) return null;
+
+    const sent = await retryNotification(user, course, notif.id);
+    if (sent === null){
+        return res.json({success: false, error: 'This notification is no longer waiting to be retried'});
+    }
+
+    res.json({success: true, sent});
+})
+
+/**
+ * POST /api/cmt/notifications/preview
+ * Preview upcoming and due notifications for a specific course up to a given date
+ */
+router.post('/preview', async (req, res) => {
+    const user = requireUser(req, res);
+    const {courseId, until} = req.body;
+
+    if (!user) return null;
+    if (!courseId || !until) {
+        return res.status(400).json({error: 'Missing courseId or until'});
+    }
+
+    const course = await requireCourse(req, res, courseId);
+    if (!course) return null;
+    let untilDate;
+    try {
+        untilDate = campusInstant(until, HOUR_BEFORE_MIDNIGHT);
+        untilDate.setTime(untilDate.getTime() + END_OF_LAST_HOUR_MS);
+    } catch {
+        return res.status(400).json({error: 'Invalid until date'});
+    }
+
+    const result = await previewNotifications(parseInt(courseId), untilDate)
+    res.json({success: true, ...result});
+})
+
+/**
+ * PUT /api/cmt/notifications/preferences/:appId/:identifier
+ * Update notification preferences for a specific user and app
+ */
 router.put('/preferences/:appId/:identifier', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;
@@ -105,7 +225,10 @@ router.put('/preferences/:appId/:identifier', async (req, res) => {
     }
 });
 
-// GET /api/notifications/preferences/:appId/:identifier/slack-status
+/**
+ * GET /api/cmt/notifications/preferences/:appId/:identifier/slack-status
+ * Check the Slack status for a specific user and app
+ */
 router.get('/preferences/:appId/:identifier/slack-status', async (req, res) => {
     const user = requireUser(req, res);
     if (!user) return null;

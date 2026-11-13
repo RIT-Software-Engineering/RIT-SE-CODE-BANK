@@ -1,4 +1,5 @@
 import { addActionStateContext, addCallbackContext, scaffoldBaseContexts } from "@se-code-bank/workflows-ecosystem"
+import { actionCodeForEvent } from "../courseExecution.js"
 
 export function CMTActionToActionWithContexts(action, actionStates, courseId, userId) {
     const baseActionsWithContexts = scaffoldBaseContexts(action)
@@ -35,6 +36,8 @@ function CMTDetermineCallbackFactory(courseId, userId) {
             return `holidays/course/${courseId}?uid=${userId}&asid=${asid}`
         } if (code === 'START_COURSE') {
             return `course/${courseId}/start`
+        } if (Object.values(actionCodeForEvent).includes(code)){
+            return 
         }
         
         throw Error('Unrecognized action metadata code ' + code)

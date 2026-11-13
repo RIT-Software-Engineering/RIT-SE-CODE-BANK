@@ -102,7 +102,9 @@ export async function dispatchTemplated(userId, { event, context = {}, role, sub
   }
   
   if (!res.ok) {
-    throw new Error(`dispatchTemplated failed: ${res.status}`);
+    const error = new Error(`dispatchTemplated failed: ${res.status}`);
+    error.status = res.status;
+    throw error;
   }
   return res.json();
 }

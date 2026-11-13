@@ -2,7 +2,8 @@ import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
-import { notifyOfHoliday, hasStarted } from "../utils/notifier.js";
+import { notifyOfHoliday, hasStarted, updateNotification, getReminderDate, deleteNotification, validateSendDate } from "../utils/notifier.js";
+import { latestNotifyTime } from "../utils/courseClock.js";
 
 const prisma = new PrismaClient();
 
@@ -55,12 +56,13 @@ router.post("/", async (req, res) => {
 
 /**
  * POST /api/cmt/holidays/:holidayId/notify
- * Triggers the creation of a notification for the holiday that will either be sent now or later
+ * Create notification for the specific holiday, which can be sent now or later
  */
 router.post('/:holidayId/notify', async (req, res) => {
     const {holidayId} = req.params;
-    const {change, notifyOption} = req.body;
+    const {change, notify, sendAt} = req.body;
     let notified = null;
+    let when = null;
     const holiday = await prisma.holiday.findUnique({
         where: {id: parseInt(holidayId)},
         include: {course: true}
@@ -77,20 +79,27 @@ router.post('/:holidayId/notify', async (req, res) => {
         return res.status(400).json({success: false});
     }
 
-    if (notifyOption !== 'now'){
+    if (notify !== 'now' && notify !== 'later'){
         return res.json({success: true})
     }
 
     const event = (change === 'add') ? 'holiday' : 'holiday_update'
-    
-    try{
-        notified = await notifyOfHoliday(req.user, holiday, event, holiday?.course);
-    } catch(error){
-        notified = false; // notif didn't go through
-        console.error('Notification failed:', error.message, error.cause);
+
+    if (notify === 'later'){
+        const check = validateSendDate(sendAt, latestNotifyTime(holiday.date));
+        if (check.error){
+            return res.status(400).json({error: {userFacingMessage: check.error}});
+        }
+        when = check.whenToSend;
     }
 
-    res.json({success: true, notified});
+    try{
+        notified = await notifyOfHoliday(req.user, holiday, event, holiday?.course, when);
+        return res.json({success: true, notified: when ? null : notified, scheduled: when != null});
+    } catch(error){
+        console.error('Notification failed:', error.message, error.cause);
+        return res.json({success: true, notified: false});
+    }
 });
 
 /**
@@ -142,8 +151,23 @@ router.put("/:holidayId", async (req, res) => {
         include: {course: true}
     });
     const started = await hasStarted(updatedHoliday.course)
+
+    const pendingNotice = await prisma.notification.findFirst({
+        where: {courseId: updatedHoliday.courseId, triggerId: updatedHoliday.id, event: 'holiday', status: 'SCHEDULED'},
+    })
+
+    if (pendingNotice){
+        await updateNotification(pendingNotice.id, {
+            context: {...pendingNotice.context, 
+                holidayName: updatedHoliday.name, 
+                date: updatedHoliday.date.toISOString().split('T')[0], 
+                endDate: updatedHoliday.endDate ? updatedHoliday.endDate.toISOString().split('T')[0] : null
+            },
+            sendAt: getReminderDate(updatedHoliday)
+        });
+    }
     
-    res.json({ holiday: updatedHoliday, change: 'update', notifyPrompt: started })
+    res.json({ holiday: updatedHoliday, change: 'update', notifyPrompt: started && !pendingNotice})
 });
 
 /** DELETE /api/cmt/holidays/:courseId/:holidayId
@@ -154,6 +178,14 @@ router.delete("/:holidayId", async (req, res) => {
     const holiday = await prisma.holiday.delete({
         where: {id: parseInt(holidayId)}
     });
+
+    const pendingNotice = await prisma.notification.findMany({
+        where: {courseId: holiday.courseId, triggerId: holiday.id, event: {in: ['holiday', 'holiday_update']}, status: 'SCHEDULED'}
+    })
+
+    for (const notice of pendingNotice){
+        await deleteNotification(notice.id);
+    }
 
     res.json({ holiday })
 });

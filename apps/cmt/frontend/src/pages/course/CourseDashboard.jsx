@@ -8,6 +8,8 @@ import { CMTFormFetch, CMTJsonFetch } from '../../utils/api.js'
 import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx'
+import { PendingNotifications } from '../../components/PendingNotification.jsx'
+import { NotificationPreview } from '../../components/NotificationPreview.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -101,6 +103,12 @@ export function CourseDashboard() {
                     
                     <div className="h-10"></div>
                     <ResourceManager courseId={course.id} />
+                    {started && !course?.isTemplate && (
+                        <>
+                            <PendingNotifications courseId={course.id} />
+                            <NotificationPreview courseId={course.id} />
+                        </>
+                    )}
                     <div className='mb-5 border-b mt-10'>
                         <span className="text-3xl" id="sessions">Sessions</span>
                         <p>Sessions are a single ocurrence of a class lecture. Each session appears as a row in the course site.</p>
