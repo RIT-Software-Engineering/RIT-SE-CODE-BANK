@@ -179,12 +179,12 @@ router.delete("/:holidayId", async (req, res) => {
         where: {id: parseInt(holidayId)}
     });
 
-    const pendingNotice = await prisma.notification.findFirst({
-        where: {courseId: holiday.courseId, triggerId: holiday.id, event: 'holiday', status: 'SCHEDULED'}
+    const pendingNotice = await prisma.notification.findMany({
+        where: {courseId: holiday.courseId, triggerId: holiday.id, event: {in: ['holiday', 'holiday_update']}, status: 'SCHEDULED'}
     })
 
-    if (pendingNotice){
-        await deleteNotification(pendingNotice.id);
+    for (const notice of pendingNotice){
+        await deleteNotification(notice.id);
     }
 
     res.json({ holiday })

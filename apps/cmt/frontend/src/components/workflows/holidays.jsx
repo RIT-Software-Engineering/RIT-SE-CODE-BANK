@@ -134,6 +134,7 @@ export function Holidays() {
         CMTJsonFetch('DELETE', `holidays/${holidayId}`).then(() => {
             loadHolidays()
             window.dispatchEvent(new Event(HOLIDAYS_CHANGED))
+            notifyListChanged()
         })
     }
 
