@@ -37,7 +37,7 @@ import TimelineConnector from "@mui/lab/TimelineConnector";
 import TimelineContent from "@mui/lab/TimelineContent";
 import TimelineDot from "@mui/lab/TimelineDot";
 import TimelineOppositeContent, { timelineOppositeContentClasses } from "@mui/lab/TimelineOppositeContent";
-
+import { useSearchParams } from 'next/navigation';
 import { notify } from "../utils/notify";
 
 export default function Journal() {
@@ -106,10 +106,21 @@ export default function Journal() {
   // const [deletingEntry, setDeletingEntry] = useState(false);
   // const [selectedEntry, setSelectedEntry] = useState(null);
 
+  const searchParams = useSearchParams();
+  const student = searchParams.get('student');
   const { user } = useUser();
   const canEdit = user.type == "advisor" || user.type == "scoopdinator" || user.type == "scoopervisor"; 
   
   useEffect(() => {
+    async function setStudentTopicValue() {
+      if (!student) {
+        return;
+      }
+
+      setFilterTopicValue(student);
+      return;
+    }
+
     async function fetchEntries () {
       if (user == null || user.id == null) return;
       try {
@@ -126,7 +137,7 @@ export default function Journal() {
         ]);
 
         setJournalEntries(Array.isArray(entries) ? entries : []);
-        handleApplyFilter(Array.isArray(entries) ? entries : []);
+        handleApplyFilter(Array.isArray(entries) ? entries : [], student);
 
         const contacteeMap = {};
         loadedUsers.forEach((loadedUser) => {
@@ -144,6 +155,8 @@ export default function Journal() {
         setJournalEntries([]);
       }
     }
+    
+    setStudentTopicValue();
     fetchEntries();
   }, [user]);
 
@@ -168,9 +181,10 @@ export default function Journal() {
   const handleFilterEntryTypeChange = (e) => setFilterEntryTypeValue(e.target.value || "");
   const handleFilterTimeChange = (e) => setFilterTimeValue(e.target.value || "");
 
-  const handleApplyFilter = async (baseArray=null) => {
+  const handleApplyFilter = async (baseArray=null, studentValue=null) => {
     if(baseArray == null) baseArray = Array.from(journalEntries);
     if(filterTopicValue) baseArray = baseArray.filter((entry) => entry.topic_id == filterTopicValue);
+    if(studentValue) baseArray = baseArray.filter((entry) => entry.topic_id == studentValue);
     if (filterSemesterValue) baseArray = baseArray.filter((entry) => entry.semester_GroupId == filterSemesterValue);
     if(filterRecipientValue) baseArray = baseArray.filter(entry => entry.recipients.some(recipient => recipient.id === filterRecipientValue));
     if(filterSenderValue) baseArray = baseArray.filter((entry) => entry.sender_id == filterSenderValue);
@@ -181,6 +195,8 @@ export default function Journal() {
     
     setFilteredJournalEntries(baseArray)
   };
+
+  
 
   const getVisibilityOptions = () => {
     let options = {"PERSONAL": "Private Note"};

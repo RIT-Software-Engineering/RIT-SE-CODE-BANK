@@ -124,6 +124,12 @@ const workflows = [
         description: "View your hired scooployees.",
         link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/scoopervisor/scooployees/",
       },
+      {
+        title: "View My Students",
+        roles: ["advisor"],
+        description: "View your students.",
+        link: process.env.NEXT_PUBLIC_URL_BASE_PATH+"/advisor/scooployees",
+      }
     ],
   },
   {
