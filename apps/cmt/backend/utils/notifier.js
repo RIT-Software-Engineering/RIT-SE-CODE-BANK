@@ -5,7 +5,7 @@ import courseNow from './courseClock.js';
 import { actionCodeForEvent, eventsForCode, getActionState, isStarted } from './courseExecution.js';
 
 const prisma = new PrismaClient();
-
+const DEFAULT_RECIPIENTS = ['student1@rit.edu', 'student2@rit.edu'];
 /**
  * Creates a new notification field in the database
  * 
@@ -99,7 +99,7 @@ export async function scheduleHolidayReminders(course){
                 date: holiday.date.toISOString().split('T')[0],
                 endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null
             },
-            recipients: ['student@rit.edu', 'student2@rit.edu'], // TODO: replace with proper class list when we get students in the future
+            recipients: DEFAULT_RECIPIENTS, // TODO: replace with proper class list when we get students in the future
             sendAt: getReminderDate(holiday)
         })
     }
@@ -146,7 +146,7 @@ export async function notifyOfHoliday(user, holiday, event, course, when=null){
         date: holiday.date.toISOString().split('T')[0],
         endDate: holiday.endDate ? holiday.endDate.toISOString().split('T')[0] : null  
     }
-    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = DEFAULT_RECIPIENTS; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, course, {
         event, triggerId: holiday.id, context, recipients
@@ -161,7 +161,7 @@ export async function notifyOfCancellation(user, session, when=null){
         courseName: courseName,
         date: session.date ?? null
     }
-    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = DEFAULT_RECIPIENTS; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, session.course, {
         event: 'class_cancelled', triggerId: session.id, context, recipients
@@ -179,7 +179,7 @@ export async function notifyOfMovedBlock(user, block, from, to, course, when=nul
         to: to.sessionNum,
         toDate: to.date,
     }
-    const recipients = ['student@rit.edu', 'student2@rit.edu']; // TODO: replace this with a class list when we have students in the db
+    const recipients = DEFAULT_RECIPIENTS; // TODO: replace this with a class list when we have students in the db
 
     return await sendOrSchedule(user, course, {
         event: 'content_moved', triggerId: block.id, context, recipients
@@ -255,7 +255,7 @@ export async function deliverNotification(notif, userId, course){
                 event: notif.event,
                 context, 
                 role: 'student',
-                subject: notif.context.subject,
+                subject: notif.context?.subject,
                 userEmail: recipient.email
             });
         } catch(error){
