@@ -4,6 +4,7 @@ import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
 import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { actionCodeForEvent } from "../utils/courseExecution.js";
 
 const prisma = new PrismaClient();
 const router = express.Router();
@@ -222,7 +223,7 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
 
     const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
         "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", 
-        "START_COURSE", "SEND_HOLIDAY_NOTICE", "SEND_HOLIDAY_CHANGE", "SEND_CANCELLED_CLASS", "SEND_MOVED_CONTENT"].filter(
+        "START_COURSE", ...Object.values(actionCodeForEvent)].filter(
         code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
     );
 

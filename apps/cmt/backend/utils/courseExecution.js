@@ -33,7 +33,9 @@ export const actionCodeForEvent = {
     'holiday': 'SEND_HOLIDAY_NOTICE',
     'holiday_update': 'SEND_HOLIDAY_CHANGE',
     'class_cancelled': 'SEND_CANCELLED_CLASS',
-    'content_moved': 'SEND_MOVED_CONTENT'
+    'content_moved': 'SEND_MOVED_CONTENT',
+    'course_started': 'SEND_WELCOME',
+    'material_changed': 'SEND_MATERIAL_CHANGE'
 }
 
 export async function completeAction(course, code){

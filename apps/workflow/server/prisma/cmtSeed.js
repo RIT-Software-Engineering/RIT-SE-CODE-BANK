@@ -266,6 +266,22 @@ async function main() {
                     metadata: {
                         code: 'SEND_MOVED_CONTENT',
                     },
+                },
+                {
+                    name: 'Send Welcome Message',
+                    description: 'Welcome students when the course starts',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_WELCOME',
+                    },
+                },
+                {
+                    name: 'Send Course Material Change Notification',
+                    description: 'Notify students of a change to course material',
+                    actionType: 'simple',
+                    metadata: {
+                        code: 'SEND_MATERIAL_CHANGE',
+                    },
                 }
             ]
         }

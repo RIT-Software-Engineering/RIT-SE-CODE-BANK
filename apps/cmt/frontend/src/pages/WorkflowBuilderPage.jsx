@@ -47,7 +47,9 @@ export function BuilderPageAdmin({isAdmin}){
     ["SEND_HOLIDAY_NOTICE", "Send Holiday Notice"],
     ["SEND_HOLIDAY_CHANGE", "Send Holiday Change Notification"],
     ["SEND_CANCELLED_CLASS", "Send Cancelled Class Notification"],
-    ["SEND_MOVED_CONTENT", "Send Moved Content Notification"]];
+    ["SEND_MOVED_CONTENT", "Send Moved Content Notification"],
+    ["SEND_WELCOME", "Send Welcome Message"],
+    ["SEND_MATERIAL_CHANGE", "Send Course Material Change Notification"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
