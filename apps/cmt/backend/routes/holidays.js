@@ -9,6 +9,14 @@ const prisma = new PrismaClient();
 const router = express.Router();
 export default router
 
+// if end date comes before start date, return an error message.
+function validateHolidayDates(startDate, endDate){
+    if (!startDate || !endDate) return null;
+    if (new Date(endDate) < new Date(startDate)){
+        return "End date cannot be before start date";
+    }
+    return null;
+}
 
 /** GET /api/cmt/holidays/:courseId
  * Gets all the holidays for a course, including the holiday name, start date, and end date
@@ -37,6 +45,10 @@ router.get("/:courseId", async(req, res) => {
  */
 router.post("/", async (req, res) => {
     const { name, date, endDate, id } = req.body;
+    const dateError = validateHolidayDates(date, endDate);
+
+    if (dateError) return res.status(400).json({message: dateError});
+
     const holiday = await prisma.holiday.create({
         data: {
             name: name,
@@ -101,7 +113,10 @@ router.put("/course/:courseId", async (req, res) => {
     const { courseId } = req.params;
     const { holidayName, date, endDate } = req.body;
     const { asid: actionStateId } = req.query;
+    const dateError = validateHolidayDates(date, endDate);
 
+    if (dateError) return res.status(400).json({message: dateError});
+    
     await prisma.holiday.create({
         data: {
             name: holidayName, 
@@ -131,7 +146,10 @@ router.put("/course/:courseId", async (req, res) => {
 router.put("/:holidayId", async (req, res) => {
     const {holidayId} = req.params;
     const {name, date, endDate} = req.body;
+    const dateError = validateHolidayDates(date, endDate);
 
+    if (dateError) return res.status(400).json({message: dateError});
+    
     const updatedHoliday = await prisma.holiday.update({
         where: {id: Number(holidayId)},
         data: {

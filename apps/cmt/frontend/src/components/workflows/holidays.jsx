@@ -22,6 +22,7 @@ function HolidayCard({ holiday, onChange, onDelete }) {
 
     // tracks if any edits have been made - used to disable/enable buttons
     const [isUpdated, setIsUpdated] = useState(false)
+    const badRange = (date && endDate) && endDate < date;
 
     return (
         <Col md={12} key={holiday.id} className='mb-3'>
@@ -58,16 +59,18 @@ function HolidayCard({ holiday, onChange, onDelete }) {
                             <input type="date" 
                             className="form-control" 
                             value={endDate}
+                            min={date}
                             onChange = {(e) => {
                                 setEndDate(e.target.value)
                             setIsUpdated(true)
                             }} />
                         </div>
 
-                        <Button disabled={!isUpdated} onClick = {() => onChange(holiday.id, {name, date, endDate})}>
+                        <Button disabled={!isUpdated || badRange} onClick = {() => onChange(holiday.id, {name, date, endDate})}>
                             Edit Holiday</Button>
                         <Button onClick = {() => onDelete(holiday.id)}>
                             Remove Holiday</Button>
+                        {badRange && <p className='text-red-600 mb-0'>End date cannot be before start date.</p>}
                     </Card.Text>
                 </Card.Body>
             </Card>
@@ -92,6 +95,7 @@ export function Holidays() {
 
     const [notifyHoliday, setNotifyHoliday] = useState(null)
     const [notifyResult, setNotifyResult] = useState(null);
+    const badRange = (startDate && endDate) && endDate < startDate;
 
     // handlers for form submission and updates holiday data
     const onSubmit = () => {
@@ -188,12 +192,14 @@ export function Holidays() {
                             <p className='mb-1 w-2/3 form-label'>End Date (optional): </p>
                             <input type="date" 
                             value = {endDate}
+                            min={startDate}
                             onChange = {(e) => setEndDate(e.target.value)} 
                             className="form-control" />
                         </div>
                     </div>
                     
-                    <Button disabled={!holidayName || !startDate} onClick = {() => onSubmit()}>Add Holiday</Button>
+                    <Button disabled={!holidayName || !startDate || badRange} onClick = {() => onSubmit()}>Add Holiday</Button>
+                    {badRange && <p className='text-red-600 mb-0'>End date cannot be before start date.</p>}
 
                     {holidays.length > 0 && ( 
                     <Row className='max-h-72 overflow-y-scroll'>
