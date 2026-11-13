@@ -18,7 +18,9 @@ export function NotesPanel({ courseId }) {
     const [error, setError] = useState(null)
     const [busy, setBusy] = useState(false)
     const [dueAt, setDueAt] = useState('');
-    const [seconds, setSeconds] = useState(0);
+    const [, setSeconds] = useState(0);
+    const [tab, setTab] = useState('notes')
+
     useEffect(() => {
         const timer = setInterval(() => setSeconds(prevSec => prevSec + 1), 60000);
         return () => clearInterval(timer);
@@ -34,10 +36,10 @@ export function NotesPanel({ courseId }) {
 
     async function addNote(event) {
         event.preventDefault()
-        if (!text.trim() || busy) return
+        if (!text.trim() || busy || (isReminders && !dueAt)) return
         setBusy(true)
         try {
-            await CMTJsonFetch('POST', `notes/course/${courseId}`, {text, dueAt: dueAt || null})
+            await CMTJsonFetch('POST', `notes/course/${courseId}`, {text, dueAt: isReminders ? dueAt : null})
             setText('')
             setDueAt('');
             await load()
@@ -59,51 +61,62 @@ export function NotesPanel({ courseId }) {
 
     const openCount = notes.filter(note => note.status === 'open').length
     const dueCount = notes.filter(isDue).length;
-    const shown = [...notes].sort((a, b) => Number(isDue(b)) - Number(isDue(a)));
+    const isReminders = tab === 'reminders';
+    const byDue = (a, b) => Number(isDue(b)) - Number(isDue(a)) || a.dueAt.localeCompare(b.dueAt);
+    const visible = notes.filter(note => isReminders ? note.dueAt : !note.dueAt);
+    if (isReminders) visible.sort(byDue);
 
     if (!open) {
         return (
             <button
-                className="fixed right-0 top-1/3 z-40 rounded-l border bg-white px-2 py-3 shadow"
+                className="sticky top-24 shrink-0 self-start rounded-l border bg-white px-2 py-3 shadow"
                 style={{ writingMode: 'vertical-rl' }}
                 onClick={() => setOpen(true)}
             >
-                My notes ({openCount}){dueCount > 0 && ` - ${dueCount} due`}
+                My notes ({openCount})
             </button>
         )
     }
 
     return (
-        <aside className="fixed right-0 top-24 bottom-4 z-40 flex w-80 flex-col rounded-l border bg-white shadow">
+        <aside className="sticky top-24 flex h-[calc(100vh-7rem)] w-80 shrink-0 flex-col self-start rounded-l border bg-white shadow">
             <div className="flex items-center justify-between border-b p-3">
                 <strong>My notes</strong>
-                <button onClick={() => setOpen(false)} aria-label="Minimize notes">–</button>
+                <button onClick={() => setOpen(false)} aria-label="Minimize notes">-</button>
             </div>
 
+            <div className="flex border-b text-sm">
+                {['notes', 'reminders'].map(name => (
+                    <button key={name} className={`flex-1 p-2 ${tab === name ? 'border-b-2 border-black font-semibold' : 'text-gray-500'}`} onClick={() => setTab(name)}>
+                        {name === 'notes' ? 'Notes' : `Reminders${dueCount > 0 ? ` (${dueCount})` : ''}`}
+                    </button>
+                ))}
+            </div>
+            
             <form onSubmit={addNote} className="border-b p-3">
-                        <input type='datetime-local' className='mb-2 w-full rounded border p-1'
-                            value={dueAt} onChange={event => setDueAt(event.target.value)}
-                        />
+                {isReminders && (<input type='datetime-local' className='mb-2 w-full rounded border p-1'
+                    value={dueAt} onChange={event => setDueAt(event.target.value)}
+                />)}
                 <textarea
                     className="mb-2 w-full rounded border p-2"
                     rows={3}
                     maxLength={2000}
-                    placeholder="Note to self..."
+                    placeholder={isReminders ? "Reminder to..." : "Note to self..."}
                     value={text}
                     onChange={event => setText(event.target.value)}
                 />
-                <Button type="submit" size="sm" disabled={busy || !text.trim()}>Add note</Button>
+                <Button type="submit" size="sm" disabled={busy || !text.trim()}>{isReminders ? 'Add reminder' : 'Add note'}</Button>
             </form>
 
             {error && <p className="px-3 pt-2 text-sm text-red-600">{error}</p>}
 
-                    {dueCount > 0 && (
-                        <p className="mx-3 mt-2 rounded bg-amber-100 p-2 text-sm">{dueCount} note{dueCount > 1 ? 's' : ''} due</p>
-                    )}
+            {dueCount > 0 && (
+                <p className="mx-3 mt-2 rounded bg-amber-100 p-2 text-sm">{dueCount} note{dueCount > 1 ? 's' : ''} due</p>
+            )}
             <ul className="flex-1 space-y-2 overflow-y-auto p-3">
-                {notes.length === 0 && <li className="text-sm text-gray-500">No notes yet.</li>}
-                        {shown.map(note => (
-                            <li key={note.id} className={`rounded border p-2 ${isDue(note) ? 'border-red-400' : ''}`}>
+                {visible.length === 0 && <li className="text-sm text-gray-500">{isReminders ? 'No reminders yet.' : 'No notes yet.'}</li>}
+                {visible.map(note => (
+                    <li key={note.id} className={`rounded border p-2 ${isDue(note) ? 'border-red-400' : ''}`}>
                         <div className="flex items-start gap-2">
                             <input
                                 type="checkbox"
@@ -115,11 +128,11 @@ export function NotesPanel({ courseId }) {
                             <span className={`flex-1 whitespace-pre-wrap break-words ${note.status !== 'open' ? 'text-gray-500' : ''} ${note.status === 'done' ? 'line-through' : ''}`}>
                                 {note.text}
                             </span>
-                                    {note.dueAt && (
-                                        <div className={`text-sm ${isDue(note) ? 'font-semibold text-red-600' : 'text-gray-500'}`}>
-                                            Due: {formatDue(note.dueAt)}
-                                        </div>
-                                    )}
+                            {note.dueAt && (
+                                <div className={`text-sm ${isDue(note) ? 'font-semibold text-red-600' : 'text-gray-500'}`}>
+                                    Due: {formatDue(note.dueAt)}
+                                </div>
+                            )}
                         </div>
                         <div className="mt-1 text-right">
                             <button

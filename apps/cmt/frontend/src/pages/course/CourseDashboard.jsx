@@ -85,54 +85,56 @@ export function CourseDashboard() {
                 ? <CMTDangerAlert error={error} />
                 : course === null
                 ? <p> Loading </p>
-                : <>
-                    <CourseInfo course={course} action={startCourseButton} />
-                    <div className="h-10"></div>
-                    <div className="flex justify-center">
-                        <div className="max-w-screen-xl w-full">
-                            {workflow && (
-                                <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
-                            )}
-                            {/* displays course execution workflow & actions on page. decide whether to have on the page or on a separate page */}
-                            {/* {execWorkflow && (
-                                <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={execActionsWithContexts} course={course} workflow={execWorkflow}/>
-                            )} */}
+                : <div className='flex items-start gap-2'>
+                    <div className='min-w-0 flex-1'>
+                        <CourseInfo course={course} action={startCourseButton} />
+                        <div className="h-10"></div>
+                        <div className="flex justify-center">
+                            <div className="max-w-screen-xl w-full">
+                                {workflow && (
+                                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
+                                )}
+                                {/* displays course execution workflow & actions on page. decide whether to have on the page or on a separate page */}
+                                {/* {execWorkflow && (
+                                    <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={execActionsWithContexts} course={course} workflow={execWorkflow}/>
+                                )} */}
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div className="h-10"></div>
-                    <ResourceManager courseId={course.id} />
-                    <div className='mb-5 border-b mt-10'>
-                        <span className="text-3xl" id="sessions">Sessions</span>
-                        <p>Sessions are a single ocurrence of a class lecture. Each session appears as a row in the course site.</p>
-                    </div>
-                    <div className="flex justify-center">
-                        <div className="max-w-screen-xl w-full">
-                            <Session
-                                sessionCount={sessionCount} setSessionCount={setSessionCount}
-                                sessions={sessions} setSessions={setSessions}
-                                sessionActions={sessionActions}
-                                updateWorkflow={update}
-                                fetchToCallback={fetchToCallback}
-                                courseId={course.id}
-                                started={started}
-                            />
-                            <div className='flex justify-end pt-4 mb-4'>
-                                <Button onClick={() => {
-                                    /** Makes a post request to add the session with no material.
-                                     * ID is the class ID to identify where it belongs in the future
-                                     */
-                                CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async json => {
-                                    setSessionCount(sessionCount+1);
-                                    setSessions(prevSessions => [...prevSessions, json.session])
-                                })
-                                }}>Add extra session</Button>
+                        
+                        <div className="h-10"></div>
+                        <ResourceManager courseId={course.id} />
+                        <div className='mb-5 border-b mt-10'>
+                            <span className="text-3xl" id="sessions">Sessions</span>
+                            <p>Sessions are a single ocurrence of a class lecture. Each session appears as a row in the course site.</p>
+                        </div>
+                        <div className="flex justify-center">
+                            <div className="max-w-screen-xl w-full">
+                                <Session
+                                    sessionCount={sessionCount} setSessionCount={setSessionCount}
+                                    sessions={sessions} setSessions={setSessions}
+                                    sessionActions={sessionActions}
+                                    updateWorkflow={update}
+                                    fetchToCallback={fetchToCallback}
+                                    courseId={course.id}
+                                    started={started}
+                                />
+                                <div className='flex justify-end pt-4 mb-4'>
+                                    <Button onClick={() => {
+                                        /** Makes a post request to add the session with no material.
+                                         * ID is the class ID to identify where it belongs in the future
+                                         */
+                                        CMTJsonFetch('POST', 'session', {sessionCount, id}).then(async json => {
+                                            setSessionCount(sessionCount+1);
+                                            setSessions(prevSessions => [...prevSessions, json.session])
+                                        })
+                                    }}>Add extra session</Button>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </>
+                    {!course?.isTemplate && execState != null && <NotesPanel courseId={course.id} />}
+                </div>
             }
-            {!course?.isTemplate && execState != null && <NotesPanel courseId={course.id} />}
         </>
     )
 }
