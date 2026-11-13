@@ -186,6 +186,44 @@ export async function notifyOfMovedBlock(user, block, from, to, course, when=nul
     }, when);
 }
 
+export async function notifyOfCourseStart(user, course){
+    const courseName = courseLabel(course);
+    const context = {
+        subject: `${courseName}: Welcome to the Course`,
+        courseName,
+        startDate: course.startDate ?? null
+    }
+
+    return await sendOrSchedule(user, course, {
+        event: 'course_started', triggerId: course.id, context, recipients: DEFAULT_RECIPIENTS
+    });
+}
+
+function toPlainText(html){
+    return String(html ?? '')
+        .replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>').replace(/\s+/g, ' ').trim();
+}
+
+export async function notifyOfMaterialChange(user, course, change, item){
+    const courseName = courseLabel(course);
+    const itemType = item.isSyllabus ? 'Syllabus' : 'Course Material';
+    const changeLabel = change.charAt(0).toUpperCase() + change.slice(1);
+    const context = {
+        subject: `${courseName}: ${itemType} ${changeLabel}`,
+        courseName,
+        changeText: change,
+        itemLabel: toPlainText(item.label ?? item.name),
+        sessionNum: item.sessionNum ?? null,
+        isSyllabus: Boolean(item.isSyllabus)
+    }
+    const itemId = typeof item.id === 'number' ? item.id : null;
+
+    return await sendOrSchedule(user, course, {
+        event: 'material_changed', triggerId: itemId, context, recipients: DEFAULT_RECIPIENTS
+    });
+}
+
 // returns whether the course has started
 export async function hasStarted(course){
     if (!course?.execWorkflowStateId) return false;
