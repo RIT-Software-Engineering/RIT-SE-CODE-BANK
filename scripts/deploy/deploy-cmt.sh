@@ -8,7 +8,8 @@ VM_HOST="${DEPLOY_HOST:-apps-staging.se.rit.edu}"
 VM_USER="${CMT_DEPLOY_USER:-fjg5149}"
 
 # Get the branch name from GitHub Actions environment
-DEPLOY_BRANCH="${GITHUB_REF_NAME:-dev}"
+# DEPLOY_BRANCH="${GITHUB_REF_NAME:-dev}"
+DEPLOY_BRANCH="${cmt-dev2:-cmt-dev2}"
 
 # SSH and deploy
 ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
@@ -16,6 +17,8 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     
     echo "Navigating to deployment directory..."
     cd "/opt/cmt"
+
+    # install app dependencies
     
     echo "Pulling latest changes from ${DEPLOY_BRANCH}..."
     git fetch origin
@@ -23,6 +26,8 @@ ssh -i "$DEPLOY_KEY" "${VM_USER}@${VM_HOST}" << ENDSSH
     
     cd ./apps/cmt
     cp ./.env.staging ./.env
+
+    docker compose -f compose.build.yaml -f compose.run.yaml down
 
     echo "Composing new containers..."
     docker compose -f compose.build.yaml -f compose.run.yaml up -d --build
