@@ -1,0 +1,29 @@
+services:
+  backend:
+    build:
+      context: ./apps/teambuilding/express
+      dockerfile: Dockerfile
+    container_name: my-backend-container
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/teambuilding/ui/Dockerfile
+    container_name: my-frontend-container
+    ports:
+      - "3001:3000"
+    depends_on:
+      - backend
+
+  demo-app:
+    build:
+      context: .
+      dockerfile: apps/demo-app/Dockerfile
+    container_name: demo-app-container
+    ports:
+      - "3002:3000"
+    depends_on:
+      - backend
+    

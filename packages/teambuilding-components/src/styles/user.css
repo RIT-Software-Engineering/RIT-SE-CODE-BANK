@@ -1,0 +1,172 @@
+body{
+  margin:0;
+}
+.user-communities-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    margin-top: 24px;
+}
+
+.user-community-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    padding: 16px;
+    background: #fafafa;
+    box-shadow: 0 2px 12px rgba(25,118,210,0.08);
+}
+
+.user-community-box h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+.user-team-box {
+    border: 1px solid #eee;
+    border-radius: 6px;
+    margin: 8px 0;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.user-team-teammates {
+    margin-top: 8px;
+}
+
+.user-team-teammates-label {
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.user-team-teammates-list {
+    display: inline;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.user-teammate {
+    display: inline-block;
+    margin-right: 10px;
+    cursor: pointer;
+    text-decoration: underline;
+    color: #222;
+}
+
+.user-teammate-self {
+    font-weight: bold;
+    color: #1976d2;
+}
+
+.user-tempuser-btn {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    z-index: 1000;
+    padding: 14px 22px;
+    border-radius: 8px;
+    background: #333;
+    color: #fff;
+    font-weight: bold;
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.user-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-popup-content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 32px 24px;
+    min-width: 320px;
+    position: relative;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+}
+
+.user-popup-close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+}
+
+.user-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+
+.user-edit-contact-btn {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: none;
+    background: #1976d2;
+    color: #fff;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.user-edit-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.user-edit-contact-form label {
+    display: block;
+    margin-bottom: 12px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-edit-contact-form input {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    font-size: 1em;
+}
+
+.user-edit-contact-save {
+    background: #1976d2;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.user-edit-contact-save:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.user-error-message {
+    background: #ffebee;
+    color: #c62828;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid #ef5350;
+    margin-bottom: 16px;
+    font-size: 0.9em;
+}

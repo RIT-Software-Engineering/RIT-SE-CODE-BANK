@@ -1,0 +1,10 @@
+{
+  "name": "rit-se-code-bank",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "apps/*/*",
+    "apps/teambuilding/*",
+    "packages/*"
+  ]
+}

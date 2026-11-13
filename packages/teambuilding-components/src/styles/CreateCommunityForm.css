@@ -1,0 +1,109 @@
+.create-community {
+  width: 100%;
+  max-width: 44rem;
+  padding: 1.5rem;
+  border: 1px solid var(--color-gray-1, #d0d3d4);
+  border-radius: 0.5rem;
+  background: var(--background, #ffffff);
+  color: var(--foreground, #000000);
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+}
+
+.create-community-title {
+  margin: 0 0 1.25rem;
+  font-size: 1.5rem;
+  line-height: 2rem;
+  font-weight: 700;
+}
+
+.create-community-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.75rem;
+}
+
+.create-community-input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-gray-1, #d0d3d4);
+  border-radius: 0.375rem;
+  background: var(--background, #ffffff);
+  color: var(--foreground, #000000);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.create-community-input::placeholder {
+  color: var(--color-gray-3, #7c878e);
+  opacity: 1;
+}
+
+.create-community-input:focus-visible {
+  outline: 2px solid var(--color-orange, #f76902);
+  outline-offset: 2px;
+  border-color: var(--color-orange, #f76902);
+}
+
+.create-community-button {
+  padding: 0.75rem 1.25rem;
+  border: 2px solid var(--color-orange, #f76902);
+  border-radius: 0.375rem;
+  background: var(--color-orange, #f76902);
+  color: #ffffff;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.create-community-button:hover:not(:disabled) {
+  background: #d95700;
+  border-color: #d95700;
+}
+
+.create-community-button:focus-visible {
+  outline: 2px solid var(--foreground, #000000);
+  outline-offset: 3px;
+}
+
+.create-community-button:disabled {
+  background: var(--color-gray-2, #a2aaad);
+  border-color: var(--color-gray-2, #a2aaad);
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
+.create-community-import-button {
+  background: #ffffff;
+  color: var(--foreground, #000000);
+  border-color: var(--color-orange, #f76902);
+}
+
+.create-community-import-button:hover:not(:disabled) {
+  background: #fff1e8;
+  border-color: #d95700;
+}
+
+@media (max-width: 480px) {
+  .create-community {
+    padding: 1rem;
+  }
+
+  .create-community-controls {
+    flex-direction: column;
+  }
+
+  .create-community-input,
+  .create-community-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .create-community-button {
+    transition: none;
+  }
+}

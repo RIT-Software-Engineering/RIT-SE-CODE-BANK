@@ -1,0 +1,112 @@
+
+.community-members {
+  width: 100%;
+  min-width: 0;
+  color: var(--foreground);
+}
+
+.community-members-title {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+}
+
+.community-members-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.community-members-item {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--color-gray-1);
+  border-radius: 6px;
+  background: var(--background);
+  overflow-wrap: anywhere;
+}
+
+.community-members-add {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem;
+  border: 1px solid var(--color-gray-1);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--color-gray-1) 15%, var(--background));
+}
+
+.community-members-label {
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  font-weight: 600;
+}
+
+.community-members-controls {
+  display: flex;
+  align-items: stretch;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.community-members-select {
+  flex: 1;
+  min-width: 180px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--color-gray-2);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--foreground);
+  font: inherit;
+}
+
+.community-members-select:focus {
+  outline: 2px solid var(--color-orange);
+  outline-offset: 2px;
+  border-color: var(--color-orange);
+}
+
+.community-members-button {
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--color-orange);
+  color: #000000;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.community-members-button:hover:not(:disabled) {
+  background: #d95700;
+}
+
+.community-members-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .community-members-controls {
+    flex-direction: column;
+  }
+
+  .community-members-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .community-members-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .community-members-button {
+    transition: none;
+  }
+}

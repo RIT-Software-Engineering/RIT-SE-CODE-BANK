@@ -1,0 +1,43 @@
+.display-format {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 20rem;
+  font-family: "Helvetica Neue", Helvetica, Roboto, Arial, sans-serif;
+  color: var(--foreground, #000000);
+}
+
+.display-format-label {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+}
+
+.display-format-select {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  border: 1px solid var(--color-gray-1, #d0d3d4);
+  border-radius: 0.375rem;
+  background-color: var(--background, #ffffff);
+  color: var(--foreground, #000000);
+  font: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.display-format-select:hover {
+  border-color: var(--color-gray-3, #7c878e);
+}
+
+.display-format-select:focus-visible {
+  outline: 2px solid var(--color-orange, #f76902);
+  outline-offset: 2px;
+  border-color: var(--color-orange, #f76902);
+}
+
+.display-format-select option {
+  background-color: var(--background, #ffffff);
+  color: var(--foreground, #000000);
+}
