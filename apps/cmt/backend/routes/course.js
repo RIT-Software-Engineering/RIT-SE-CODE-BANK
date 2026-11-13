@@ -5,7 +5,7 @@ import { compressedMetadataToObject } from '@se-code-bank/workflows-ecosystem'
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { findActionsByCode } from '../utils/workflows/api.js';
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
-import { scheduleHolidayReminders } from '../utils/notifier.js'
+import { notifyOfCourseStart, scheduleHolidayReminders } from '../utils/notifier.js'
 import { findChildByCode, isStarted } from '../utils/courseExecution.js'
 
 /**
@@ -579,8 +579,14 @@ router.put('/:id/start', async (req, res) =>{
     const updatedState = await workflowsFetch('GET', `/states/workflow/${course.execWorkflowStateId}`)
     res.json({
         execState: updatedState.baseActionState.stateType
-   })
+    })
     await scheduleHolidayReminders(course)
+
+    try{
+        await notifyOfCourseStart(req.user, course);
+    } catch(error){
+        console.error('Failed to send welcome message:', error.message);
+    }
 })
 
 /**

@@ -1,13 +1,28 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { deleteNotification, hasStarted, notifyOfCancellation, notifyOfMovedBlock, validateSendDate } from "../utils/notifier.js";
+import { deleteNotification, hasStarted, notifyOfCancellation, notifyOfMaterialChange, notifyOfMovedBlock, validateSendDate } from "../utils/notifier.js";
 import { latestNotifyTime } from "../utils/courseClock.js";
 
 const prisma = new PrismaClient();
 
 const router = express.Router();
 export default router
+
+async function notifyAboutMaterial(req, sessionId, change, material, notify){
+    if (notify !== 'now') return null;
+    try{
+        const session = await prisma.session.findFirst({
+            where: {id: sessionId, course: {professorId: req.user.uid}},
+            include: {course: true}
+        });
+        if (!session || !await hasStarted(session.course)) return null;
+        return await notifyOfMaterialChange(req.user, session.course, change, {...material, sessionNum: session.sessionNum});
+    } catch(error){
+        console.error('Failed to send out material change notification:', error);
+        return false;
+    }
+}
 
 
 /** GET /api/cmt/session/:courseId
@@ -102,7 +117,8 @@ router.post("/:sessionId", async (req, res) => {
             blockId,
         }
     });
-    res.json({ material })
+    const notified = await notifyAboutMaterial(req, parseInt(sessionId), 'added', material, item.notify);
+    res.json({ material, notified })
 })
 
 /** PUT /api/cmt/session/material/:materialId
@@ -111,7 +127,7 @@ router.post("/:sessionId", async (req, res) => {
  */ 
 router.put("/material/:materialId", async (req, res) => {
     const {materialId} = req.params;
-    const {itemLabel, itemBody, itemType, sessionNum, sessionId, blockId} = req.body;
+    const {itemLabel, itemBody, itemType, sessionNum, sessionId, blockId, notify} = req.body;
 
     const parsedBlockId = blockId ? Number(blockId) : null;
     if (parsedBlockId) {
@@ -132,8 +148,9 @@ router.put("/material/:materialId", async (req, res) => {
             ...(blockId !== undefined && {blockId: parsedBlockId}),
         }
     })
+    const notified = await notifyAboutMaterial(req, material.sessionId, 'updated', material, notify);
 
-    res.json({ material })
+    res.json({ material, notified })
 })
 
 /** PATCH /api/cmt/session/blocks/:blockId
@@ -346,7 +363,8 @@ router.delete('/material/:materialId', async (req, res) => {
         where: {id: parseInt(materialId)},
         data: {active: false},
     });
-    res.json({ material })
+    const notified = await notifyAboutMaterial(req, material.sessionId, 'removed', material, req.query.notify);
+    res.json({ material, notified })
 })
 
 /** DELETE /api/cmt/session/:courseId/:sessionNum
