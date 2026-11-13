@@ -1,7 +1,7 @@
 import express from "express";
 
 import { PrismaClient } from '../prisma/generated/client/index.js'
-import { workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
+import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities"
 import { notifyOfHoliday, hasStarted } from "../utils/notifier.js";
 
 const prisma = new PrismaClient();
@@ -9,6 +9,13 @@ const prisma = new PrismaClient();
 const router = express.Router();
 export default router
 
+// if end date comes before start date, throw an error.
+function validateHolidayDates(startDate, endDate){
+    if (!startDate || !endDate) return;
+    if (new Date(endDate) < new Date(startDate)){
+        throw new CMTError({userFacingMessage: "End date cannot be before start date"});
+    }
+}
 
 /** GET /api/cmt/holidays/:courseId
  * Gets all the holidays for a course, including the holiday name, start date, and end date
@@ -37,6 +44,8 @@ router.get("/:courseId", async(req, res) => {
  */
 router.post("/", async (req, res) => {
     const { name, date, endDate, id } = req.body;
+    validateHolidayDates(date, endDate);
+
     const holiday = await prisma.holiday.create({
         data: {
             name: name,
@@ -102,6 +111,8 @@ router.put("/course/:courseId", async (req, res) => {
     const { holidayName, date, endDate } = req.body;
     const { asid: actionStateId } = req.query;
 
+    validateHolidayDates(date, endDate);
+    
     await prisma.holiday.create({
         data: {
             name: holidayName, 
@@ -132,6 +143,8 @@ router.put("/:holidayId", async (req, res) => {
     const {holidayId} = req.params;
     const {name, date, endDate} = req.body;
 
+    validateHolidayDates(date, endDate);
+    
     const updatedHoliday = await prisma.holiday.update({
         where: {id: Number(holidayId)},
         data: {
