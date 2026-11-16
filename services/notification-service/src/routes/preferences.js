@@ -23,6 +23,7 @@ router.get("/:appId/:userId", async (req, res) => {
     const prisma = getPrisma();
     const pref = await prisma.userPreference.findUnique({
       where: { appId_userId: { appId, userId } },
+      // where: { id: { appId, userId } },
     });
     if (!pref) {
       // return defaults when no record exists
