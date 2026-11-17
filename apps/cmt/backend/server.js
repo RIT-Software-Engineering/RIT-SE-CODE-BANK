@@ -18,6 +18,8 @@ import makeTeachingRouter from './routes/teaching.js';
 import requireTeachingInstructor from './middleware/requireTeachingInstructor.js';
 import { isInstructor } from './middleware/requireInstructor.js';
 import { isStudentUser, studentForUser } from './utils/students.js';
+import holidayRoutes from './routes/holidays.js'; // add holiday route
+import notificationRoutes from "./routes/notifications.js"
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -189,9 +191,10 @@ app.get("/", (_req, res) => {
       events: "/api/cmt/events",
       courses: "/api/cmt/course",
       templates: "/api/cmt/template",
-      workflows: "/api/cmt/workflows",
+      workflows: "/api/cmt/workflow",
       teamBuilder: "/api/cmt/team-builder",
       session: "/api/cmt/session",
+      holidays: "/api/cmt/holidays",
     },
   });
 });
@@ -205,6 +208,8 @@ app.use("/api/cmt/team-builder", requireTeachingInstructor, teamBuilderRoutes);
 app.use("/api/cmt/workflow", requireTeachingInstructor, workflowRoutes)
 app.use("/api/cmt/session", requireTeachingInstructor, sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
+app.use("/api/cmt/holidays", holidayRoutes);
+app.use("/api/cmt/notifications", notificationRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS

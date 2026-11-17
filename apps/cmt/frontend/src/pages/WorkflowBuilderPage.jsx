@@ -41,7 +41,9 @@ export function BuilderPageAdmin({isAdmin}){
     ["COURSE_SYLLABUS", "Syllabus"],
     ["COURSE_DAYS", "Course Days"],
     ["COURSE_START_DATE", "Start Date"],
-    ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"]];
+    ["COURSE_HOLIDAYS", "Course Holidays"],
+    ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"],
+    ["START_COURSE", "Start Course"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -147,6 +149,7 @@ export function BuilderPageAdmin({isAdmin}){
                         case "COURSE_DAYS":
                             setValidation(Object.values(validation)[0])
                             break;
+                        case "START_COURSE":
                         default:
                             break;
                     }
@@ -215,6 +218,7 @@ export function BuilderPageAdmin({isAdmin}){
             <Form.Select onChange={e=>setMetaWorkflow(e.target.value)} value={metaWorkflow}>
                 <option>None</option>
                 <option>Course Creation Workflow</option>
+                <option>Course Execution Workflow</option>
             </Form.Select>
             </> : <></>}
 
@@ -447,7 +451,7 @@ function BuilderOutputRenderer({code, setPlaceholder, validation, setValidation,
             : <></>}
             </>
             break;
-
+        case "START_COURSE":
         default:
             returnOutput = <></>
     }
@@ -567,6 +571,27 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 isRequired: isRequired
             }];
             break;
+        
+        case "COURSE_HOLIDAYS": 
+            output = [{
+                name: "Holiday Name",
+                key: "holidayName",
+                type: "text",
+                isRequired: isRequired
+            },
+            {
+                name: "Start Date",
+                key: "date",
+                type: "date",
+                isRequired: isRequired
+            },
+            {
+                name: "End Date (optional)",
+                key: "endDate",
+                type: "date",
+                isRequired: false
+            }]
+            break;
 
         case "COURSE_SYLLABUS":
             output = [{
@@ -603,7 +628,7 @@ function BuilderOutputsHelper(code, isRequired, placeholder, validation){
                 }
             }
             break;
-
+        case "START_COURSE":
         default:
             // We set output to null in case we get something we don't know how to deal with.
             output=null;

@@ -25,6 +25,10 @@ export function CourseDashboard() {
     const [sessionCount, setSessionCount] = useState(0)
     const [sessions, setSessions] = useState([]);
     const [error, setError] = useState(null)
+    const [execState, setExecState] = useState(null);
+    const [execWorkflow, setExecWorkflow] = useState(null);
+    const [execActionsWithContexts, setExecActionsWithContexts] = useState([]);
+    const [started, setStarted] = useState(false);
 
     const update = useCallback(async () => 
         CMTJsonFetch('GET', `course/${id}`).then(async json => {
@@ -34,10 +38,20 @@ export function CourseDashboard() {
                 setActionsWithContexts(json.actionsWithContexts ?? [])
                 setWorkflow(json.workflow)
             })
+            setExecState(json.execState)
+            setExecWorkflow(json.execWorkflow)
+            setExecActionsWithContexts(json.execActionsWithContexts ?? [])
+            setStarted(json.started)
         }).catch(createErrorHandler("Failed to fetch course details.", setError)),
         [id]
     )
-    useEffect(() => void update(), [id, update])
+    useEffect(() => void update(), [id, update]);
+
+    async function startCourse(){
+        CMTJsonFetch('PUT', `course/${id}/start`)
+        .then(update)
+        .catch(createErrorHandler("Failed to start course.", setError))
+    }
 
 
     /** @type FetchToCallback - This annotation is purely cosmetic and not needed! */
@@ -58,6 +72,11 @@ export function CourseDashboard() {
         [actionsWithContexts]
     )
 
+    const startCourseButton = (!course?.isTemplate && execState != null) 
+        ? (started ? 
+            <Button disabled>Course in Progress</Button> : <Button onClick={startCourse}>Start Course</Button>)
+        : null; 
+                    
     return (
         <>
             <div className='flex items-center mb-4'>
@@ -68,7 +87,7 @@ export function CourseDashboard() {
                 : course === null
                 ? <p> Loading </p>
                 : <>
-                    <CourseInfo course={course} />
+                    <CourseInfo course={course} action={startCourseButton} />
                     <div className="py-3"><TeachingStaff key={course.id} course={course} /></div>
                     <CourseSections key={course.id} course={course}>
                     <div className="h-10"></div>
@@ -77,8 +96,13 @@ export function CourseDashboard() {
                             {workflow && (
                                 <CMTWorkflow key={course.id} refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
                             )}
+                            {/* displays course execution workflow & actions on page. decide whether to have on the page or on a separate page */}
+                            {/* {execWorkflow && (
+                                <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={execActionsWithContexts} course={course} workflow={execWorkflow}/>
+                            )} */}
                         </div>
                     </div>
+                    
                     <div className="h-10"></div>
                     <ResourceManager key={course.id} courseId={course.id} />
                     <div className='mb-5 border-b mt-10'>
@@ -95,6 +119,7 @@ export function CourseDashboard() {
                                 updateWorkflow={update}
                                 fetchToCallback={fetchToCallback}
                                 courseId={course.id}
+                                started={started}
                             />
                             <div className='flex justify-end pt-4 mb-4'>
                                 <Button onClick={() => {
@@ -116,7 +141,7 @@ export function CourseDashboard() {
     )
 }
 
-function CourseInfo({ course }) {
+function CourseInfo({ course, action }) {
     return (
         <>
             <div className="flex items-end gap-14 mt-2 w-100 p-6 pb-4 rounded-t-lg text-xl" style={{ borderBottomWidth: "6px", borderBottomColor: course.color, backgroundColor: `color-mix(in oklab, #fff 85%, ${course.color})` }}>
@@ -134,6 +159,7 @@ function CourseInfo({ course }) {
                     {/* TODO maybe remove? Students are kinda silly to have and a pain to update */}
                     <p className={`mb-0 ${course.students ?? "hidden"}`}>Number of Students: {course.students ?? "TBD"}</p>
                 </div>
+                {action && <div className="ml-auto">{action}</div>}
             </div>
         </>
     )

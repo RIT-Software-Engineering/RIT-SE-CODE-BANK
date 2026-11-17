@@ -5,6 +5,7 @@ import { ReadOnlyEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { SectionApplyScope, useSectionSync } from "./CourseSections";
+import { toNotifyResult } from "../../components/NotifyMessage";
 
 const STATUS_LABELS = {
     NOT_STARTED: "Not started",
@@ -18,7 +19,7 @@ const STATUS_CLASSES = {
     COMPLETED: "bg-success text-white"
 };
 
-export function SessionBlocks({session, sessions, blocks, materials, refresh, onEditMaterial, setError, createOpen, onCreateClose}) {
+export function SessionBlocks({session, sessions, blocks, materials, refresh, onEditMaterial, setError, createOpen, onCreateClose, showNotify, onNotifyResult}) {
     const [blockName, setBlockName] = useState("");
     const [applyToAll, setApplyToAll] = useState(false);
     const {refreshSync, hasRelatedSections} = useSectionSync();
@@ -34,7 +35,10 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
         .sort((a, b) => a.position - b.position || a.id - b.id);
 
     useEffect(() => {
-        if (blockToMove) setTargetSessionId(String(blockToMove.sessionId));
+        if (blockToMove){ 
+            setTargetSessionId(String(blockToMove.sessionId));
+            setNotificationOption("none");
+        }
     }, [blockToMove]);
 
     if (!session) return null;
@@ -62,12 +66,14 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
             .catch(handleError("Failed to update block status."));
     }
 
-    function moveBlock(block, targetId, position) {
+    function moveBlock(block, targetId, position, notify="none") {
         return CMTJsonFetch("PATCH", `/session/blocks/${block.id}/move`, {
             targetSessionId: Number(targetId),
-            targetPosition: position
+            targetPosition: position,
+            notify
         })
-            .then(() => {
+            .then(json => {
+                onNotifyResult(toNotifyResult(json.notified));
                 setBlockToMove(null);
                 setNotificationOption("none");
                 void refreshSync();
@@ -257,20 +263,21 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                             )}
                         </Form.Select>
                     </Form.Group>
-                    <Form.Group>
-                        <Form.Label>Student notification</Form.Label>
-                        <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                            <option value="none">Do not notify students</option>
-                            <option value="students">Prompt to notify students</option>
-                            <option value="personal">Create a personal reminder</option>
-                        </Form.Select>
-                    </Form.Group>
+                    {showNotify && (
+                        <Form.Group>
+                            <Form.Label>Student notification</Form.Label>
+                            <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                                <option value="none">Do not notify students</option>
+                                <option value="now">Notify students now</option>
+                                {/* <option value="personal">Create a personal reminder</option> */}
+                            </Form.Select>
+                        </Form.Group>
+                    )}
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setBlockToMove(null)}>Cancel</Button>
                     <Button onClick={() => {
-                        void notificationOption;
-                        return moveBlock(blockToMove, targetSessionId);
+                        return moveBlock(blockToMove, targetSessionId, undefined, notificationOption);
                     }}>Move block</Button>
                 </Modal.Footer>
             </Modal>

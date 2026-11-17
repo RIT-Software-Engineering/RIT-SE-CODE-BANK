@@ -1,6 +1,6 @@
 import { Edit, Info, Trash2 } from "lucide-react";
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip } from "react-bootstrap";
+import { Accordion, Card, Button, Offcanvas, Form, Table, Alert, Modal, OverlayTrigger, Tooltip, Badge } from "react-bootstrap";
 import { CheckmarkAction} from "@se-code-bank/workflows-ecosystem/components";
 import { ReadOnlyEditor, RichTextEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { useLinkDetection } from "../../components/RichTextEditor/useLinkDetection";
@@ -10,11 +10,53 @@ import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
 import { SectionApplyScope, useSectionSync } from "./CourseSections";
 import { useSearchParams } from "react-router-dom";
+import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
+import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
  * @import { SetStateAction } from "react"
  */
+
+function holidayOnDate(date, holidays){
+    if (!date) return null;
+    const day = date.split('T')[0];
+    return holidays.find(hol =>
+        day >= hol.date.split('T')[0] && day <= (hol.endDate ?? hol.date).split('T')[0]
+    ) ?? null;
+}
+
+// look for sessions that land on/during holidays and return them.
+function sessionConflicts(sessions, blocks, materials, holidays){
+    const conflicts = [];
+
+    for (const session of sessions){
+        const blockCount = blocks.filter(block => block.sessionId === session.id).length;
+        const materialCount = materials.filter(material => 
+            material.sessionNum === session.sessionNum - 1 
+            && material.type !== "Personal Notes"
+        ).length
+
+        if (blockCount === 0 && materialCount === 0) continue;
+
+        if (session.canceled){
+            conflicts.push({session, blockCount, reason:'canceled'});
+            continue
+        }
+
+        if (!session.date) continue;
+
+        const day = session.date.split('T')[0];
+        const holiday = holidays.find(hol => 
+            day >= hol.date.split('T')[0] && day <= (hol.endDate ?? hol.date).split('T')[0]
+        );
+
+        if (holiday){
+            conflicts.push({session, blockCount, reason: 'holiday', holiday});
+        }
+    }
+    return conflicts;
+}
 
 /**
  * A session component, maintains sessionData, whether the session modal is open, and the current session selected.
@@ -30,9 +72,10 @@ import { useSearchParams } from "react-router-dom";
  * @param {() => void} props.updateWorkflow 
  * @param {FetchToCallback} props.fetchToCallback 
  * @param {string} props.courseId - the identifier for which sessionData to obtain
+ * @param {boolean} props.started - whether the course has been started
  * @returns {React.ReactElement} the session accordion as HTML
  */
-export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId}) {
+export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId, started}) {
     const {refreshSync} = useSectionSync();
     const [searchParams] = useSearchParams();
     const reviewSession = Number(searchParams.get("session"));
@@ -61,10 +104,22 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     const [sessionToCancel, setSessionToCancel] = useState(null);
     const [blockSessionIdForCreate, setBlockSessionIdForCreate] = useState(null);
     const [error, setError] = useState(null)
+    const [notifyResult, setNotifyResult] = useState(null);
 
     // We only work with 1 session date at a time, and it gets reset regardless.
     // Probably not the best system and could be improved
     const [sessionDate, setSessionDate] = useState('');
+
+    const [holidays, , loadHolidays] = useHolidays(parseInt(courseId))
+    const isHoliday = sessionDate && holidays.some(holiday =>
+        new Date(sessionDate) >= new Date(holiday.date) && 
+        new Date(sessionDate) <= new Date(holiday.endDate ?? holiday.date)
+    )
+
+    useEffect(() => {
+        window.addEventListener(HOLIDAYS_CHANGED, loadHolidays)
+        return () => window.removeEventListener(HOLIDAYS_CHANGED, loadHolidays)
+    }, [loadHolidays])
 
     /**
      * Initial GET request upon loading the page
@@ -83,12 +138,13 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
     }, [courseId, setSessionCount])
     useEffect(() => void update(), [courseId, update])
 
-    const setCanceled = useCallback((session, canceled) => {
-        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled})
+    const setCanceled = useCallback((session, canceled, notify = "none") => {
+        return CMTJsonFetch("PATCH", `/session/${session.id}/cancellation`, {canceled, notify})
             .then(json => {
                 setSessions(sessions.map(currentSession =>
                     currentSession.id === session.id ? json.session : currentSession
                 ));
+                setNotifyResult(toNotifyResult(json.notified));
                 setSessionToCancel(null);
                 void refreshSync();
             })
@@ -97,32 +153,45 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
 
     if (error) return <CMTDangerAlert error={error} />
 
+    const conflicts = sessionConflicts(sessions, sessionBlocks, sessionData, holidays);
+
     return (
         <Accordion activeKey={activeSession} onSelect={setActiveSession}>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
         isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
         blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}/>
-        <SessionEditModal sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
+        <SessionEditModal showNotify={started} sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId} 
         isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
         setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
         <DeleteModal deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
         materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
+        <NotifyMessage notifyResult={notifyResult} onClose={() => setNotifyResult(null)} />
         <CancelSessionModal
+            showNotify={started}
             session={sessionToCancel}
             onClose={() => setSessionToCancel(null)}
             onConfirm={(notificationOption) => {
-                void notificationOption;
-                return setCanceled(sessionToCancel, true);
+                return setCanceled(sessionToCancel, true, notificationOption);
             }}
         />
+        {conflicts.map(conflict => (
+            <Alert variant="warning" key={conflict.session.id}>
+                {conflict.reason === "canceled" 
+                    ? `Session ${conflict.session.sessionNum} is canceled and has content! `
+                    : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
+                }
+                Move the content to another available session.
+            </Alert>
+        ))}
         {
             Array.from({ length: sessionCount }, (_, i) => {
                 const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
                 let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
                 const currentSession = sessions.find(session => session.sessionNum === i+1);
+                const holiday = holidayOnDate(currentSession?.date, holidays);
 
                 return (
-                    <Accordion.Item eventKey={`${i}`} key={sessionAction} onClick={()=>setSessionNum(i)}>
+                    <Accordion.Item eventKey={`${i}`} key={i} onClick={()=>setSessionNum(i)}>
                         <Accordion.Header>
                             <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
                                 {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
@@ -173,11 +242,13 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                         (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
                                         : "No materials"})
                                     </span>
+                                    {holiday && <Badge bg="warning" text="dark" className="ms-3 fs-6">Holiday: {holiday.name}</Badge>}
                                 </span>
                             </div>
                         </Accordion.Header>
                         <Accordion.Body>
                             <SessionBlocks
+                                showNotify={started}
                                 session={currentSession}
                                 sessions={sessions}
                                 blocks={sessionBlocks}
@@ -190,6 +261,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                     setCurMaterialId(materialId);
                                     setIsEditOpen(true);
                                 }}
+                                onNotifyResult={setNotifyResult}
                             />
                             { sessionData.find(data => data.sessionNum === i) ?
                             <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
@@ -222,31 +294,35 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                                 </Card.Body>
                             </Card> : <></>
                             }
-
-                            {sessionDate ? 
-                            <Form className="flex max-w-[30%] gap-2 items-center"
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                console.log(sessionDate)
-                                CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
-                                    const sessionsCopy = sessions.map(session => {
-                                        if (session.sessionNum === i+1) 
-                                            return {...session, date: sessionDate}
-                                        return session
-                                    });
-                                    setSessions(sessionsCopy);
-                                    setSessionDate('');
-                                })
-                            }}>
-                                <Form.Label>Date: </Form.Label>
-                                <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
-                                <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
-                                <Button type="submit" variant="success">Submit</Button>
-                            </Form> :
+                            {
+                            sessionDate ? 
+                            <>
+                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the schedule.</Alert>}
+                                <Form className="flex max-w-[30%] gap-2 items-center"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    console.log(sessionDate)
+                                    CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
+                                        const sessionsCopy = sessions.map(session => {
+                                            if (session.sessionNum === i+1) 
+                                                return {...session, date: sessionDate}
+                                            return session
+                                        });
+                                        setSessions(sessionsCopy);
+                                        setSessionDate('');
+                                    })
+                                }}>
+                                    <Form.Label>Date: </Form.Label>
+                                    <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
+                                    <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
+                                    <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
+                                </Form>
+                            </> :
                             <div className="flex gap-3 items-center">
                                 <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
                                 <Button variant="outline-secondary" onClick={() => {
                                     setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
+                                    loadHolidays()
                                     }} size="sm">Edit</Button>
                             </div>
                             }
@@ -278,7 +354,7 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
   );
 }
 
-function CancelSessionModal({session, onClose, onConfirm}) {
+function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
     const [notificationOption, setNotificationOption] = useState('none');
     const [submitting, setSubmitting] = useState(false);
     const isFutureSession = Boolean(session?.date && session.date > new Date().toISOString().split('T')[0]);
@@ -303,14 +379,16 @@ function CancelSessionModal({session, onClose, onConfirm}) {
             </Modal.Header>
             <Modal.Body>
                 <p>This session will remain on the schedule and be marked as canceled.</p>
-                <Form.Group>
-                    <Form.Label>Student notification</Form.Label>
-                    <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                        <option value="none">Do not send a notification</option>
-                        <option value="now">Send a notification now</option>
-                        {isFutureSession && <option value="scheduled">Schedule a notification</option>}
-                    </Form.Select>
-                </Form.Group>
+                {showNotify && (
+                    <Form.Group>
+                        <Form.Label>Student notification</Form.Label>
+                        <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
+                            <option value="none">Do not send a notification</option>
+                            <option value="now">Send a notification now</option>
+                            {/* {isFutureSession && <option value="scheduled">Schedule a notification</option>} */}
+                        </Form.Select>
+                    </Form.Group>
+                )}
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={close} disabled={submitting}>Keep session</Button>
@@ -609,11 +687,12 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
  * @param {Number} props.sessionCount 
  * @param {Array} props.sessions
  * @param {Array} props.blocks
+ * @param {Boolean} props.showNotify - whether to show the notification option in the modal
  * @returns {React.ReactElement} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, 
     isEditOpen, setIsEditOpen, courseId, 
-    setDeleteOpen, setMaterialId, sessionCount, sessions, blocks }){
+    setDeleteOpen, setMaterialId, sessionCount, sessions, blocks, showNotify }){
     const curMaterial = sessionData.find(material => material.id === materialId);
     
     const [itemLabel, setItemLabel] = useState(curMaterial?.label ?? "");
@@ -672,7 +751,9 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
 
     function requestMaterialUpdate() {
         if (!itemLabel.startsWith("<p>") || !itemLabel.replace(/<p>.+<\/p>/, ""))
-            setUpdatePromptOpen(true);
+            if (showNotify) 
+                setUpdatePromptOpen(true);
+            else updateMaterial();
         else
             setWarningVisible(true);
     }
@@ -812,8 +893,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                 <Form.Label>Student notification</Form.Label>
                                 <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
                                     <option value="none">Do not notify students</option>
-                                    <option value="students">Prompt to notify students</option>
-                                    <option value="personal">Create a personal reminder</option>
+                                    {/* <option value="students">Prompt to notify students</option> */}
+                                    {/* <option value="personal">Create a personal reminder</option> */}
                                 </Form.Select>
                             </Form.Group>
                         </Modal.Body>

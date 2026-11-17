@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../prisma/generated/client/index.js';
 
 dotenv.config();
 const prisma = new PrismaClient();
