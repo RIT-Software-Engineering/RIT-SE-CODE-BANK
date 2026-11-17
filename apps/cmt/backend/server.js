@@ -7,10 +7,17 @@ import jwt from "jsonwebtoken";
 import authMiddleware from "./authMiddleware.js";
 
 import courseRoutes from "./routes/course.js";
+import sectionRoutes from "./routes/sections.js";
 import makeTeamBuilderRouter from "./routes/teamBuilder.js";
 import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
+import makeStudentRouter from './routes/students.js';
+import makeAuthRouter from './routes/auth.js';
+import makeTeachingRouter from './routes/teaching.js';
+import requireTeachingInstructor from './middleware/requireTeachingInstructor.js';
+import { isInstructor } from './middleware/requireInstructor.js';
+import { isStudentUser, studentForUser } from './utils/students.js';
 import holidayRoutes from './routes/holidays.js'; // add holiday route
 import notificationRoutes from "./routes/notifications.js"
 import noteRoutes from "./routes/notes.js"
@@ -21,6 +28,7 @@ import { readFileSync } from "fs";
 import dotenv from "dotenv";
 import { CMTErrorToString, serializeError } from "@se-code-bank/cmt-shared-utilities";
 import { getTimeString } from "../shared-utilities/cmtLogging.js";
+import { startRunner } from "./utils/notifRunner.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -43,6 +51,7 @@ const BASE_URL = process.env.BASE_URL || `http://localhost:${BACKEND_PORT}`;
 
 const allowedOrigins = [
   `http://localhost:${FRONTEND_PORT}`, // from .env (e.g., 3010)
+  "http://localhost:3011",            // Alternate local frontend port
   "http://localhost:3000",            // CRA default
   "http://apps-staging.se.rit.edu",   // staging
   "https://apps-staging.se.rit.edu",   // staging
@@ -119,11 +128,14 @@ app.post("/api/cmt/dev/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
+    const student = isStudentUser(user) ? await studentForUser(prisma, user) : null;
+
     // Create JWT token with user data from dev-users.json
     const token = jwt.sign(
       { 
         uid: user.uid,
-        professorId: user.id,
+        professorId: isInstructor(user) ? user.id : undefined,
+        ...(student && {studentProfileId: student.id}),
         email: user.email,
         name: user.name,
         givenName: user.givenName,
@@ -153,6 +165,7 @@ app.post("/api/cmt/dev/login", async (req, res) => {
         email: user.email,
         roles: user.roles,
         affiliations: user.affiliations,
+        ...(student && {studentProfileId: student.id}),
       },
     });
   } catch (error) {
@@ -189,10 +202,13 @@ app.get("/", (_req, res) => {
 });
 
 // API Routes
-app.use("/api/cmt/course", courseRoutes);
-app.use("/api/cmt/team-builder", teamBuilderRoutes);
-app.use("/api/cmt/workflow", workflowRoutes)
-app.use("/api/cmt/session", sessionRoutes);
+app.use("/api/cmt/auth", makeAuthRouter(prisma));
+app.use("/api/cmt/students", makeStudentRouter(prisma));
+app.use("/api/cmt/teaching", makeTeachingRouter(prisma));
+app.use("/api/cmt/course", requireTeachingInstructor, sectionRoutes, courseRoutes);
+app.use("/api/cmt/team-builder", requireTeachingInstructor, teamBuilderRoutes);
+app.use("/api/cmt/workflow", requireTeachingInstructor, workflowRoutes)
+app.use("/api/cmt/session", requireTeachingInstructor, sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
 app.use("/api/cmt/holidays", holidayRoutes);
 app.use("/api/cmt/notifications", notificationRoutes);
@@ -249,4 +265,5 @@ app.listen(BACKEND_PORT, () => {
     `Server running on port ${BACKEND_PORT}
 and URL: ${BASE_URL}/api`
   );
+  startRunner();
 });

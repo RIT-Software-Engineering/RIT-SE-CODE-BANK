@@ -11,7 +11,7 @@ import {
     WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
-import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { CMTDangerAlert, createErrorHandler, handleError } from "../utils/error.jsx";
 
 /**
@@ -43,7 +43,13 @@ export function BuilderPageAdmin({isAdmin}){
     ["COURSE_START_DATE", "Start Date"],
     ["COURSE_HOLIDAYS", "Course Holidays"],
     ["CHECKMARK_PUBLISH_SITE", "Publish Site Checkmark"],
-    ["START_COURSE", "Start Course"]];
+    ["START_COURSE", "Start Course"],
+    ["SEND_HOLIDAY_NOTICE", "Send Holiday Notice"],
+    ["SEND_HOLIDAY_CHANGE", "Send Holiday Change Notification"],
+    ["SEND_CANCELLED_CLASS", "Send Cancelled Class Notification"],
+    ["SEND_MOVED_CONTENT", "Send Moved Content Notification"],
+    ["SEND_WELCOME", "Send Welcome Message"],
+    ["SEND_MATERIAL_CHANGE", "Send Course Material Change Notification"]];
     const [loading, setLoading] = useState(true);
     const [parentId, setParentId] = useState("");
     const [depthLevel, setDepthLevel] = useState(0);
@@ -1068,7 +1074,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         if (!isWorkflowChild){
             // If this is the first action then we set the root action
             if (workflowsCopy[index].actions.length === 1 && workflowParent.id === workflowsCopy[index].id)
-                await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
+                await CMTJsonFetch("PUT", `workflow/workflowTemplate/${workflows[index].attributeId}/root`, {
                 rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             else 
                 setWorkflows(workflowsCopy);
@@ -1078,7 +1084,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             if (workflowParent.childActionsWithContexts.length > 1)
                 setWorkflows(workflowsCopy);
             else {
-                await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
+                await CMTJsonFetch("PUT", `workflow/actionTemplate/workflow/${workflowParent.id}/root`, {
                 rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             }
         }

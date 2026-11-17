@@ -4,10 +4,48 @@ import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
 import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { actionCodeForEvent } from "../utils/courseExecution.js";
+import { accessError, authorizeActionState, resolveSectionIdentity, sectionAccess } from "../utils/sectionPermissions.js";
+import { authorizeWorkflow, authorizeWorkflowAction } from "../utils/workflowPermissions.js";
+import { isInstructor } from "../middleware/requireInstructor.js";
 
 const prisma = new PrismaClient();
 const router = express.Router();
 export default router
+
+router.use(async (req, _res, next) => {
+    try {
+        const identity = await resolveSectionIdentity(prisma, req.user);
+        if (!identity.professorId) throw accessError("Instructor access required");
+        req.user = {...req.user, uid: identity.professorId};
+        const parts = req.path.split("/").filter(Boolean);
+        if (parts[0] === "editCheckmarkAction") {
+            await authorizeActionState(prisma, req.user, req.query.asid, req.query.courseId, workflowsFetch);
+        } else if (parts[0] === "publishCourseTemplate") {
+            await sectionAccess(prisma, req.user, req.query.courseId, "manageStaff");
+            await authorizeActionState(prisma, req.user, req.query.asid, req.query.courseId, workflowsFetch);
+        } else if (parts[0] === "editDownloadCourseAction") {
+            const course = await prisma.course.findFirst({where: {workflowId: req.body.workflowId}});
+            if (!course) throw accessError("Section workflow not found", 404);
+            await sectionAccess(prisma, req.user, course.id, "editMaterials");
+        } else if (parts[0] === "workflowTemplate" && parts[1]) {
+            await authorizeWorkflow(prisma, req.user, parts[1]);
+        } else if (parts[0] === "actionTemplate") {
+            if (req.method === "GET") await authorizeWorkflow(prisma, req.user, parts[2], {readOnly: true});
+            else if (req.method === "POST") {
+                if (!isInstructor(req.user)) throw accessError("Instructor access required");
+                if (req.body.parentActionId) await authorizeWorkflowAction(prisma, req.user, req.body.parentActionId);
+            } else if (parts[1] === "workflow") {
+                await authorizeWorkflowAction(prisma, req.user, parts[2]);
+            } else {
+                await authorizeWorkflowAction(prisma, req.user, parts[2]);
+                if (req.body?.nextActionId) await authorizeWorkflowAction(prisma, req.user, req.body.nextActionId);
+            }
+        } else if (req.method !== "GET" && !isInstructor(req.user)) throw accessError("Instructor access required");
+        if (req.body?.rootActionId) await authorizeWorkflowAction(prisma, req.user, req.body.rootActionId);
+        next();
+    } catch (error) { next(error); }
+});
 
 function findActionsWithContextsByCode(actionsWithContexts, code) {
     const matchingActions = [];
@@ -148,6 +186,16 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     return res.status(200).json({workflow: updatedWorkflow});
 });
 
+router.put("/workflowTemplate/:workflowId/root", async (req, res) => {
+    const workflow = await workflowsFetch("PUT", `workflows/${req.params.workflowId}`, {rootActionId: req.body.rootActionId});
+    res.json({workflow});
+});
+
+router.put("/actionTemplate/workflow/:workflowId/root", async (req, res) => {
+    const workflow = await workflowsFetch("PUT", `workflows/action/${req.params.workflowId}`, {rootActionId: req.body.rootActionId});
+    res.json({workflow});
+});
+
 // workflow/workflowTemplate/:workflowId
 router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     const {workflowId} = req.params;
@@ -221,7 +269,8 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     );
 
     const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
-        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", "START_COURSE"].filter(
+        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", 
+        "START_COURSE", ...Object.values(actionCodeForEvent)].filter(
         code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
     );
 

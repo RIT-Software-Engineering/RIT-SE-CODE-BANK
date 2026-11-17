@@ -48,7 +48,8 @@ export function CourseOverview() {
                         <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
-                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
+                                    <Badge bg="light" text="dark" className="mr-auto self-start">Section {course.section || "TBD"}</Badge>
+                                    {course.capabilities?.manageStaff && <Settings className={`hidden group-hover:block size-10 hover:size-12
                                     ${isDarkColor(course.color) ? 
                                         "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
                                     }
@@ -56,7 +57,8 @@ export function CourseOverview() {
                                         e.stopPropagation();
                                         setEditModalOpen(true);
                                         setCourse(course);
-                                    }} />
+                                    }} />}
+                                    <Badge bg="secondary" className="self-start">{course.sectionRole}</Badge>
                                 </Card.Header>
                                 <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
                                     {course.classId} - {course.name}</Card.Body>
@@ -71,7 +73,8 @@ export function CourseOverview() {
                         <Col md={4} key={course}>
                             <Card className={`w-xl group hover:cursor-pointer`} onClick={() => navigate(`/courses/${course.id}`)}>
                                 <Card.Header style={{background: course.color}} className='h-28 flex justify-end'>
-                                    <Settings className={`hidden group-hover:block size-10 hover:size-12
+                                    <Badge bg="light" text="dark" className="mr-auto self-start">Section {course.section || "TBD"}</Badge>
+                                    {course.capabilities?.archiveSection && <Settings className={`hidden group-hover:block size-10 hover:size-12
                                     ${isDarkColor(course.color) ? 
                                         "text-gray-300 hover:text-white" : "text-gray-500 hover:text-black" }`
                                     }
@@ -79,7 +82,7 @@ export function CourseOverview() {
                                         e.stopPropagation();
                                         setArchiveOpen(true);
                                         setCourse(course);
-                                    }} />
+                                    }} />}
                                 </Card.Header>
                                 <Card.Body className='h-28 text-2xl group-hover:underline group-hover:text-blue-500'>
                                     {course.classId} - {course.name}</Card.Body>
