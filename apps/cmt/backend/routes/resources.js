@@ -5,8 +5,14 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
+import { authorizeActionState, authorizeSection } from '../utils/sectionPermissions.js'
 
 const router = express.Router()
+const courseGuard = authorizeSection(null, "editMaterials", "courseId")
+const resourceGuard = capability => authorizeSection(null, capability, async req => {
+    const resource = await req.prisma.resource.findUnique({where: {id: req.params.id}})
+    return resource?.courseId
+})
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -67,7 +73,7 @@ const upload = multer({
  * GET /api/cmt/resources/:courseId
  * Get all resources for a course
  */
-router.get('/:courseId', async (req, res) => {
+router.get('/:courseId', courseGuard, async (req, res) => {
     const { courseId } = req.params
     const resources = await req.prisma.resource.findMany({
         where: { courseId: parseInt(courseId), isSyllabus: false, },
@@ -80,7 +86,7 @@ router.get('/:courseId', async (req, res) => {
  * POST /api/cmt/resources/:courseId
  * Upload a new resource
  */
-router.post('/:courseId', upload.single('file'), async (req, res, next) => {
+router.post('/:courseId', courseGuard, upload.single('file'), async (req, res, next) => {
     try {
         const { courseId } = req.params
         const { name } = req.body
@@ -116,7 +122,7 @@ router.post('/:courseId', upload.single('file'), async (req, res, next) => {
  * PUT /api/cmt/resources/:id
  * Update resource name
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', resourceGuard("editMaterials"), async (req, res) => {
     const { id } = req.params
     const { name } = req.body
 
@@ -152,7 +158,12 @@ const syllabusUpload = multer({
  * POST /api/cmt/resources/syllabus/:courseId
  * Creates a syllabus if one doesn't exist or updates the file if one does
  */
-router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, res) => {
+router.post('/syllabus/:courseId', courseGuard, async (req, _res, next) => {
+    try {
+        if (req.query.asid) await authorizeActionState(req.prisma, req.user, req.query.asid, req.params.courseId, workflowsFetch)
+        next()
+    } catch (error) { next(error) }
+}, syllabusUpload.single('file'), async (req, res) => {
     try {
         const { courseId } = req.params
 
@@ -160,9 +171,7 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
         if (!req.file)
             return res.status(400).json({ error: 'No file uploaded' })
         
-        const course = await req.prisma.course.findUnique({
-            where: {id: parseInt(courseId), professorId: req.user.uid}
-        })
+        const course = req.sectionAccess.course
         
         let resource;
         
@@ -172,7 +181,7 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
         
         if (existingSyllabus.length > 0) {
             resource = await req.prisma.resource.updateMany({
-                where: {isSyllabus: true},
+                where: {isSyllabus: true, courseId: course.id},
                 data: {
                     filename: req.file.originalname,
                     mimeType: req.file.mimetype,
@@ -200,7 +209,7 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
             });
         }
 
-        const { uid: _userId, asid: actionStateId } = req.query
+        const { asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
         
         res.status(200).json(resource)
@@ -213,7 +222,7 @@ router.post('/syllabus/:courseId', syllabusUpload.single('file'), async (req, re
  * GET /api/cmt/resources/syllabus/:courseId
  * Get syllabus resource of a course
  */
-router.get('/syllabus/:courseId', async (req, res) => {
+router.get('/syllabus/:courseId', courseGuard, async (req, res) => {
     try {
         const { courseId } = req.params
         const resources = await req.prisma.resource.findMany({
@@ -230,12 +239,14 @@ router.get('/syllabus/:courseId', async (req, res) => {
  * GET /api/cmt/resources/id/:id
  * Get a single resource by ID
  */
-router.get('/id/:id', async (req, res) => {
+router.get('/id/:id', resourceGuard("viewTeaching"), async (req, res) => {
     try {
         const { id } = req.params;
 
         const resource = await req.prisma.resource.findUnique({
             where: { id },
+            select: {id: true, name: true, filename: true, mimeType: true, courseId: true, isSyllabus: true,
+                createdAt: true, updatedAt: true, sharedKey: true},
         });
 
         if (!resource) {
@@ -253,7 +264,7 @@ router.get('/id/:id', async (req, res) => {
  * DELETE /api/cmt/resources/:id
  * Delete resource and file
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', resourceGuard("editMaterials"), async (req, res) => {
     const { id } = req.params
 
     const resource = await req.prisma.resource.findUnique({
@@ -264,7 +275,10 @@ router.delete('/:id', async (req, res) => {
         return res.status(404).json({ error: new CMTError({ userFacingMessage: `Resource with ID ${id} not found` }) })
     }
 
-    if (fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
+    const otherReferences = await req.prisma.resource.count({
+        where: {filePath: resource.filePath, id: {not: resource.id}}
+    });
+    if (otherReferences === 0 && fs.existsSync(resource.filePath)) fs.unlinkSync(resource.filePath)
 
     await req.prisma.resource.delete({
         where: { id: id },
@@ -277,7 +291,7 @@ router.delete('/:id', async (req, res) => {
  * GET /api/cmt/resources/download/:id
  * Download resource file
  */
-router.get('/download/:id', async (req, res) => {
+router.get('/download/:id', resourceGuard("viewTeaching"), async (req, res) => {
     // Find in DB
     const { id } = req.params
     const resource = await req.prisma.resource.findUnique({

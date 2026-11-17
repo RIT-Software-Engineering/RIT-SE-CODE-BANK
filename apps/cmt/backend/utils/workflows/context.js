@@ -22,7 +22,7 @@ function CMTDetermineCallbackFactory(courseId, userId) {
         } if (code === 'COURSE_SEMESTER') {
             return `course/${courseId}?uid=${userId}&asid=${asid}`
         } if (code.includes('CHECKMARK') || code.includes("SESSION_")) {
-            return `workflow/editCheckmarkAction?uid=${userId}&asid=${asid}`
+            return `workflow/editCheckmarkAction?courseId=${courseId}&uid=${userId}&asid=${asid}`
         } if (code === "PUBLISH_TEMPLATE") {
             return `workflow/publishCourseTemplate?courseId=${courseId}&asid=${asid}`
         } if (code === 'COURSE_DAYS') {
