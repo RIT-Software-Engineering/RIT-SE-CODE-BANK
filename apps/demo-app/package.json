@@ -9,7 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@rit/teambuilding-components" : "*",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.11",
+    "@mui/material": "^7.3.11",
+    "@rit/peereval-components": "^1.0.0",
+    "@rit/teambuilding-components": "*",
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0"

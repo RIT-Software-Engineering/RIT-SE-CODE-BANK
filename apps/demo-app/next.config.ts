@@ -4,7 +4,10 @@ import path from "node:path";
 
 const nextConfig: NextConfig = {
   /* config options here */
-  transpilePackages: ["@rit/teambuilding-components"],
+  transpilePackages: [
+    "@rit/teambuilding-components",
+    "@rit/peereval-components",
+  ],
   experimental: {
     agentFeedback: true,
   },
