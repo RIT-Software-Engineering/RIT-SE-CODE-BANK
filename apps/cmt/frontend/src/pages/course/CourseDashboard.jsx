@@ -10,6 +10,8 @@ import { Session } from './Session.jsx'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx'
 import { PendingNotifications } from '../../components/PendingNotification.jsx'
 import { NotificationPreview } from '../../components/NotificationPreview.jsx'
+import { CourseSections } from './CourseSections.jsx'
+import TeachingStaff from './TeachingStaff.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -88,11 +90,13 @@ export function CourseDashboard() {
                 ? <p> Loading </p>
                 : <>
                     <CourseInfo course={course} action={startCourseButton} />
+                    <div className="py-3"><TeachingStaff key={course.id} course={course} /></div>
+                    <CourseSections key={course.id} course={course}>
                     <div className="h-10"></div>
                     <div className="flex justify-center">
                         <div className="max-w-screen-xl w-full">
                             {workflow && (
-                                <CMTWorkflow refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
+                                <CMTWorkflow key={course.id} refresh={update} fetchToCallback={fetchToCallback} actionsWithContexts={actionsWithContexts} course={course} workflow={workflow}/>
                             )}
                             {/* displays course execution workflow & actions on page. decide whether to have on the page or on a separate page */}
                             {/* {execWorkflow && (
@@ -102,7 +106,7 @@ export function CourseDashboard() {
                     </div>
                     
                     <div className="h-10"></div>
-                    <ResourceManager courseId={course.id} />
+                    <ResourceManager key={course.id} courseId={course.id} />
                     {started && !course?.isTemplate && (
                         <>
                             <PendingNotifications courseId={course.id} />
@@ -116,6 +120,7 @@ export function CourseDashboard() {
                     <div className="flex justify-center">
                         <div className="max-w-screen-xl w-full">
                             <Session
+                                key={course.id}
                                 sessionCount={sessionCount} setSessionCount={setSessionCount}
                                 sessions={sessions} setSessions={setSessions}
                                 sessionActions={sessionActions}
@@ -137,6 +142,7 @@ export function CourseDashboard() {
                             </div>
                         </div>
                     </div>
+                    </CourseSections>
                 </>
             }
         </>

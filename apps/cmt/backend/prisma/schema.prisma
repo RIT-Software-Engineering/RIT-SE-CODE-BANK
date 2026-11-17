@@ -14,9 +14,25 @@ model Professor {
   lname           String
   email           String
   courses         Course[]
+  offerings       CourseOffering[]
   tbteamset       TBTeamSet[]
+  teachingSections SectionInstructor[] @relation("TeachingInstructor")
+  instructorAssignments SectionInstructor[] @relation("InstructorAssignedBy")
+  taAssignments SectionTA[]
+  syncAcknowledgments SectionSyncAcknowledgment[]
 
   @@map("professors")
+}
+
+model Student {
+  id          String         @id @default(uuid()) @db.Char(36)
+  fname       String?
+  lname       String?
+  email       String         @unique @db.VarChar(254)
+  enrollments TBEnrollment[]
+  teachingSections SectionTA[]
+
+  @@map("students")
 }
 
 model Course {
@@ -44,6 +60,80 @@ model Course {
   syllabusName        String?       // The actual syllabus is found in resources
   Resource        Resource[]
   isTemplate      Boolean       @default(false)
+  offeringId      Int?
+  offering        CourseOffering? @relation(fields: [offeringId], references: [id])
+  instructors     SectionInstructor[]
+  teachingAssistants SectionTA[]
+
+  @@unique([offeringId, section])
+}
+
+model CourseOffering {
+  id          Int      @id @default(autoincrement())
+  name        String
+  classId     String
+  season      String?
+  year        Int?
+  startDate   String?
+  professorId String
+  professor   Professor @relation(fields: [professorId], references: [id])
+  sections    Course[]
+  syncIssues  SectionSyncIssue[]
+}
+
+model SectionInstructor {
+  id                    Int       @id @default(autoincrement())
+  courseId              Int
+  professorId           String
+  assignedByProfessorId String
+  createdAt             DateTime  @default(now())
+  course                Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  professor             Professor @relation("TeachingInstructor", fields: [professorId], references: [id], onDelete: Cascade)
+  assignedBy            Professor @relation("InstructorAssignedBy", fields: [assignedByProfessorId], references: [id])
+
+  @@unique([courseId, professorId])
+  @@index([professorId])
+}
+
+model SectionTA {
+  id                    Int       @id @default(autoincrement())
+  courseId              Int
+  studentProfileId      String    @db.Char(36)
+  assignedByProfessorId String
+  createdAt             DateTime  @default(now())
+  course                Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student               Student   @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  assignedBy            Professor @relation(fields: [assignedByProfessorId], references: [id])
+
+  @@unique([courseId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model SectionSyncAcknowledgment {
+  issueId     Int
+  professorId String
+  occurrence  Int
+  dismissedAt DateTime @default(now())
+  issue       SectionSyncIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  professor   Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, professorId])
+  @@index([professorId])
+}
+
+model SectionSyncIssue {
+  id          Int      @id @default(autoincrement())
+  offeringId  Int
+  issueKey    String   @db.VarChar(191)
+  details     Json
+  resolved    Boolean  @default(false)
+  occurrence  Int      @default(1)
+  dismissedAt DateTime?
+  updatedAt   DateTime @updatedAt
+  offering    CourseOffering @relation(fields: [offeringId], references: [id])
+  acknowledgments SectionSyncAcknowledgment[]
+
+  @@unique([offeringId, issueKey])
 }
 
 model Session {
@@ -58,6 +148,10 @@ model Session {
   course      Course  @relation(fields: [courseId], references: [id])
   material    SessionMaterial[]
   blocks      SessionBlock[]
+  sharedKey   String? @default(uuid())
+  teachingWeek Int?
+
+  @@index([courseId, sharedKey])
 }
 
 model SessionMaterial {
@@ -71,6 +165,9 @@ model SessionMaterial {
   blockId     Int?
   session     Session @relation(fields: [sessionId], references: [id])
   block       SessionBlock? @relation(fields: [blockId], references: [id], onDelete: SetNull)
+  sharedKey   String? @default(uuid())
+
+  @@index([sharedKey])
 }
 
 model SessionBlock {
@@ -81,8 +178,10 @@ model SessionBlock {
   sessionId Int
   session   Session            @relation(fields: [sessionId], references: [id])
   material  SessionMaterial[]
+  sharedKey String? @default(uuid())
 
   @@index([sessionId, position])
+  @@index([sharedKey])
 }
 
 model TBEnrollment {
@@ -95,10 +194,14 @@ model TBEnrollment {
   createdAt DateTime   @default(now())
   course    Course     @relation(fields: [courseId], references: [id])
   members   TBMember[]
+  studentProfileId String? @db.Char(36)
+  studentProfile Student? @relation(fields: [studentProfileId], references: [id], onDelete: Restrict)
 
   @@unique([courseId, email])
   @@unique([courseId, studentId])
+  @@unique([courseId, studentProfileId])
   @@index([courseId])
+  @@index([studentProfileId])
 }
 
 model TBMember {
@@ -155,6 +258,7 @@ model Resource {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isSyllabus Boolean @default(false)
+  sharedKey  String? @default(uuid())
   course    Course   @relation(fields: [courseId], references: [id])
 
   @@index([courseId])

@@ -8,6 +8,8 @@ import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { CMTError, extractUserFacingError } from "@se-code-bank/cmt-shared-utilities";
 import { SessionBlocks } from "./SessionBlocks";
+import { SectionApplyScope, useSectionSync } from "./CourseSections";
+import { useSearchParams } from "react-router-dom";
 import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
 import { emptyNotifyBody, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
@@ -76,6 +78,16 @@ function sessionConflicts(sessions, blocks, materials, holidays){
  * @returns {React.ReactElement} the session accordion as HTML
  */
 export function Session({sessionCount, setSessionCount, sessions, setSessions, sessionActions, updateWorkflow, fetchToCallback, courseId, started}) {
+    const {refreshSync} = useSectionSync();
+    const [searchParams] = useSearchParams();
+    const reviewSession = Number(searchParams.get("session"));
+    const [activeSession, setActiveSession] = useState(null);
+    useEffect(() => {
+        if (reviewSession > 0) {
+            setActiveSession(String(reviewSession - 1));
+            document.getElementById("sessions")?.scrollIntoView({block: "start"});
+        }
+    }, [reviewSession]);
     /**
      * sessionData is an array of objects that holds data regarding session material. Contains:
      * sessionNum - the session the material belongs to
@@ -137,15 +149,17 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 setNotifyResult(toNotifyResult(json.notified, json.scheduled));
                 notifyListChanged();
                 setSessionToCancel(null);
+                void refreshSync();
             })
-    }, [sessions, setSessions]);
+            .catch(createErrorHandler("Failed to update session cancellation.", setError));
+    }, [sessions, setSessions, refreshSync]);
 
     if (error) return <CMTDangerAlert error={error} />
 
     const conflicts = sessionConflicts(sessions, sessionBlocks, sessionData, holidays);
 
     return (
-        <Accordion>
+        <Accordion activeKey={activeSession} onSelect={setActiveSession}>
         <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
         isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
         blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}
@@ -425,12 +439,15 @@ const sessionCheckmarkRenderers = {
  * @param {(editModalOpen: Boolean) => void} props.setEditModalOpen - Used to close the edit modal if deleting a single item
  * @param {string} props.courseId - Used to delete all of a session's material. Unused if deleting a single item
  * @param {Number} props.sessionNum - Used to delete all of a session's material. Unused if deleting a single item
+ * @param {Boolean} props.showNotify - Whether to show the notify checkbox. Only shows if deleting a single item
+ * @param {(notifyResult: Object) => void} props.onNotifyResult - Callback to handle the result of the notification after deletion
  * @returns {React.ReactElement} 
  */
 function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, setMaterialId,
     materialId, setEditModalOpen, 
     courseId, sessionNum, showNotify, onNotifyResult}){
     const [notifyNow, setNotifyNow] = useState(false);
+    const {refreshSync} = useSectionSync();
 
     const closeModal = () => {
         setNotifyNow(false);
@@ -446,6 +463,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
                 return material;
             });
             setSessionData(sessionDataCopy);
+            void refreshSync();
         });
         closeModal();
     };
@@ -457,6 +475,7 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
             setSessionData(sessionDataCopy);
             onNotifyResult(toNotifyResult(json.notified));
             notifyListChanged();
+            void refreshSync();
         });
         setEditModalOpen(false);
         closeModal();
@@ -510,6 +529,8 @@ function DeleteModal({deleteOpen, setDeleteOpen, sessionData, setSessionData, se
  * @param {string} props.courseId - the course ID for resource linking
  * @param {string} props.defaultMaterialType - What the material type dropdown should start as. Default is Topic/Lecture
  * @param {React.Dispatch<SetStateAction<string>>} props.setDefaultMaterialType - state setter for defaultMaterialType
+ * @param {boolean} props.showNotify - whether to show the notify checkbox
+ * @param {(notifyResult: Object) => void} props.onNotifyResult - Callback to handle the result of the notification after upload
  * @returns {React.ReactElement} the modal as HTML
  */
 export function SessionModal({ sessionNum, sessionData, setSessionData, 
@@ -520,6 +541,8 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
     const [itemType, setItemType] = useState(defaultMaterialType);
     const [notifyNow, setNotifyNow] = useState(false);
     const [blockId, setBlockId] = useState("");
+    const [applyToAll, setApplyToAll] = useState(false);
+    const {refreshSync} = useSectionSync();
     const [error, setError] = useState('');
     const [titleEditor, setTitleEditor] = useState(null);
     const hasLinksInTitle = useLinkDetection(titleEditor);
@@ -529,6 +552,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
         setItemLabel('');
         setItemBody('');
         setBlockId('');
+        setApplyToAll(false);
         setError('');
         setNotifyNow(false);
     }, [setDefaultMaterialType])
@@ -543,7 +567,8 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
             itemBody: hasLinksInTitle ? undefined : itemBody,
             sessionNum,
             blockId: blockId ? Number(blockId) : null,
-            notify: notifyNow ? 'now' : 'none'
+            notify: notifyNow ? 'now' : 'none',
+            applyToAll
         })
             .then(async json => {
                 setSessionData(sessionData => [...sessionData, json.material])
@@ -551,9 +576,10 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
                 notifyListChanged()
                 setIsOpen(false)
                 resetForm()
+                void refreshSync();
             })
             .catch(createErrorHandler("Error uploading material", setError))
-    }, [blockId, hasLinksInTitle, itemBody, itemLabel, itemType, notifyNow, onNotifyResult, resetForm, sessionNum, sessions, setIsOpen, setSessionData])
+    }, [applyToAll, blockId, hasLinksInTitle, itemBody, itemLabel, itemType, resetForm, sessionNum, sessions, setIsOpen, setSessionData, refreshSync, notifyNow, onNotifyResult])
 
     function handleClose() {
         setIsOpen(false);
@@ -602,6 +628,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
                             </div>
 
                             <div className="mb-3">
+                                <SectionApplyScope value={applyToAll} onChange={setApplyToAll} disabled={itemType === "Personal Notes"} />
                                 <Form.Label>Session block</Form.Label>
                                 <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
                                     <option value="">No block</option>
@@ -690,6 +717,7 @@ export function SessionModal({ sessionNum, sessionData, setSessionData,
  * @param {Array} props.sessions
  * @param {Array} props.blocks
  * @param {Boolean} props.showNotify - whether to show the notification option in the modal
+ * @param {(notifyResult: Object) => void} props.onNotifyResult - Callback to handle the result of the notification after edit
  * @returns {React.ReactElement} the modal as HTML
  */
 function SessionEditModal({ sessionData, setSessionData, materialId, 
@@ -702,6 +730,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
     const [itemType, setItemType] = useState(curMaterial?.type ?? "Topic/Lecture");
     const [sessionNum, setSessionNum] = useState(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
     const [blockId, setBlockId] = useState(curMaterial?.blockId ? String(curMaterial.blockId) : "");
+    const [applyToAll, setApplyToAll] = useState(false);
+    const {refreshSync} = useSectionSync();
     const [updatePromptOpen, setUpdatePromptOpen] = useState(false);
     const [notificationOption, setNotificationOption] = useState("none");
     const [warningVisible, setWarningVisible] = useState(false);
@@ -731,7 +761,8 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
             sessionNum: realSessionNum,
             sessionId,
             blockId: blockId ? Number(blockId) : null,
-            notify: notificationOption
+            notify: notificationOption,
+            applyToAll
         })
             .then(json => {
                 const sessionDataCopy = sessionData.map(material => {
@@ -745,6 +776,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setIsEditOpen(false);
                 setUpdatePromptOpen(false);
                 setNotificationOption("none");
+                void refreshSync();
                 resetForm();
             })
             .catch(createErrorHandler("Error updating resource", setError))
@@ -779,6 +811,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                 setItemType(curMaterial?.type ?? "Topic/Lecture");
                 setSessionNum(`Session ${(curMaterial?.sessionNum ?? 0) + 1}`);
                 setBlockId(curMaterial?.blockId ? String(curMaterial.blockId) : "");
+                setApplyToAll(false);
             }}
             show={isEditOpen}
             onHide={() => { setIsEditOpen(false); resetForm(); }}
@@ -825,6 +858,7 @@ function SessionEditModal({ sessionData, setSessionData, materialId,
                                     </div>
 
                                     <div className="mb-3">
+                                        <SectionApplyScope value={applyToAll} onChange={setApplyToAll} disabled={itemType === "Personal Notes" || curMaterial?.type === "Personal Notes"} />
                                         <Form.Label>Session block</Form.Label>
                                         <Form.Select value={blockId} onChange={event => setBlockId(event.target.value)}>
                                             <option value="">No block</option>

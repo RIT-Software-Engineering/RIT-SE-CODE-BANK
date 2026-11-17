@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN npm ci --omit-dev
+RUN npm ci --include=dev
 
 RUN npm run --workspace=apps/cmt/frontend build
 

@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { PrismaClient } from './generated/client/index.js';
-import testUsers from '../dev-users.json' with { type: "json" }
+import { readFile } from 'node:fs/promises';
+import { seedDevelopmentUsers } from '../utils/seedUsers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,9 @@ dotenv.config({
 const prisma = new PrismaClient();
 
 async function main() {
+  const testUsers = JSON.parse(await readFile(new URL('../dev-users.json', import.meta.url), 'utf8'));
+  const counts = await seedDevelopmentUsers(prisma, testUsers);
+  console.log(`Development profiles ready: ${counts.professors} instructors and ${counts.students} students/TAs.`);
   
   // Safe to re-run on every start: each professor is only created if no row with that
   // uid exists, and existing rows are left untouched (empty `update`).

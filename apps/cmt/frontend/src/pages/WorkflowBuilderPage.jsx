@@ -11,7 +11,7 @@ import {
     WorkflowComponentRendererAdmin,
     SimpleActionRenderer,
     ComplexActionRenderer } from "../components/workflows/BuilderRenderers.jsx";
-import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { CMTError } from "@se-code-bank/cmt-shared-utilities";
 import { CMTDangerAlert, createErrorHandler, handleError } from "../utils/error.jsx";
 
 /**
@@ -1074,7 +1074,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
         if (!isWorkflowChild){
             // If this is the first action then we set the root action
             if (workflowsCopy[index].actions.length === 1 && workflowParent.id === workflowsCopy[index].id)
-                await workflowsFetch("PUT", `workflows/${workflows[index].attributeId}`, {
+                await CMTJsonFetch("PUT", `workflow/workflowTemplate/${workflows[index].attributeId}/root`, {
                 rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             else 
                 setWorkflows(workflowsCopy);
@@ -1084,7 +1084,7 @@ async function addStandardAction(index, workflows, setWorkflows, name, descripti
             if (workflowParent.childActionsWithContexts.length > 1)
                 setWorkflows(workflowsCopy);
             else {
-                await workflowsFetch("PUT", `workflows/action/${workflowParent.id}`, {
+                await CMTJsonFetch("PUT", `workflow/actionTemplate/workflow/${workflowParent.id}/root`, {
                 rootActionId: json.action.id}).then(()=>setWorkflows(workflowsCopy));
             }
         }

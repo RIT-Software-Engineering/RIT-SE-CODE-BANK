@@ -3,6 +3,9 @@ import express from "express";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { deleteNotification, hasStarted, notifyOfCancellation, notifyOfMaterialChange, notifyOfMovedBlock, validateSendDate } from "../utils/notifier.js";
 import { latestNotifyTime } from "../utils/courseClock.js";
+import { createSectionBlock, saveSectionMaterial, shareSectionBlock, removeSectionBlock, ownedSession, teachingFilter } from '../utils/sectionContent.js';
+import { refreshSectionSync } from '../utils/sectionSync.js';
+import { authorizeSection, sectionAccess } from '../utils/sectionPermissions.js';
 
 const prisma = new PrismaClient();
 
@@ -24,12 +27,40 @@ async function notifyAboutMaterial(req, sessionId, change, material, notify){
     }
 }
 
+const courseGuard = authorizeSection(prisma, "editMaterials", "courseId");
+const sessionGuard = authorizeSection(prisma, "editMaterials", async req => {
+    const session = await prisma.session.findUnique({where: {id: Number(req.params.sessionId || req.body.sessionId)}});
+    return session?.courseId;
+});
+const blockGuard = authorizeSection(prisma, "editMaterials", async req => {
+    const block = await prisma.sessionBlock.findUnique({where: {id: Number(req.params.blockId)}, include: {session: true}});
+    return block?.session.courseId;
+});
+const materialGuard = authorizeSection(prisma, "editMaterials", async req => {
+    const material = await prisma.sessionMaterial.findUnique({where: {id: Number(req.params.materialId)}, include: {session: true}});
+    return material?.session.courseId;
+});
+async function allSectionsGuard(req, _res, next) {
+    try {
+        const course = req.sectionAccess.course;
+        if (course.offeringId && !course.isTemplate) {
+            const targets = await prisma.course.findMany({where: {offeringId: course.offeringId, active: true, isTemplate: false}});
+            for (const target of targets) await sectionAccess(prisma, req.user, target.id, "editMaterials");
+        }
+        next();
+    } catch (error) { next(error); }
+}
+function applyScopeGuard(req, res, next) {
+    if (req.body.applyToAll === true) return allSectionsGuard(req, res, next);
+    next();
+}
+
 
 /** GET /api/cmt/session/:courseId
  * Gets all the sessions for one class id, including the class material
  * When successful, returns both sessions and the session materials
  */
-router.get("/:courseId", async(req, res) => {
+router.get("/:courseId", courseGuard, async(req, res) => {
     const { courseId } = req.params;
     const sessions = await prisma.session.findMany({
         where: {courseId: parseInt(courseId)}
@@ -63,7 +94,7 @@ router.get("/:courseId", async(req, res) => {
 /** POST /api/cmt/session/
  * Makes a new session in the DB and returns it so we can use its id
  */
-router.post("/", async (req, res) => {
+router.post("/", authorizeSection(prisma, "editMaterials", req => req.body.id), async (req, res) => {
     const session = await prisma.session.create({
         data: {
             sessionNum: req.body.sessionCount+1,
@@ -77,46 +108,33 @@ router.post("/", async (req, res) => {
 /** POST /api/cmt/session/blocks
  * Creates an optional organizational block within a session.
  */
-router.post("/blocks", async (req, res) => {
-    const {sessionId, name} = req.body;
-    if (!req.user) return res.status(401).json({error: "Not authenticated"});
-    if (!name?.trim()) return res.status(400).json({error: "Block name is required"});
-
-    const session = await prisma.session.findFirst({
-        where: {id: Number(sessionId), course: {professorId: req.user.uid}}
-    });
-    if (!session) return res.status(404).json({error: "Session not found for this instructor"});
-
-    const position = await prisma.sessionBlock.count({where: {sessionId: session.id}});
-    const block = await prisma.sessionBlock.create({
-        data: {name: name.trim(), position, sessionId: session.id}
-    });
+router.post("/blocks", sessionGuard, applyScopeGuard, async (req, res) => {
+    const {block, courseId} = await createSectionBlock(prisma, req.user?.uid, req.body);
+    await refreshSectionSync(prisma, courseId);
     res.json({block});
+});
+
+router.post("/blocks/:blockId/share", blockGuard, allSectionsGuard, async (req, res) => {
+    const courseId = await shareSectionBlock(prisma, req.user?.uid, req.params.blockId);
+    await refreshSectionSync(prisma, courseId);
+    res.json({success: true});
+});
+
+router.delete("/blocks/:blockId", blockGuard, async (req, res) => {
+    const courseId = await removeSectionBlock(prisma, req.user?.uid, req.params.blockId);
+    await refreshSectionSync(prisma, courseId);
+    res.json({success: true});
 });
 
 /** POST /api/cmt/session/:sessionId
  * Creates session material. Upon success returns the session material, but it doesn't do anything with it
  */ 
-router.post("/:sessionId", async (req, res) => {
+router.post("/:sessionId", sessionGuard, applyScopeGuard, async (req, res) => {
     const { sessionId } = req.params;
     const item = req.body;
-    const blockId = item.blockId ? Number(item.blockId) : null;
-    if (blockId) {
-        const block = await prisma.sessionBlock.findFirst({
-            where: {id: blockId, sessionId: parseInt(sessionId)}
-        });
-        if (!block) return res.status(400).json({error: "Block does not belong to this session"});
-    }
-    const material = await prisma.sessionMaterial.create({
-        data: {
-            type: item.itemType,
-            label:item.itemLabel,
-            body: item.itemBody,
-            sessionId: parseInt(sessionId),
-            sessionNum: item.sessionNum,
-            blockId,
-        }
-    });
+    const {material, courseId} = await saveSectionMaterial(prisma, req.user?.uid, req.params.sessionId, req.body);
+    await refreshSectionSync(prisma, courseId);
+    
     const notified = await notifyAboutMaterial(req, parseInt(sessionId), 'added', material, item.notify);
     res.json({ material, notified })
 })
@@ -126,28 +144,9 @@ router.post("/:sessionId", async (req, res) => {
  * Will always update the label and body even if no changes are actually made to them upon submission.
  */ 
 router.put("/material/:materialId", async (req, res) => {
-    const {materialId} = req.params;
-    const {itemLabel, itemBody, itemType, sessionNum, sessionId, blockId, notify} = req.body;
-
-    const parsedBlockId = blockId ? Number(blockId) : null;
-    if (parsedBlockId) {
-        const block = await prisma.sessionBlock.findFirst({
-            where: {id: parsedBlockId, sessionId: parseInt(sessionId)}
-        });
-        if (!block) return res.status(400).json({error: "Block does not belong to this session"});
-    }
-    
-    const material = await prisma.sessionMaterial.update({
-        where: {id: Number(materialId)},
-        data: {
-            label: itemLabel,
-            body:  itemBody,
-            type: itemType,
-            sessionNum: parseInt(sessionNum),
-            sessionId: parseInt(sessionId),
-            ...(blockId !== undefined && {blockId: parsedBlockId}),
-        }
-    })
+    const {notify} = req.body;
+    const {material, courseId} = await saveSectionMaterial(prisma, req.user?.uid, req.body.sessionId, req.body, req.params.materialId);
+    await refreshSectionSync(prisma, courseId);
     const notified = await notifyAboutMaterial(req, material.sessionId, 'updated', material, notify);
 
     res.json({ material, notified })
@@ -156,20 +155,20 @@ router.put("/material/:materialId", async (req, res) => {
 /** PATCH /api/cmt/session/blocks/:blockId
  * Updates a block's name or progression status.
  */
-router.patch("/blocks/:blockId", async (req, res) => {
+router.patch("/blocks/:blockId", blockGuard, async (req, res) => {
     const {blockId} = req.params;
     const {name, status} = req.body;
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const existingBlock = await prisma.sessionBlock.findFirst({
-        where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}}
+        where: {id: Number(blockId), session: {course: teachingFilter(req.user.uid)}}
     });
     if (!existingBlock) return res.status(404).json({error: "Block not found for this instructor"});
 
     const allowedStatuses = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED"];
     if (status !== undefined && !allowedStatuses.includes(status))
         return res.status(400).json({error: "Invalid block status"});
-    if (name !== undefined && !name.trim())
+    if (name !== undefined && (typeof name !== "string" || !name.trim()))
         return res.status(400).json({error: "Block name is required"});
 
     const block = await prisma.sessionBlock.update({
@@ -179,6 +178,8 @@ router.patch("/blocks/:blockId", async (req, res) => {
             ...(status !== undefined && {status})
         }
     });
+    const session = await prisma.session.findUnique({where: {id: block.sessionId}});
+    await refreshSectionSync(prisma, session.courseId);
     res.json({block});
 });
 
@@ -186,7 +187,7 @@ router.patch("/blocks/:blockId", async (req, res) => {
  * Reorders a block or moves it to another session in the same course.
  * Triggers a notification if the course has started
  */
-router.patch("/blocks/:blockId/move", async (req, res) => {
+router.patch("/blocks/:blockId/move", blockGuard, async (req, res) => {
     const {blockId} = req.params;
     const {targetSessionId, targetPosition, notify, sendAt} = req.body;
     let notified = null;
@@ -194,14 +195,14 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
     if (!req.user) return res.status(401).json({error: "Not authenticated"});
 
     const block = await prisma.sessionBlock.findFirst({
-        where: {id: Number(blockId), session: {course: {professorId: req.user.uid}}},
+        where: {id: Number(blockId), session: {course: teachingFilter(req.user.uid)}},
         include: {session: {include: {course: true}}}
     });
     const targetSession = await prisma.session.findFirst({
         where: {
             id: Number(targetSessionId),
             courseId: block?.session.courseId,
-            course: {professorId: req.user.uid}
+            course: teachingFilter(req.user.uid)
         }
     });
     if (!block || !targetSession) return res.status(404).json({error: "Block or target session not found"});
@@ -253,6 +254,7 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
     });
 
     let scheduled = false;
+    await refreshSectionSync(prisma, targetSession.courseId);
     try{
         const movedSessions = block.sessionId !== targetSession.id;
         if (['now', 'later'].includes(notify) && movedSessions && await hasStarted(fromSession.course)){
@@ -274,9 +276,10 @@ router.patch("/blocks/:blockId/move", async (req, res) => {
  * Updates session material. Upon success returns the session material.
  * Will always update the label and body even if no changes are actually made to them upon submission.
  */ 
-router.put("/:sessionId", async (req, res) => {
+router.put("/:sessionId", sessionGuard, async (req, res) => {
     const {sessionId} = req.params;
     const {completed, date} = req.body;
+    const owned = await ownedSession(prisma, sessionId, req.user?.uid);
     
     await prisma.session.update({
         where: {id: Number(sessionId)},
@@ -286,6 +289,7 @@ router.put("/:sessionId", async (req, res) => {
         }
     })
 
+    await refreshSectionSync(prisma, owned.courseId);
     res.sendStatus(200)
 })
 
@@ -294,7 +298,7 @@ router.put("/:sessionId", async (req, res) => {
  * completion state, or materials.
  * Triggers a notification if the course has started
  */
-router.patch("/:sessionId/cancellation", async (req, res) => {
+router.patch("/:sessionId/cancellation", sessionGuard, async (req, res) => {
     const {sessionId} = req.params;
     const {canceled, notify, sendAt} = req.body;
     let when = null;
@@ -305,7 +309,7 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
     const existingSession = await prisma.session.findFirst({
         where: {
             id: Number(sessionId),
-            course: {professorId: req.user.uid}
+            course: teachingFilter(req.user.uid)
         },
         include: {course: true}
     });
@@ -328,6 +332,7 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
         }
     });
 
+    await refreshSectionSync(prisma, session.courseId);
     let notified = null;
     let scheduled = false;
     try{
@@ -357,13 +362,18 @@ router.patch("/:sessionId/cancellation", async (req, res) => {
  * Sets a specific session material to inactive. Upon success returns the session material to be updated
  * Not a true delete, but users cannot see inactive items so basically functions like one
  */ 
-router.delete('/material/:materialId', async (req, res) => {
+router.delete('/material/:materialId', materialGuard, async (req, res) => {
     const {materialId} = req.params;
+    const existing = await prisma.sessionMaterial.findFirst({
+        where: {id: Number(materialId), session: {course: teachingFilter(req.user?.uid || "")}}, include: {session: true}
+    });
+    if (!existing) return res.status(404).json({error: "Material not found for this instructor"});
     const material = await prisma.sessionMaterial.update({
         where: {id: parseInt(materialId)},
         data: {active: false},
     });
     const notified = await notifyAboutMaterial(req, material.sessionId, 'removed', material, req.query.notify);
+    await refreshSectionSync(prisma, existing.session.courseId);
     res.json({ material, notified })
 })
 
@@ -371,10 +381,10 @@ router.delete('/material/:materialId', async (req, res) => {
  * Sets material for one session to inactive. Upon success returns the session materials to be updated
  * Not a true delete, but users cannot see inactive items so basically functions like one
  */ 
-router.delete("/:courseId/:sessionNum", async (req, res) => {
+router.delete("/:courseId/:sessionNum", courseGuard, async (req, res) => {
     const {courseId, sessionNum} = req.params;
     const session  = await prisma.session.findFirstOrThrow({
-    where: {courseId: parseInt(courseId), sessionNum: parseInt(sessionNum)}
+    where: {courseId: parseInt(courseId), sessionNum: parseInt(sessionNum), course: teachingFilter(req.user?.uid || "")}
     });
     let sessionId = session.id; 
     await prisma.sessionMaterial.updateMany({
@@ -385,5 +395,6 @@ router.delete("/:courseId/:sessionNum", async (req, res) => {
     const deletedMaterials = await prisma.sessionMaterial.findMany({
         where: {sessionId: sessionId, active: false}
     })
+    await refreshSectionSync(prisma, Number(courseId));
     res.json({ materials: deletedMaterials })
 });
