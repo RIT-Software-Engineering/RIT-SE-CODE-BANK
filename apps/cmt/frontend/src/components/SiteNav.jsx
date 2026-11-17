@@ -5,23 +5,24 @@ import {
   ChevronDown,
   GraduationCap,
   Wrench,
+  BookOpen,
 } from "lucide-react";
-import { getUserFromCookie, logout } from "../utils/auth";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { canLearn, canTeach, hasAnyRole, INSTRUCTOR_ROLES } from "../utils/roles.js";
 import { Container, Dropdown, Nav, Navbar, NavDropdown, Button } from "react-bootstrap";
 
 export default function SiteNav() {
-  const [user, setUser] = useState(null);
+  const {user, signOut} = useAuth();
   const [activeDropdown, setActiveDropdown] = useState(null);
 
   const profileRef = useRef(null);
 
   // Load user on mount
   useEffect(() => {
-    setUser(getUserFromCookie());
     setActiveDropdown(window.location.pathname);
   }, []);
 
-  const menuGroups = [
+  const instructorGroups = [
     {
       id: "course",
       label: "Course Management",
@@ -42,6 +43,15 @@ export default function SiteNav() {
         { to: "/workflowbuilder-admin", label: "Workflow Builder Admin"},
       ]
     }
+  ];
+  const menuGroups = [
+    ...(hasAnyRole(user, INSTRUCTOR_ROLES) ? instructorGroups : []),
+    ...(canTeach(user) ? [{id: "teaching", label: "Teaching", icon: <GraduationCap size={18} />,
+      items: [{to: "/teaching", label: "Teaching Sections"}]}] : []),
+    ...(canLearn(user) ? [{
+      id: "learning", label: "My Learning", icon: <BookOpen size={18} />,
+      items: [{to: "/student/courses", label: "My Courses"}, {to: "/student/teams", label: "My Teams"}]
+    }] : [])
   ];
 
   return (
@@ -124,7 +134,7 @@ export default function SiteNav() {
               <div className="w-full pl-3 pr-16 py-2">
                   <div className="text-base font-bold mb-1">{user?.name}</div>
                   <div className="text-sm mb-1 text-[#666]">{user?.email}</div>
-                  { user?.roles.map(role => {
+                  { (user?.roles || []).map(role => {
                     return <div key={role} className="inline-block text-xs mr-2 px-2 py-2 bg-[#f97216] text-white rounded-full font-semibold mt-1">
                       {role.toUpperCase()}
                     </div>
@@ -137,7 +147,7 @@ export default function SiteNav() {
               <Button
                 variant="danger"
                 className="w-full py-2 border-none rounded-lg text-white text-sm font-semibold"
-                onClick={logout}>
+                onClick={signOut}>
                 Log out
               </Button>
             </Dropdown.Item>

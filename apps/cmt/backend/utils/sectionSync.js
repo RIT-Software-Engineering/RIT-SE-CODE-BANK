@@ -113,7 +113,7 @@ export async function refreshSectionSync(prisma, courseId) {
         await tx.$queryRaw`SELECT id FROM CourseOffering WHERE id = ${course.offeringId} FOR UPDATE`;
         const offering = await tx.courseOffering.findUnique({where: {id: course.offeringId}});
         const sections = await tx.course.findMany({
-            where: {offeringId: offering.id, professorId: offering.professorId, active: true, isTemplate: false},
+            where: {offeringId: offering.id, active: true, isTemplate: false},
             include: {sessions: {include: {blocks: true, material: true}}, Resource: true},
             orderBy: {id: "asc"}
         });

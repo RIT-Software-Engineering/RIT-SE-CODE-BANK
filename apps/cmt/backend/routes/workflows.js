@@ -4,10 +4,47 @@ import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
 import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { accessError, authorizeActionState, resolveSectionIdentity, sectionAccess } from "../utils/sectionPermissions.js";
+import { authorizeWorkflow, authorizeWorkflowAction } from "../utils/workflowPermissions.js";
+import { isInstructor } from "../middleware/requireInstructor.js";
 
 const prisma = new PrismaClient();
 const router = express.Router();
 export default router
+
+router.use(async (req, _res, next) => {
+    try {
+        const identity = await resolveSectionIdentity(prisma, req.user);
+        if (!identity.professorId) throw accessError("Instructor access required");
+        req.user = {...req.user, uid: identity.professorId};
+        const parts = req.path.split("/").filter(Boolean);
+        if (parts[0] === "editCheckmarkAction") {
+            await authorizeActionState(prisma, req.user, req.query.asid, req.query.courseId, workflowsFetch);
+        } else if (parts[0] === "publishCourseTemplate") {
+            await sectionAccess(prisma, req.user, req.query.courseId, "manageStaff");
+            await authorizeActionState(prisma, req.user, req.query.asid, req.query.courseId, workflowsFetch);
+        } else if (parts[0] === "editDownloadCourseAction") {
+            const course = await prisma.course.findFirst({where: {workflowId: req.body.workflowId}});
+            if (!course) throw accessError("Section workflow not found", 404);
+            await sectionAccess(prisma, req.user, course.id, "editMaterials");
+        } else if (parts[0] === "workflowTemplate" && parts[1]) {
+            await authorizeWorkflow(prisma, req.user, parts[1]);
+        } else if (parts[0] === "actionTemplate") {
+            if (req.method === "GET") await authorizeWorkflow(prisma, req.user, parts[2], {readOnly: true});
+            else if (req.method === "POST") {
+                if (!isInstructor(req.user)) throw accessError("Instructor access required");
+                if (req.body.parentActionId) await authorizeWorkflowAction(prisma, req.user, req.body.parentActionId);
+            } else if (parts[1] === "workflow") {
+                await authorizeWorkflowAction(prisma, req.user, parts[2]);
+            } else {
+                await authorizeWorkflowAction(prisma, req.user, parts[2]);
+                if (req.body?.nextActionId) await authorizeWorkflowAction(prisma, req.user, req.body.nextActionId);
+            }
+        } else if (req.method !== "GET" && !isInstructor(req.user)) throw accessError("Instructor access required");
+        if (req.body?.rootActionId) await authorizeWorkflowAction(prisma, req.user, req.body.rootActionId);
+        next();
+    } catch (error) { next(error); }
+});
 
 function findActionsWithContextsByCode(actionsWithContexts, code) {
     const matchingActions = [];
@@ -148,10 +185,20 @@ router.put("/workflowTemplate/:workflowId", async(req, res) => {
     return res.status(200).json({workflow: updatedWorkflow});
 });
 
+router.put("/workflowTemplate/:workflowId/root", async (req, res) => {
+    const workflow = await workflowsFetch("PUT", `workflows/${req.params.workflowId}`, {rootActionId: req.body.rootActionId});
+    res.json({workflow});
+});
+
+router.put("/actionTemplate/workflow/:workflowId/root", async (req, res) => {
+    const workflow = await workflowsFetch("PUT", `workflows/action/${req.params.workflowId}`, {rootActionId: req.body.rootActionId});
+    res.json({workflow});
+});
+
 // workflow/workflowTemplate/:workflowId
 router.delete("/workflowTemplate/:workflowId", async(req, res) => {
     const {workflowId} = req.params;
-    const msg = workflowsFetch("DELETE", `workflows/${workflowId}`);
+    const msg = await workflowsFetch("DELETE", `workflows/${workflowId}`);
     return res.status(200).json({message: msg})
 });
 
@@ -178,7 +225,7 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
     let safeMetadata = metadata ? makeMetadataSafeForWorkflows(metadata) : {} ;
     if (safeMetadata && Object.keys(safeMetadata).length === 0)
         safeMetadata = null;
-    const action = workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
+    const action = await workflowsFetch("PUT", `/actions/${actionId}`, {name:name, description: description, metadata: safeMetadata});
     return res.status(200).json({action: action})
 });
 
@@ -186,21 +233,21 @@ router.put("/actionTemplate/action/:actionId", async (req, res) => {
 router.put("/actionTemplate/workflow/:workflowId", async (req, res) => {
     const {workflowId} = req.params;
     const {name, description} = req.body;
-    const workflow = workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
+    const workflow = await workflowsFetch("PUT", `/actions/${workflowId}`, {name:name, description: description});
     return res.status(200).json({action: workflow});
 });
 
 // workflow/actionTemplate/action/:actionId
 router.delete("/actionTemplate/action/:actionId", async (req, res) => {
     const {actionId} = req.params;
-    const msg = workflowsFetch("DELETE", `/actions/${actionId}`);
+    const msg = await workflowsFetch("DELETE", `/actions/${actionId}`);
     return res.status(200).json({message: msg});
 });
 
 // workflow/actionTemplate/workflow/:workflowId
 router.delete("/actionTemplate/workflow/:workflowId", async (req, res) => {
     const {workflowId} = req.params;
-    const msg = workflowsFetch("DELETE", `/actions/${workflowId}`);
+    const msg = await workflowsFetch("DELETE", `/actions/${workflowId}`);
     return res.status(200).json({message: msg});
 })
 

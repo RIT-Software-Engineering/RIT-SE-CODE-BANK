@@ -116,13 +116,13 @@ export function CourseSections({course, children}) {
                         <option key={item.id} value={item.id}>{item.section || `Section ${item.id} (TBD)`}</option>
                     ))}
                 </Form.Select>
-                <Button variant="outline-primary" onClick={() => {setSection(""); setProgress("reset"); setError(null); setCreateOpen(true);}}>
+                {course.capabilities?.manageOffering && <Button variant="outline-primary" onClick={() => {setSection(""); setProgress("reset"); setError(null); setCreateOpen(true);}}>
                     <span className="inline-flex items-center gap-1"><Plus size={16} />Add section</span>
-                </Button>
-                <Button variant="outline-danger" disabled={course.active === false} onClick={() => {setError(null); setRemoveOpen(true);}}>
+                </Button>}
+                {course.capabilities?.archiveSection && <Button variant="outline-danger" disabled={course.active === false} onClick={() => {setError(null); setRemoveOpen(true);}}>
                     <span className="inline-flex items-center gap-1"><Trash2 size={16} />Remove section</span>
-                </Button>
-                {hasRelatedSections && (
+                </Button>}
+                {(sync.hasRelatedSections ?? hasRelatedSections) && (
                     <>
                         <Badge bg={sync.issues.length ? "warning" : "success"} text={sync.issues.length ? "dark" : "light"}>
                             {sync.issues.length ? "Out of sync" : "In sync"}

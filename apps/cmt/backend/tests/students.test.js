@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isStudentUser, namesConflict, normalizeStudentEmail, prepareStudentRoster, studentName } from "../utils/students.js";
+import { ensureStudentProfile, isStudentUser, namesConflict, normalizeStudentEmail, prepareStudentRoster, studentName } from "../utils/students.js";
 import requireInstructor from "../middleware/requireInstructor.js";
 
 test("student email is normalized and restricted to configured institutional domains", () => {
@@ -41,4 +41,21 @@ test("student and TA identities share profile eligibility; neither grants instru
     const response = {status(code) {this.code = code; return this;}, json() {}};
     requireInstructor({user: null}, response, () => assert.fail("Unauthenticated request passed"));
     assert.equal(response.code, 401);
+});
+
+test("concurrent profile creation reuses the winner without bypassing roster name checks", async () => {
+    const winner = {id: "existing-uuid", email: "a@rit.edu", fname: "Ada", lname: "Example"};
+    const client = () => {
+        let lookups = 0;
+        return {student: {
+            findUnique: async () => ++lookups === 1 ? null : winner,
+            upsert: async () => {throw Object.assign(new Error("Concurrent profile"), {code: "P2002"});},
+            update: async ({where, data}) => {assert.equal(where.id, winner.id); return {...winner, ...data};}
+        }};
+    };
+    assert.equal((await ensureStudentProfile(client(), {email: winner.email, fname: "Ada"})).id, winner.id);
+    const trusted = await ensureStudentProfile(client(), {email: winner.email, fname: "Updated"}, {trusted: true});
+    assert.equal(trusted.id, winner.id);
+    assert.equal(trusted.fname, "Updated");
+    await assert.rejects(ensureStudentProfile(client(), {email: winner.email, fname: "Conflicting"}), error => error.status === 409);
 });

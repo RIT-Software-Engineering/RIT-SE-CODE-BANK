@@ -3,6 +3,10 @@ import { studentForUser } from "../utils/students.js";
 
 export default function makeStudentRouter(prisma) {
     const router = express.Router();
+    router.use((_req, res, next) => {
+        res.set("Cache-Control", "private, no-store");
+        next();
+    });
     router.use(async (req, _res, next) => {
         try {
             req.studentProfile = await studentForUser(prisma, req.user);

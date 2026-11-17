@@ -8,7 +8,7 @@ export function sectionError(message, status = 400) {
 export async function ownedSection(tx, id, professorId) {
     if (!professorId) throw sectionError("Not authenticated", 401);
     if (!Number.isSafeInteger(Number(id)) || Number(id) < 1) throw sectionError("Invalid section ID");
-    const course = await tx.course.findFirst({where: {id: Number(id), professorId}});
+    const course = await tx.course.findFirst({where: {id: Number(id), ...teachingFilter(professorId)}});
     if (!course) throw sectionError("Section not found for this instructor", 404);
     return course;
 }
@@ -17,18 +17,24 @@ export async function ownedSession(tx, id, professorId) {
     if (!professorId) throw sectionError("Not authenticated", 401);
     if (!Number.isSafeInteger(Number(id)) || Number(id) < 1) throw sectionError("Invalid session ID");
     const session = await tx.session.findFirst({
-        where: {id: Number(id), course: {professorId}}, include: {course: true}
+        where: {id: Number(id), course: teachingFilter(professorId)}, include: {course: true}
     });
     if (!session) throw sectionError("Session not found for this instructor", 404);
     return session;
 }
 
-async function targetSections(tx, source, all) {
+export function teachingFilter(professorId) {
+    return {OR: [{professorId}, {isTemplate: false, instructors: {some: {professorId}}}]};
+}
+
+async function targetSections(tx, source, all, professorId) {
     if (!all || !source.offeringId || source.isTemplate) return [source];
-    return tx.course.findMany({
-        where: {offeringId: source.offeringId, professorId: source.professorId, active: true, isTemplate: false},
+    const targets = await tx.course.findMany({
+        where: {offeringId: source.offeringId, active: true, isTemplate: false},
         orderBy: {id: "asc"}
     });
+    for (const target of targets) await ownedSection(tx, target.id, professorId);
+    return targets;
 }
 
 async function correspondingSession(tx, source, target, block) {
@@ -70,7 +76,7 @@ export async function createSectionBlock(prisma, professorId, {sessionId, name, 
     if (typeof name !== "string" || !name.trim()) throw sectionError("Block name is required");
     return prisma.$transaction(async tx => {
         const source = await ownedSession(tx, sessionId, professorId);
-        const targets = await targetSections(tx, source.course, applyToAll === true);
+        const targets = await targetSections(tx, source.course, applyToAll === true, professorId);
         const sharedKey = randomUUID();
         let created;
         for (const target of targets) {
@@ -87,7 +93,7 @@ export async function saveSectionMaterial(prisma, professorId, sessionId, item, 
     return prisma.$transaction(async tx => {
         const source = await ownedSession(tx, sessionId, professorId);
         const existing = materialId ? await tx.sessionMaterial.findFirst({
-            where: {id: Number(materialId), session: {course: {professorId}}}, include: {session: true}
+            where: {id: Number(materialId), session: {course: teachingFilter(professorId)}}, include: {session: true}
         }) : null;
         if (materialId && (!existing || existing.session.courseId !== source.courseId))
             throw sectionError("Material not found in this section", 404);
@@ -98,7 +104,7 @@ export async function saveSectionMaterial(prisma, professorId, sessionId, item, 
         if (typeof item.itemLabel !== "string" || !item.itemLabel.trim() || typeof type !== "string")
             throw sectionError("Material type and title are required");
         const all = item.applyToAll === true && type !== "Personal Notes" && existing?.type !== "Personal Notes";
-        const targets = await targetSections(tx, source.course, all);
+        const targets = await targetSections(tx, source.course, all, professorId);
         const sharedKey = existing?.sharedKey || randomUUID();
         let saved;
         for (const target of targets) {
@@ -127,7 +133,7 @@ export async function removeSectionBlock(prisma, professorId, blockId) {
         throw sectionError("Invalid block ID");
     return prisma.$transaction(async tx => {
         const block = await tx.sessionBlock.findFirst({
-            where: {id: Number(blockId), session: {course: {professorId}}}, include: {session: true}
+            where: {id: Number(blockId), session: {course: teachingFilter(professorId)}}, include: {session: true}
         });
         if (!block) throw sectionError("Block not found for this instructor", 404);
         await tx.sessionMaterial.updateMany({where: {blockId: block.id}, data: {blockId: null}});
@@ -145,12 +151,12 @@ export async function removeSectionBlock(prisma, professorId, blockId) {
 export async function shareSectionBlock(prisma, professorId, blockId) {
     return prisma.$transaction(async tx => {
         const block = await tx.sessionBlock.findFirst({
-            where: {id: Number(blockId), session: {course: {professorId: professorId || ""}}},
+            where: {id: Number(blockId), session: {course: teachingFilter(professorId || "")}},
             include: {material: true}
         });
         if (!block) throw sectionError("Block not found for this instructor", 404);
         const source = await ownedSession(tx, block.sessionId, professorId);
-        const targets = await targetSections(tx, source.course, true);
+        const targets = await targetSections(tx, source.course, true, professorId);
         for (const target of targets.filter(section => section.id !== source.courseId)) {
             const existing = await tx.sessionBlock.findFirst({where: {sharedKey: block.sharedKey, session: {courseId: target.id}}});
             const {session} = existing

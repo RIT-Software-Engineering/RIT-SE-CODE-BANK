@@ -2,7 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import App from "./App.jsx";
-import HomePage from "./pages/Homepage.jsx";
+import RoleHome from "./components/RoleHome.jsx";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+import { INSTRUCTOR_ROLES } from "./utils/roles.js";
+import StudentCoursesPage from "./pages/student/StudentCoursesPage.jsx";
+import StudentTeamsPage from "./pages/student/StudentTeamsPage.jsx";
+import TeachingSectionsPage from "./pages/teaching/TeachingSectionsPage.jsx";
+import TeachingSectionPage from "./pages/teaching/TeachingSectionPage.jsx";
 import TeamBuilderPage from "./pages/TeamBuilderPage.jsx";
 import DevLoginPage from "./pages/DevLoginPage.jsx";
 import RequireAuth from "./components/RequireAuth.jsx";
@@ -15,7 +21,6 @@ import { CourseDashboard } from "./pages/course/CourseDashboard.jsx";
 import { BuilderPageAdmin } from "./pages/WorkflowBuilderPage.jsx";
 import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
 import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
-import { serializeError } from "@se-code-bank/cmt-shared-utilities";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -38,6 +43,7 @@ if (process.env.NODE_ENV === "development") {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <BrowserRouter basename="/cmt">
+      <AuthProvider>
       <Routes>
         {/* Public route: login page */}
         <Route path="/login" element={<DevLoginPage />} />
@@ -52,13 +58,17 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           }
         >
           {/* Landing page - shows welcome message */}
-          <Route index element={<HomePage />} />
+          <Route index element={<RoleHome />} />
+          <Route path="student/courses" element={<RequireAuth learning><StudentCoursesPage /></RequireAuth>} />
+          <Route path="student/teams" element={<RequireAuth learning><StudentTeamsPage /></RequireAuth>} />
+          <Route path="teaching" element={<RequireAuth teaching><TeachingSectionsPage /></RequireAuth>} />
+          <Route path="teaching/:id" element={<RequireAuth teaching><TeachingSectionPage /></RequireAuth>} />
 
           {/* Professor-only routes */}
           <Route 
             path="teambuilder" 
             element={
-              <RequireAuth roles={['instructor', 'professor']}>
+              <RequireAuth teachingInstructor>
                 <TeamBuilderPage />
               </RequireAuth>
             } 
@@ -89,15 +99,15 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           />
           <Route 
             path="courses" 
-            element={<CourseOverview />} 
+            element={<RequireAuth teachingInstructor><CourseOverview /></RequireAuth>}
           />
           <Route 
             path="courses/:id" 
-            element={<CourseDashboard />} 
+            element={<RequireAuth teachingInstructor><CourseDashboard /></RequireAuth>}
           />
           <Route 
             path="workflowbuilder" 
-            element={<BuilderPageAdmin isAdmin={false}/>} 
+            element={<RequireAuth roles={INSTRUCTOR_ROLES}><BuilderPageAdmin isAdmin={false}/></RequireAuth>}
           />
           <Route 
             path="workflowbuilder-admin" 
@@ -109,6 +119,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           />
         </Route>
       </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );

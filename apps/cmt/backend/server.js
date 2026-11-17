@@ -13,7 +13,10 @@ import workflowRoutes from "./routes/workflows.js";
 import sessionRoutes from './routes/session.js';
 import resourceRoutes from './routes/resources.js';
 import makeStudentRouter from './routes/students.js';
-import requireInstructor, { isInstructor } from './middleware/requireInstructor.js';
+import makeAuthRouter from './routes/auth.js';
+import makeTeachingRouter from './routes/teaching.js';
+import requireTeachingInstructor from './middleware/requireTeachingInstructor.js';
+import { isInstructor } from './middleware/requireInstructor.js';
 import { isStudentUser, studentForUser } from './utils/students.js';
 
 import path from "path";
@@ -194,12 +197,14 @@ app.get("/", (_req, res) => {
 });
 
 // API Routes
+app.use("/api/cmt/auth", makeAuthRouter(prisma));
 app.use("/api/cmt/students", makeStudentRouter(prisma));
-app.use("/api/cmt/course", requireInstructor, sectionRoutes, courseRoutes);
-app.use("/api/cmt/team-builder", requireInstructor, teamBuilderRoutes);
-app.use("/api/cmt/workflow", requireInstructor, workflowRoutes)
-app.use("/api/cmt/session", requireInstructor, sessionRoutes);
-app.use("/api/cmt/resources", requireInstructor, resourceRoutes);
+app.use("/api/cmt/teaching", makeTeachingRouter(prisma));
+app.use("/api/cmt/course", requireTeachingInstructor, sectionRoutes, courseRoutes);
+app.use("/api/cmt/team-builder", requireTeachingInstructor, teamBuilderRoutes);
+app.use("/api/cmt/workflow", requireTeachingInstructor, workflowRoutes)
+app.use("/api/cmt/session", requireTeachingInstructor, sessionRoutes);
+app.use("/api/cmt/resources", resourceRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS

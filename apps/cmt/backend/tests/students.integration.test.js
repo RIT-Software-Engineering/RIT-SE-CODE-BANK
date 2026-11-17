@@ -7,6 +7,7 @@ import { PrismaClient } from "../prisma/generated/client/index.js";
 import authMiddleware from "../authMiddleware.js";
 import requireInstructor from "../middleware/requireInstructor.js";
 import makeStudentRouter from "../routes/students.js";
+import makeAuthRouter from "../routes/auth.js";
 import makeTeamBuilderRouter from "../routes/teamBuilder.js";
 import { backfillStudents } from "../utils/studentBackfill.js";
 import { seedDevelopmentUsers } from "../utils/seedUsers.js";
@@ -51,6 +52,7 @@ test("minimal student profiles, roster compatibility, authenticated access and b
         const app = express();
         app.use(express.json());
         app.use(authMiddleware);
+        app.use("/api/cmt/auth", makeAuthRouter(prisma));
         app.use("/api/cmt/students", makeStudentRouter(prisma));
         app.use("/api/cmt/team-builder", requireInstructor, makeTeamBuilderRouter(prisma));
         for (const route of ["course", "session", "resources", "workflow"])
@@ -67,6 +69,27 @@ test("minimal student profiles, roster compatibility, authenticated access and b
             body.append("file", new Blob([csv], {type: "text/csv"}), "roster.csv");
             return request(`/team-builder/courses/${courseId}/roster`, user, {method: "POST", body});
         };
+
+        await t.test("session lookup reuses the canonical profile without creating enrollments", async () => {
+            const count = await prisma.tBEnrollment.count({where: {courseId: {in: courses.map(course => course.id)}}});
+            const response = await request("/auth/me?studentProfileId=not-trusted");
+            assert.equal(response.status, 200);
+            assert.equal(response.headers.get("cache-control"), "private, no-store");
+            const body = await response.json();
+            const profile = await prisma.student.findUnique({where: {email}});
+            assert.equal(body.user.studentProfileId, profile.id);
+            assert.equal(await prisma.tBEnrollment.count({where: {courseId: {in: courses.map(course => course.id)}}}), count);
+            assert.equal((await request("/auth/me", instructor)).status, 200);
+        });
+
+        await t.test("simultaneous first session lookups share one student profile", async () => {
+            const ta = {...student, email: taEmail, uid: `ta-${uid}`, roles: ["ta"]};
+            const responses = await Promise.all(Array.from({length: 8}, () => request("/auth/me", ta)));
+            assert.ok(responses.every(response => response.status === 200));
+            const bodies = await Promise.all(responses.map(response => response.json()));
+            assert.equal(new Set(bodies.map(body => body.user.studentProfileId)).size, 1);
+            assert.equal(await prisma.student.count({where: {email: taEmail}}), 1);
+        });
 
         await t.test("email-based imports preserve legacy enrollment/team IDs and do not collect new university IDs", async () => {
             const csv = `\uFEFFemail,firstName,lastName,studentId\n${email.toUpperCase()},Student,Fixture,DO-NOT-STORE`;
@@ -105,7 +128,7 @@ test("minimal student profiles, roster compatibility, authenticated access and b
             const conflict = await upload(courseB.id, `email,firstName\n${partialEmail},Temporary\n${email},Conflicting`);
             assert.equal(conflict.status, 409);
             assert.equal(await prisma.student.findUnique({where: {email: partialEmail}}), null);
-            assert.equal((await upload(otherCourse.id, `email\n${email}`)).status, 404);
+            assert.equal((await upload(otherCourse.id, `email\n${email}`)).status, 403);
             assert.equal((await upload(courseA.id, `email\n${otherEmail}`, student)).status, 403);
         });
 
@@ -114,6 +137,7 @@ test("minimal student profiles, roster compatibility, authenticated access and b
             assert.equal((await request("/students/me", instructor)).status, 403);
             const self = await (await request(`/students/me?email=${otherEmail}`)).json();
             assert.equal(self.student.email, email);
+            assert.equal((await request("/students/me/courses")).headers.get("cache-control"), "private, no-store");
             assert.deepEqual(Object.keys(self.student).sort(), ["email", "fname", "id", "lname"]);
             const enrolled = await (await request("/students/me/courses")).json();
             assert.deepEqual(enrolled.enrollments.map(row => row.course.id).sort((a, b) => a - b), [courseA.id, courseB.id]);
@@ -122,10 +146,17 @@ test("minimal student profiles, roster compatibility, authenticated access and b
             await prisma.tBTeamSet.update({where: {id: published.id}, data: {status: "DRAFT"}});
             assert.equal((await (await request("/students/me/teams")).json()).memberships.length, 0);
             await prisma.tBTeamSet.update({where: {id: published.id}, data: {status: "PUBLISHED"}});
+            await prisma.tBTeamSet.update({where: {id: published.id}, data: {status: "ARCHIVED"}});
+            assert.equal((await (await request("/students/me/teams")).json()).memberships.length, 0);
+            await prisma.tBTeamSet.update({where: {id: published.id}, data: {status: "PUBLISHED"}});
             await prisma.course.update({where: {id: courseA.id}, data: {active: false}});
             assert.equal((await (await request("/students/me/teams")).json()).memberships.length, 0);
             assert.equal((await (await request("/students/me/courses")).json()).enrollments.length, 1);
             await prisma.course.update({where: {id: courseA.id}, data: {active: true}});
+            await prisma.course.update({where: {id: courseA.id}, data: {isTemplate: true}});
+            assert.equal((await (await request("/students/me/teams")).json()).memberships.length, 0);
+            assert.equal((await (await request("/students/me/courses")).json()).enrollments.length, 1);
+            await prisma.course.update({where: {id: courseA.id}, data: {isTemplate: false}});
             const other = {...student, uid: otherUid, email: otherEmail};
             assert.deepEqual((await (await request("/students/me/courses", other)).json()).enrollments, []);
             assert.deepEqual((await (await request("/students/me/teams", other)).json()).memberships, []);
@@ -186,6 +217,17 @@ test("minimal student profiles, roster compatibility, authenticated access and b
             assert.equal(await prisma.professor.count({where: {id: {in: users.slice(1).map(user => user.uid)}}}), 0);
             assert.equal(await prisma.student.count({where: {email: {in: [email, taEmail]}}}), 2);
         });
+
+        await t.test("removed enrollments revoke access and sibling sections are never inferred", async () => {
+            const offering = await prisma.courseOffering.create({data: {name: "Student fixture offering", classId: "TEST", professorId: uid}});
+            await prisma.course.updateMany({where: {id: {in: [courseA.id, courseC.id]}}, data: {offeringId: offering.id}});
+            const enrolled = await (await request("/students/me/courses")).json();
+            assert.ok(!enrolled.enrollments.some(row => [courseC.id, courseD.id, otherCourse.id].includes(row.course.id)));
+            await prisma.tBMember.deleteMany({where: {enrollment: {courseId: courseA.id, studentProfile: {email}}}});
+            await prisma.tBEnrollment.deleteMany({where: {courseId: courseA.id, studentProfile: {email}}});
+            assert.ok(!(await (await request("/students/me/courses")).json()).enrollments.some(row => row.course.id === courseA.id));
+            assert.equal((await (await request("/students/me/teams")).json()).memberships.length, 0);
+        });
     } finally {
         if (server) await new Promise(resolve => server.close(resolve));
         const fixtureIds = [uid, otherUid, `student-${uid}`];
@@ -196,6 +238,7 @@ test("minimal student profiles, roster compatibility, authenticated access and b
         await prisma.tBTeamSet.deleteMany({where: {courseId: {in: ids}}});
         await prisma.tBEnrollment.deleteMany({where: {courseId: {in: ids}}});
         await prisma.course.deleteMany({where: {id: {in: ids}}});
+        await prisma.courseOffering.deleteMany({where: {professorId: {in: fixtureIds}}});
         await prisma.professor.deleteMany({where: {id: {in: fixtureIds}}});
         await prisma.student.deleteMany({where: {email: {in: studentEmails}}});
         await prisma.$disconnect();

@@ -16,6 +16,10 @@ model Professor {
   courses         Course[]
   offerings       CourseOffering[]
   tbteamset       TBTeamSet[]
+  teachingSections SectionInstructor[] @relation("TeachingInstructor")
+  instructorAssignments SectionInstructor[] @relation("InstructorAssignedBy")
+  taAssignments SectionTA[]
+  syncAcknowledgments SectionSyncAcknowledgment[]
 
   @@map("professors")
 }
@@ -26,6 +30,7 @@ model Student {
   lname       String?
   email       String         @unique @db.VarChar(254)
   enrollments TBEnrollment[]
+  teachingSections SectionTA[]
 
   @@map("students")
 }
@@ -54,6 +59,8 @@ model Course {
   isTemplate      Boolean       @default(false)
   offeringId      Int?
   offering        CourseOffering? @relation(fields: [offeringId], references: [id])
+  instructors     SectionInstructor[]
+  teachingAssistants SectionTA[]
 
   @@unique([offeringId, section])
 }
@@ -71,6 +78,46 @@ model CourseOffering {
   syncIssues  SectionSyncIssue[]
 }
 
+model SectionInstructor {
+  id                    Int       @id @default(autoincrement())
+  courseId              Int
+  professorId           String
+  assignedByProfessorId String
+  createdAt             DateTime  @default(now())
+  course                Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  professor             Professor @relation("TeachingInstructor", fields: [professorId], references: [id], onDelete: Cascade)
+  assignedBy            Professor @relation("InstructorAssignedBy", fields: [assignedByProfessorId], references: [id])
+
+  @@unique([courseId, professorId])
+  @@index([professorId])
+}
+
+model SectionTA {
+  id                    Int       @id @default(autoincrement())
+  courseId              Int
+  studentProfileId      String    @db.Char(36)
+  assignedByProfessorId String
+  createdAt             DateTime  @default(now())
+  course                Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  student               Student   @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  assignedBy            Professor @relation(fields: [assignedByProfessorId], references: [id])
+
+  @@unique([courseId, studentProfileId])
+  @@index([studentProfileId])
+}
+
+model SectionSyncAcknowledgment {
+  issueId     Int
+  professorId String
+  occurrence  Int
+  dismissedAt DateTime @default(now())
+  issue       SectionSyncIssue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  professor   Professor @relation(fields: [professorId], references: [id], onDelete: Cascade)
+
+  @@id([issueId, professorId])
+  @@index([professorId])
+}
+
 model SectionSyncIssue {
   id          Int      @id @default(autoincrement())
   offeringId  Int
@@ -81,6 +128,7 @@ model SectionSyncIssue {
   dismissedAt DateTime?
   updatedAt   DateTime @updatedAt
   offering    CourseOffering @relation(fields: [offeringId], references: [id])
+  acknowledgments SectionSyncAcknowledgment[]
 
   @@unique([offeringId, issueKey])
 }

@@ -169,7 +169,12 @@ test("section persistence, shared content, notifications, cloning and ownership"
         await t.test("section routes enforce ownership and persist notification acknowledgment", async () => {
             const app = express();
             app.use(express.json());
-            app.use((req, _res, next) => {req.prisma = prisma; req.user = {uid: req.headers["x-fixture-user"] || professorId}; next();});
+            app.use((req, _res, next) => {
+                const id = req.headers["x-fixture-user"] || professorId;
+                req.prisma = prisma;
+                req.user = {uid: id, email: `${id}@example.invalid`, roles: ["instructor"]};
+                next();
+            });
             app.use("/course", sectionsRouter);
             app.use("/course", courseRouter);
             app.use("/session", sessionRouter);
@@ -178,7 +183,7 @@ test("section persistence, shared content, notifications, cloning and ownership"
             await new Promise(resolve => server.once("listening", resolve));
             const base = `http://127.0.0.1:${server.address().port}/course/${source.id}`;
             assert.equal((await realFetch(`${base}/sections`)).status, 200);
-            assert.equal((await realFetch(`${base}/section-sync`, {headers: {"x-fixture-user": randomUUID()}})).status, 404);
+            assert.equal((await realFetch(`${base}/section-sync`, {headers: {"x-fixture-user": randomUUID()}})).status, 403);
             await prisma.sessionBlock.update({where: {id: block.id}, data: {status: "COMPLETED"}});
             const sync = await (await realFetch(`${base}/section-sync`)).json();
             const warning = sync.issues[0];
@@ -186,11 +191,11 @@ test("section persistence, shared content, notifications, cloning and ownership"
                 method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({occurrence: warning.occurrence})
             });
             assert.equal(dismissed.status, 200);
-            assert.ok((await prisma.sectionSyncIssue.findUnique({where: {id: warning.id}})).dismissedAt);
+            assert.ok(await prisma.sectionSyncAcknowledgment.findUnique({where: {issueId_professorId: {issueId: warning.id, professorId}}}));
 
             const removable = await createSectionBlock(prisma, professorId, {sessionId: session.id, name: "Route removal"});
             const blockUrl = `http://127.0.0.1:${server.address().port}/session/blocks/${removable.block.id}`;
-            assert.equal((await realFetch(blockUrl, {method: "DELETE", headers: {"x-fixture-user": randomUUID()}})).status, 404);
+            assert.equal((await realFetch(blockUrl, {method: "DELETE", headers: {"x-fixture-user": randomUUID()}})).status, 403);
             assert.ok(await prisma.sessionBlock.findUnique({where: {id: removable.block.id}}));
             const removalResponse = await realFetch(blockUrl, {method: "DELETE"});
             assert.equal(removalResponse.status, 200);

@@ -36,18 +36,33 @@ export async function ensureStudentProfile(tx, input, {trusted = false} = {}) {
     const fname = studentName(input.fname);
     const lname = studentName(input.lname);
     const existing = await tx.student.findUnique({where: {email}});
-    if (!trusted && existing && namesConflict(existing, {fname, lname}))
-        throw studentError("The roster name conflicts with an existing student profile. Review the email and name before importing.", 409);
-    return tx.student.upsert({
-        where: {email}, create: {email, fname, lname},
-        // Only verified authentication may replace another course's canonical profile information.
-        update: trusted ? {...(fname && {fname}), ...(lname && {lname})} : {}
-    });
+    const validateName = profile => {
+        if (!trusted && profile && namesConflict(profile, {fname, lname}))
+            throw studentError("The roster name conflicts with an existing student profile. Review the email and name before importing.", 409);
+    };
+    validateName(existing);
+    // Only verified authentication may replace another course's canonical profile information.
+    const update = trusted ? {...(fname && {fname}), ...(lname && {lname})} : {};
+    try {
+        return await tx.student.upsert({where: {email}, create: {email, fname, lname}, update});
+    } catch (error) {
+        if (error.code !== "P2002") throw error;
+        // Concurrent first-login requests may race on MySQL's emulated upsert.
+        const concurrent = await tx.student.findUnique({where: {email}});
+        if (!concurrent) throw error;
+        validateName(concurrent);
+        return Object.keys(update).length ? tx.student.update({where: {id: concurrent.id}, data: update}) : concurrent;
+    }
 }
 
 export async function studentForUser(prisma, user) {
     if (!user) throw studentError("Not authenticated", 401);
-    if (!isStudentUser(user)) throw studentError("Student or TA access required", 403);
+    if (!isStudentUser(user)) {
+        const email = normalizeStudentEmail(user.email);
+        const profile = await prisma.student.findUnique({where: {email}});
+        const enrolled = profile && await prisma.tBEnrollment.findFirst({where: {studentProfileId: profile.id}, select: {id: true}});
+        if (!enrolled) throw studentError("Student enrollment required", 403);
+    }
     // The caller must pass the server-verified identity, never request-body profile fields.
     return ensureStudentProfile(prisma, {
         email: user.email, fname: user.givenName, lname: user.sn

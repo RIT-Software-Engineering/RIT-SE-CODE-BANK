@@ -9,6 +9,7 @@ import { flattenActionsWithContexts } from '../../utils/workflows.js'
 import { Session } from './Session.jsx'
 import { CMTDangerAlert, createErrorHandler } from '../../utils/error.jsx'
 import { CourseSections } from './CourseSections.jsx'
+import TeachingStaff from './TeachingStaff.jsx'
 
 /**
  * @import { FetchToCallback } from "@se-code-bank/workflows-ecosystem"
@@ -68,6 +69,7 @@ export function CourseDashboard() {
                 ? <p> Loading </p>
                 : <>
                     <CourseInfo course={course} />
+                    <div className="py-3"><TeachingStaff key={course.id} course={course} /></div>
                     <CourseSections key={course.id} course={course}>
                     <div className="h-10"></div>
                     <div className="flex justify-center">

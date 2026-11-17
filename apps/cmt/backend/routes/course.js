@@ -8,6 +8,8 @@ import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
 import { ensureCourseOffering } from '../utils/courseSections.js';
 import { ownedSection } from '../utils/sectionContent.js';
 import { refreshSectionSync } from '../utils/sectionSync.js';
+import requireInstructor from '../middleware/requireInstructor.js';
+import { accessError, authorizeActionState, authorizeSection, instructorSectionFilter, resolveSectionIdentity, sectionAccess } from '../utils/sectionPermissions.js';
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -23,10 +25,10 @@ const prisma = new PrismaClient();
  * Get all courses from a professor
  */
 router.get('/', async (req, res) => {
-    const profId = req.user.uid;
+    const identity = await resolveSectionIdentity(prisma, req.user);
     const {isTemplate, isActive} = req.query;
     const where = {
-         professorId: profId, 
+         ...instructorSectionFilter(identity),
          isTemplate: Boolean(isTemplate),
     };
     if (isActive)
@@ -36,7 +38,10 @@ router.get('/', async (req, res) => {
         where: where,
         orderBy: {id: "desc"}
     })
-    res.json(courses)
+    res.json(await Promise.all(courses.map(async course => {
+        const access = await sectionAccess(prisma, req.user, course.id, "editMaterials");
+        return {...course, capabilities: access.capabilities, sectionRole: access.role};
+    })))
 })
 
 /**
@@ -74,10 +79,9 @@ router.get('/templates', async (_, res) => {
  * }
  * ```
  */
-router.get('/:id', async (req, res) => {
-    // TODO: check perms/if prof owns course
+router.get('/:id', authorizeSection(prisma, "editMaterials", "id"), async (req, res) => {
     const course = await prisma.course.findUnique({
-        where: { id: parseInt(req.params.id), professorId: req.user.uid },
+        where: { id: parseInt(req.params.id) },
         include: {sessions: true}
     })
 
@@ -91,7 +95,7 @@ router.get('/:id', async (req, res) => {
     
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
-    res.json({ course, workflow, actionsWithContexts, actionStates: workflowState })
+    res.json({ course: {...course, capabilities: req.sectionAccess.capabilities, sectionRole: req.sectionAccess.role}, workflow, actionsWithContexts, actionStates: workflowState })
 })
 
 /**
@@ -104,7 +108,7 @@ router.get('/:id', async (req, res) => {
  * }
  * ```
  */
-router.post('/', async (req, res) => {
+router.post('/', requireInstructor, async (req, res) => {
     try {
         const professorId = req.user.uid;
 
@@ -119,9 +123,9 @@ router.post('/', async (req, res) => {
         let actions;
         if (workflowBase.rootActionId){
             const actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
-            function parseMetadata(action) {
+            const parseMetadata = action => {
                 action.metadata = compressedMetadataToObject(action.metadata)
-                if (action.childActions) for (action of action.childActions) parseMetadata(action)
+                if (action.childActions) for (const child of action.childActions) parseMetadata(child)
             }
             actionResponse.forEach(action => parseMetadata(action))
             actions = actionResponse 
@@ -200,11 +204,21 @@ router.post('/', async (req, res) => {
  * }
  * ```
  */
-router.post('/:templateId', async (req, res) => {
+router.post('/:templateId', requireInstructor, async (req, res) => {
     try {
         const professorId = req.user.uid;
         const {templateId} = req.params;
         const {color, workflowId, name, code, toBeTemplate} = req.body;
+        const source = await prisma.course.findUnique({where: {id: Number(templateId)}});
+        if (!source || source.workflowId !== workflowId) throw accessError("Template source not found", 404);
+        try {
+            await sectionAccess(prisma, req.user, source.id, "editMaterials");
+        } catch (error) {
+            if (error.status !== 403) throw error;
+            const definition = await workflowsFetch("GET", `workflows/${workflowId}`);
+            if (!source.active || !source.isTemplate || !definition.tags?.includes("TangledUpInLiesImAWorkflony"))
+                throw accessError("Template is not available", 403);
+        }
 
         let sessionActions;
         let workflow;
@@ -215,9 +229,9 @@ router.post('/:templateId', async (req, res) => {
             let actions;
             if (workflowBase.rootActionId){
                 actionResponse = await workflowsFetch("GET", `/actions?workflowId=${workflowBase.id}`);
-                function parseMetadata(action) {
+                const parseMetadata = action => {
                     action.metadata = compressedMetadataToObject(action.metadata)
-                    if (action.childActions) for (action of action.childActions) parseMetadata(action)
+                    if (action.childActions) for (const child of action.childActions) parseMetadata(child)
                 }
                 actionResponse.forEach(action => parseMetadata(action))
                 if (!toBeTemplate)
@@ -399,10 +413,16 @@ router.post('/:templateId', async (req, res) => {
  * PUT /api/cmt/course/:id
  * Update course - add workflowId or other fields
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', authorizeSection(prisma, "editMaterials", "id"), async (req, res) => {
     const { id } = req.params
     const updateData = req.body
     await ownedSection(prisma, id, req.user?.uid);
+    const {capabilities} = req.sectionAccess;
+    if (updateData.active !== undefined && !capabilities.archiveSection)
+        throw accessError("Only the section owner can archive or restore it");
+    if (["courseCode", "courseName", "year", "season"].some(key => updateData[key] !== undefined) && !capabilities.manageOffering)
+        throw accessError("Only the course offering owner can change shared course details");
+    if (req.query.asid) await authorizeActionState(prisma, req.user, req.query.asid, id, workflowsFetch);
 
     console.log('PUT /api/cmt/course/:id called with:', id, updateData)
 
@@ -447,7 +467,7 @@ router.put('/:id', async (req, res) => {
         data: mappedData
     })
 
-    if (updatedCourse.offeringId) {
+    if (updatedCourse.offeringId && capabilities.manageOffering) {
         const shared = {name: updatedCourse.name, classId: updatedCourse.classId, season: updatedCourse.season, year: updatedCourse.year};
         await prisma.$transaction([
             prisma.courseOffering.update({where: {id: updatedCourse.offeringId}, data: shared}),
@@ -485,7 +505,7 @@ router.put('/:id', async (req, res) => {
         }
     }
 
-    const { uid: _userId, asid: actionStateId } = req.query
+    const { asid: actionStateId } = req.query
     if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
 
     await refreshSectionSync(prisma, Number(id));
@@ -499,7 +519,7 @@ router.put('/:id', async (req, res) => {
  * DELETE /api/cmt/course/:id
  * Delete a course and all related data (events, enrollments, etc.)
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authorizeSection(prisma, "archiveSection", "id"), async (req, res) => {
     try {
         const { id } = req.params
         await ownedSection(prisma, id, req.user?.uid);

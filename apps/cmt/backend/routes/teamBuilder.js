@@ -1,7 +1,8 @@
 import express from "express";
 import multer from "multer";
 import { parse } from "csv-parse/sync";
-import { isInstructor } from "../middleware/requireInstructor.js";
+import { accessError, instructorSectionFilter, resolveSectionIdentity, sectionAccess } from "../utils/sectionPermissions.js";
+import { teachingFilter } from "../utils/sectionContent.js";
 import { importStudentRoster } from "../utils/students.js";
 
 // Require that a user is logged in (authMiddleware should set req.user)
@@ -17,14 +18,8 @@ function requireUser(req, res) {
 async function getProfessorForUser(prisma, req, res) {
   const user = requireUser(req, res);
   if (!user) return null;
-  if (!isInstructor(user)) {
-    res.status(403).json({ success: false, error: "Instructor access required" });
-    return null;
-  }
-  
-  const professor = await prisma.professor.findFirst({
-    where: { email: user.email },
-  });
+  const identity = await resolveSectionIdentity(prisma, user);
+  const professor = identity.professorId ? {id: identity.professorId} : null;
 
   if (!professor) {
     res.status(403).json({
@@ -45,7 +40,7 @@ async function ensureTeamSetOwnedByProfessor(prisma, teamSetId, professorId) {
   });
 
   if (!teamSet) return null;
-  if (!teamSet.course || teamSet.course.professorId !== professorId) return null;
+  if (!teamSet.course || !await prisma.course.findFirst({where: {id: teamSet.courseId, ...teachingFilter(professorId)}})) return null;
 
   return teamSet;
 }
@@ -53,6 +48,23 @@ async function ensureTeamSetOwnedByProfessor(prisma, teamSetId, professorId) {
 export default function makeTeamBuilderRouter(prisma) {
   const router = express.Router();
   const upload = multer({ storage: multer.memoryStorage() });
+  router.use(async (req, _res, next) => {
+    try {
+      const identity = await resolveSectionIdentity(prisma, req.user);
+      if (!identity.professorId) throw accessError("Instructor access required");
+      req.sectionIdentity = identity;
+      const parts = req.path.split("/").filter(Boolean);
+      let courseId;
+      if (parts[0] === "courses") courseId = Number(parts[1]);
+      else if (parts[0] === "teamsets") {
+        const set = await prisma.tBTeamSet.findUnique({where: {id: Number(parts[1])}});
+        courseId = set?.courseId;
+        if (!courseId) throw accessError("Team set not found", 404);
+      }
+      if (courseId) await sectionAccess(prisma, req.user, courseId, "manageTeams");
+      next();
+    } catch (error) { next(error); }
+  });
 
   function shuffleDeterministic(arr) {
     const a = [...arr];
@@ -70,7 +82,7 @@ export default function makeTeamBuilderRouter(prisma) {
       if (!professor) return;
 
       const courses = await prisma.course.findMany({
-        where: { professorId: professor.id },
+        where: instructorSectionFilter(req.sectionIdentity),
         orderBy: [{ id: "asc" }],
         select: { id: true, professorId: true, name: true, year: true, season: true, classId: true },
       });
@@ -98,7 +110,7 @@ export default function makeTeamBuilderRouter(prisma) {
 
         // Make sure the course belongs to this professor
         const course = await prisma.course.findFirst({
-          where: { id: courseId, professorId: professor.id },
+          where: { id: courseId, ...teachingFilter(professor.id) },
         });
         if (!course) {
           return res.status(404).json({
@@ -155,7 +167,7 @@ export default function makeTeamBuilderRouter(prisma) {
 
       // Ensure course belongs to this professor
       const course = await prisma.course.findFirst({
-        where: { id: courseId, professorId: professor.id },
+        where: { id: courseId, ...teachingFilter(professor.id) },
       });
       if (!course) {
         return res.status(404).json({
@@ -234,7 +246,6 @@ export default function makeTeamBuilderRouter(prisma) {
 
       const where = {
         courseId,
-        createdByProfessorId: professor.id,
       };
       if (status) where.status = status;
 
@@ -412,6 +423,9 @@ export default function makeTeamBuilderRouter(prisma) {
         return res
           .status(400)
           .json({ error: "Target team not in this TeamSet" });
+
+      const enrollment = await prisma.tBEnrollment.findFirst({where: {id: Number(enrollmentId), courseId: existing.courseId}});
+      if (!enrollment) return res.status(400).json({error: "Enrollment is not in this section"});
 
       const teamIds = (
         await prisma.TBTeam.findMany({
