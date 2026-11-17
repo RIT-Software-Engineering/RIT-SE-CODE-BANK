@@ -6,7 +6,7 @@
 
 */
 -- AlterTable
-ALTER TABLE `course` ADD COLUMN `execWorkflowId` VARCHAR(191) NULL,
+ALTER TABLE `Course` ADD COLUMN `execWorkflowId` VARCHAR(191) NULL,
     ADD COLUMN `execWorkflowStateId` VARCHAR(191) NULL,
     ADD COLUMN `offeringId` INTEGER NULL;
 
@@ -14,17 +14,17 @@ ALTER TABLE `course` ADD COLUMN `execWorkflowId` VARCHAR(191) NULL,
 ALTER TABLE `resources` ADD COLUMN `sharedKey` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `session` ADD COLUMN `sharedKey` VARCHAR(191) NULL,
+ALTER TABLE `Session` ADD COLUMN `sharedKey` VARCHAR(191) NULL,
     ADD COLUMN `teachingWeek` INTEGER NULL;
 
 -- AlterTable
-ALTER TABLE `sessionblock` ADD COLUMN `sharedKey` VARCHAR(191) NULL;
+ALTER TABLE `SessionBlock` ADD COLUMN `sharedKey` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `sessionmaterial` ADD COLUMN `sharedKey` VARCHAR(191) NULL;
+ALTER TABLE `SessionMaterial` ADD COLUMN `sharedKey` VARCHAR(191) NULL;
 
 -- AlterTable
-ALTER TABLE `tbenrollment` ADD COLUMN `studentProfileId` CHAR(36) NULL;
+ALTER TABLE `TBEnrollment` ADD COLUMN `studentProfileId` CHAR(36) NULL;
 
 -- CreateTable
 CREATE TABLE `students` (

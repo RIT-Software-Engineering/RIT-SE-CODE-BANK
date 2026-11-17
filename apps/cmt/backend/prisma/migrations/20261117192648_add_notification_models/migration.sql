@@ -1,23 +1,5 @@
 -- AlterTable
-ALTER TABLE `Course` ADD COLUMN `execWorkflowId` VARCHAR(191) NULL,
-    ADD COLUMN `execWorkflowStateId` VARCHAR(191) NULL;
-
--- CreateTable
-CREATE TABLE `Notification` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `courseId` INTEGER NOT NULL,
-    `event` VARCHAR(191) NOT NULL,
-    `triggerId` INTEGER NULL,
-    `context` JSON NOT NULL,
-    `note` VARCHAR(191) NULL,
-    `recipients` JSON NOT NULL,
-    `status` ENUM('SCHEDULED', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED') NOT NULL DEFAULT 'SCHEDULED',
-    `sendAt` DATETIME(3) NOT NULL,
-    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-
-    INDEX `Notification_courseId_idx`(`courseId`),
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `Notification` MODIFY `status` ENUM('SCHEDULED', 'PROCESSING', 'SENT', 'FAILED', 'CANCELLED') NOT NULL DEFAULT 'SCHEDULED';
 
 -- CreateTable
 CREATE TABLE `NotificationRecipient` (
