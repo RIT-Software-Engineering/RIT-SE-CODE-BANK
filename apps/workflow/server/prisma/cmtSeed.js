@@ -1,5 +1,6 @@
+require("dotenv").config({ path: require("node:path").join(__dirname, "..", ".env") });
 const { PrismaClient } = require("@prisma/client");
-const { createWorkflow } = require("./seedUtils");
+const { syncCmtWorkflows } = require("./syncCmtWorkflows");
 const prisma = new PrismaClient();
 
 async function main() {
@@ -27,6 +28,7 @@ async function main() {
     actions: [
         {
             name: 'Course Details',
+            seedKey: 'course-details',
             description: 'Add relevant details to the course!',
             actionType: 'workflow',
             userId: users[0].id,
@@ -167,6 +169,7 @@ async function main() {
         },
         {
             name: 'Add Material to Your Sessions',
+            seedKey: 'course-sessions',
             description: 'Create material for the sessions within your course!',
             actionType: 'workflow',
             userId: users[0].id,
@@ -190,6 +193,7 @@ async function main() {
         },
         {
             name: 'Download Course Website',
+            seedKey: 'course-website',
             description: 'Navigate to the course generation page and download your website!',
             actionType: 'workflow',
             userId: users[0].id,
@@ -232,27 +236,9 @@ async function main() {
     ]}
 ];
 
-    // Since there is never(?) a reason to duplicate seed data, don't run this seed file if its already been ran.
-    // This is to allow start scripts to remain idempotent.
-    // If you are looking to delete existing data, use prisma commands like "npx prisma migrate reset"
-    // Guard per workflow by metadata code
-  for (const workflow of workflowData){
-    const code = workflow.metadata.code;
-    const exists = await prisma.metadata.findFirst({
-        where: {key: "code", value: JSON.stringify(code)}
-    });
+  const counts = await syncCmtWorkflows(prisma, workflowData);
+  console.log(`CMT templates synchronized: ${counts.created} actions created, ${counts.updated} actions updated.`);
 
-    if (exists){
-        console.log(`WARNING: Skipping ${code} as it is already seeded.`);
-        continue;
-    }
-
-  // Create all workflows from workflowData
-    await createWorkflow(workflow);
-    console.log(`Seeded workflow with code: ${code}`);
-  }
-
-  console.log("🌱 Seed data created successfully!");
 }
 
 /**
@@ -261,7 +247,7 @@ async function main() {
 main()
   .catch((e) => {
     console.error(e);
-    process.exit(1);
+    process.exitCode = 1;
   })
   .finally(async () => {
     await prisma.$disconnect();

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "seed:cmt": "node prisma/cmtSeed.js",
     "start": "nodemon index.js",
     "start-cmt": "npx prisma migrate dev && node prisma/cmtSeed.js && npm run start",
     "force-reset-data-cmt": "npx prisma migrate reset --force --skip-seed && npx prisma migrate dev && node prisma/cmtSeed.js"

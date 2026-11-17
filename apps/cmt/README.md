@@ -101,6 +101,26 @@ The two sources of linting in this project are Typescript and ESLint. Even thoug
 - **ESLint**: In `apps/cmt`, run `npm run lint`
 
 ---
+## Updating Workflow Templates
+
+Workflow template definitions live in `apps/workflow/server/prisma/cmtSeed.js`. After adding an action or a nested workflow there, run this command from the repository root:
+
+```bash
+npm run seed:cmt --workspace=workflows-server
+```
+
+The seed synchronizes shared CMT templates, inserting missing actions and updating fields/metadata defined in the seed. It preserves existing action IDs, custom actions, and extra metadata. Existing course copies keep their current definitions and progress. Seed entries removed from the file are retained in the database.
+
+Keep each action's `metadata.code` stable. For workflow groups without a code, give the group a stable `seedKey`, such as `seedKey: 'course-details'`. Existing groups are initially matched by name and type. A later action-type change requires a new key.
+
+The Workflows startup command already runs `prisma/cmtSeed.js`, so synchronization runs automatically after deploying an updated Workflows image. To run it manually inside the staging container:
+
+```bash
+sudo docker exec -w /app/apps/workflow/server workflows-workflows-backend-1 node prisma/cmtSeed.js
+```
+
+Deploy changes to this seed with the Workflows service. CMT's own `backend/prisma/seed.js` seeds development user profiles.
+
 ## Keeping Everything in Sync
 As you make changes to the codebase, your development server should detect the changes and restart automatically.
 

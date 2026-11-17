@@ -3,170 +3,67 @@ const { importMetadata } = require("../api/helpers/metadata");
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-/**
- * Create a workflow with the workflowData provided.
- *
- * @param {Object} workflowData
- * @returns An Object representing the workflow created
- */
-
-async function createWorkflow(workflowData) {
-  const baseActionData = {};
-
-  // required
-  baseActionData.name = workflowData.name;
-
-  // optional
-  if (workflowData.description)
-    baseActionData.description = workflowData.description;
-  if (workflowData.rootActionOfId)
-    baseActionData.rootActionOf = { connect: { id: workflowData.rootActionOfId } };
-  if (workflowData.isFrozen) data.isFrozen = workflowData.isFrozen;
-  if (workflowData.metadata) {
-    let safeMetadata = {}
-    Object.entries(workflowData.metadata).forEach(([key, value]) => {
-      safeMetadata[key] = JSON.stringify(value)
-    })
-    baseActionData.metadata = {
-      create: importMetadata(safeMetadata),
-    };
-  }         
-  if (workflowData.previousActionId) {
-    baseActionData.previousAction = {
-      connect: { id: workflowData.previousActionId },
-    };
+function actionData(definition) {
+  const data = { name: definition.name };
+  for (const field of ["description", "form", "actionType", "isFrozen", "requireAllParticipants", "requiresSubmission", "submissionMimeTypes"]) {
+    if (definition[field] !== undefined) data[field] = definition[field];
   }
-  if (workflowData.parentActionId) {
-    baseActionData.parentAction = {
-      connect: { id: workflowData.parentActionId },
-    };
+  if (definition.metadata) {
+    const encoded = Object.fromEntries(Object.entries(definition.metadata)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, JSON.stringify(value)]));
+    data.metadata = { create: importMetadata(encoded) };
   }
-  let tags;
-  if (workflowData.tags) {
-    tags = {
-      // Add/re-add them
-      connectOrCreate: workflowData.tags.map((name) => ({
-        where: { name },
-        create: { name },
-      })),
-    };
-  }
+  if (definition.rootActionOfId) data.rootActionOf = { connect: { id: definition.rootActionOfId } };
+  if (definition.previousActionId) data.previousAction = { connect: { id: definition.previousActionId } };
+  if (definition.parentActionId) data.parentAction = { connect: { id: definition.parentActionId } };
+  return data;
+}
 
-  let workflow;
-
-  await prisma.$transaction(async () => {
-    // Create the workflow
-    workflow = await prisma.workflowAttributes.create({
-      data: {
-        baseAction: {
-          create: {
-            ...baseActionData,
-            actionType: "workflow",
-            permissions: {
-              createMany: {
-                data: permissionTypes.map((permissionType) => ({
-                  userId: workflowData.userId,
-                  permissionType: permissionType,
-                })),
-              },
-            },
-          },
-        },
-        tags: tags
+// Passing the transaction through recursion makes creation of a complete tree atomic.
+async function createWorkflow(definition, tx) {
+  if (!tx) return prisma.$transaction(client => createWorkflow(definition, client), { timeout: 30000 });
+  const workflow = await tx.workflowAttributes.create({
+    data: {
+      baseAction: {
+        create: {
+          ...actionData(definition),
+          actionType: "workflow",
+          permissions: { createMany: { data: permissionTypes.map(permissionType => ({
+            userId: definition.userId, permissionType
+          })) } }
+        }
       },
-    });
-
-    // Create any actions in this workflow
-    if (workflowData.actions?.length > 0) {
-      let lastActionId = null;
-
-      for (let i = 0; i < workflowData.actions.length; i++) {
-        const actionData = workflowData.actions[i];
-
-        lastActionId
-          ? (actionData.previousActionId = lastActionId)
-          : (actionData.rootActionOfId = workflow.id);
-
-        const action = await createAction(actionData);
-        lastActionId = action.id;
-      }
+      ...(definition.tags && { tags: {
+        connectOrCreate: [...new Set(definition.tags)].map(name => ({ where: { name }, create: { name } }))
+      } })
     }
   });
 
+  let previousActionId;
+  for (const child of definition.actions || []) {
+    const action = await createAction({
+      ...child,
+      userId: child.userId || definition.userId,
+      ...(previousActionId ? { previousActionId } : { rootActionOfId: workflow.id })
+    }, tx);
+    previousActionId = action.id;
+  }
   return workflow;
 }
 
-/**
- * Create an action with the actionData provided.
- *
- * @param {Object} actionData
- * @returns An Object representing the action created
- */
-async function createAction(actionData) {
-    // For workflow base actions
-      if (actionData.actionType && actionData.actionType === "workflow") {
-        // Create a workflow and return the base action as the newly create action
-        const workflow = await createWorkflow({ ...actionData, rootActionOfId: actionData.rootActionOfId });
-        // throw Error(actionData.previousActionId);
-        return await prisma.action.findUnique({
-          where: { id: workflow.baseActionId },
-        });
-      }
-    
-      // Get the data used to create the action
-      const data = {};
-    
-      // required data
-      data.name = actionData.name;
-    
-      // optional data
-      if (actionData.description) data.description = actionData.description;
-      if (actionData.form) data.form = actionData.form;
-      if (actionData.actionType) data.actionType = actionData.actionType;
-      if (actionData.isFrozen) data.isFrozen = actionData.isFrozen;
-      if (actionData.metadata) {
-        let safeMetadata = {}
-        Object.entries(actionData.metadata).forEach(([key, value]) => {
-          safeMetadata[key] = JSON.stringify(value)
-        })
-        data.metadata = {
-          create: importMetadata(safeMetadata),
-        };
-      }
-      // actions directly in complex/branching actions only
-      if (actionData.parentActionId) {
-        data.parentAction = { connect: { id: actionData.parentActionId } };
-      }
-      // actions directly in workflows only
-      if (actionData.previousActionId) {
-        data.previousAction = { connect: { id: actionData.previousActionId } };
-      }
-      if (actionData.rootActionOfId) {
-        data.rootActionOf = { connect: { id: actionData.rootActionOfId } };
-      }
-    
-      let action;
-    
-      await prisma.$transaction(async () => {
-        // Create the data on the database using prisma
-        action = await prisma.action.create({
-          data: data,
-        });
-    
-        // Create any child actions for this action
-        if (actionData.childActions?.length > 0) {
-          for (let i = 0; i < actionData.childActions.length; i++) {
-            const childAction = actionData.childActions[i];
-            childAction.parentActionId = action.id;
-    
-            await createAction(childAction);
-          }
-        }
-      });
-    
-    return action;
+async function createAction(definition, tx) {
+  if (!tx) return prisma.$transaction(client => createAction(definition, client), { timeout: 30000 });
+  if (definition.actionType === "workflow") {
+    const workflow = await createWorkflow(definition, tx);
+    return tx.action.findUnique({ where: { id: workflow.baseActionId } });
+  }
+
+  const action = await tx.action.create({ data: actionData(definition) });
+  for (const child of definition.childActions || []) {
+    await createAction({ ...child, userId: child.userId || definition.userId, parentActionId: action.id }, tx);
+  }
+  return action;
 }
 
-module.exports = {
-    createWorkflow
-}
+module.exports = { createWorkflow, createAction };
