@@ -1084,13 +1084,21 @@ async function hireCandidateForJobPosition(
     // =====================================================
     // 5) Add JobPositionHistory record
     // =====================================================
-    await prisma.jobPositionHistory.create({
-      data: {
+    const existingEmployment = await prisma.jobPositionHistory.findFirst({ //Check if the candidate is already employed for this position
+      where: {
         jobPositionId,
         employeeId: user.uid,
-        jobPositionHistoryStatus: "ACTIVE",
       },
     });
+    if(!existingEmployment) {
+      await prisma.jobPositionHistory.create({
+        data: {
+          jobPositionId,
+          employeeId: user.uid,
+          jobPositionHistoryStatus: "ACTIVE",
+        },
+      });
+    }
 
     // =====================================================
     // 6) Check if position is full (max TAs reached)
