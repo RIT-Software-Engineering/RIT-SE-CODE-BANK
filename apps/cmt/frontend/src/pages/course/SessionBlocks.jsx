@@ -1,11 +1,14 @@
 import { ArrowDown, ArrowUp, Copy, Edit, Move, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button, Form, Modal } from "react-bootstrap";
+import { Alert, Button, Form, Modal } from "react-bootstrap";
 import { ReadOnlyEditor } from "../../components/RichTextEditor/RichTextEditor";
 import { CMTJsonFetch } from "../../utils/api";
 import { CMTDangerAlert, createErrorHandler } from "../../utils/error";
 import { SectionApplyScope, useSectionSync } from "./CourseSections";
 import { toNotifyResult } from "../../components/NotifyMessage";
+import { emptyNotifyBody, isNotifyReady, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
+import { extractUserFacingError } from "@se-code-bank/cmt-shared-utilities";
+import { notifyListChanged } from "../../components/PendingNotification";
 
 const STATUS_LABELS = {
     NOT_STARTED: "Not started",
@@ -28,7 +31,9 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
     const [removing, setRemoving] = useState(false);
     const [removeError, setRemoveError] = useState(null);
     const [targetSessionId, setTargetSessionId] = useState("");
-    const [notificationOption, setNotificationOption] = useState("none");
+    const [notificationOption, setNotificationOption] = useState(emptyNotifyBody);
+    const [moveError, setMoveError] = useState(null);
+    const [moving, setMoving] = useState(false);
 
     const sessionBlocks = blocks
         .filter(block => block.sessionId === session?.id)
@@ -37,7 +42,8 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
     useEffect(() => {
         if (blockToMove){ 
             setTargetSessionId(String(blockToMove.sessionId));
-            setNotificationOption("none");
+            setNotificationOption(emptyNotifyBody);
+            setMoveError(null);
         }
     }, [blockToMove]);
 
@@ -66,20 +72,32 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
             .catch(handleError("Failed to update block status."));
     }
 
-    function moveBlock(block, targetId, position, notify="none") {
+    function moveBlock(block, targetId, position, notify=emptyNotifyBody) {
         return CMTJsonFetch("PATCH", `/session/blocks/${block.id}/move`, {
             targetSessionId: Number(targetId),
             targetPosition: position,
-            notify
+            ...toNotifyBody(notify)
         })
             .then(json => {
-                onNotifyResult(toNotifyResult(json.notified));
+                onNotifyResult(toNotifyResult(json.notified, json.scheduled));
+                notifyListChanged();
                 setBlockToMove(null);
-                setNotificationOption("none");
+                setNotificationOption(emptyNotifyBody);
                 void refreshSync();
                 return refresh();
             })
-            .catch(handleError("Failed to move session block."));
+    }
+
+    async function confirmMove(){
+        setMoving(true);
+        setMoveError(null);
+        try{
+            await moveBlock(blockToMove, targetSessionId, undefined, notificationOption);
+        } catch(error){
+            setMoveError(extractUserFacingError(error));
+        }finally{
+            setMoving(false);
+        }
     }
 
     async function removeBlock() {
@@ -151,7 +169,7 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                                             title="Move block up"
                                             aria-label={`Move ${block.name} up`}
                                             disabled={index === 0}
-                                            onClick={() => moveBlock(block, session.id, index - 1)}
+                                            onClick={() => moveBlock(block, session.id, index - 1).catch(handleError("Failed to move session block."))}
                                         >
                                             <ArrowUp size={16} />
                                         </Button>
@@ -161,7 +179,7 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                                             title="Move block down"
                                             aria-label={`Move ${block.name} down`}
                                             disabled={index === sessionBlocks.length - 1}
-                                            onClick={() => moveBlock(block, session.id, index + 1)}
+                                            onClick={() => moveBlock(block, session.id, index + 1).catch(handleError("Failed to move session block."))}
                                         >
                                             <ArrowDown size={16} />
                                         </Button>
@@ -263,22 +281,18 @@ export function SessionBlocks({session, sessions, blocks, materials, refresh, on
                             )}
                         </Form.Select>
                     </Form.Group>
-                    {showNotify && (
-                        <Form.Group>
-                            <Form.Label>Student notification</Form.Label>
-                            <Form.Select value={notificationOption} onChange={event => setNotificationOption(event.target.value)}>
-                                <option value="none">Do not notify students</option>
-                                <option value="now">Notify students now</option>
-                                {/* <option value="personal">Create a personal reminder</option> */}
-                            </Form.Select>
-                        </Form.Group>
-                    )}
+                    {showNotify && 
+                        <NotifyOptions value={notificationOption} onChange={setNotificationOption} />
+                    }
+                    {moveError &&
+                        <Alert variant="danger" className="mt-2">{moveError}</Alert>
+                    }
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="secondary" onClick={() => setBlockToMove(null)}>Cancel</Button>
-                    <Button onClick={() => {
-                        return moveBlock(blockToMove, targetSessionId, undefined, notificationOption);
-                    }}>Move block</Button>
+                    <Button disabled={moving || !isNotifyReady(notificationOption)} onClick={confirmMove}>
+                        {moving ? "Moving..." : "Move block"}
+                    </Button>
                 </Modal.Footer>
             </Modal>
         </section>

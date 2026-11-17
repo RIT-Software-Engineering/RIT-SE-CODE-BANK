@@ -4,6 +4,7 @@ import { CMTActionToActionWithContexts } from "../utils/workflows/context.js";
 import { createAction, findActionsByCode, makeMetadataSafeForWorkflows, newBuilderWorkflow, objectToNewAction, updateAction } from "../utils/workflows/api.js";
 import { PrismaClient } from '../prisma/generated/client/index.js'
 import { CMTError, workflowsFetch } from "@se-code-bank/cmt-shared-utilities";
+import { actionCodeForEvent } from "../utils/courseExecution.js";
 import { accessError, authorizeActionState, resolveSectionIdentity, sectionAccess } from "../utils/sectionPermissions.js";
 import { authorizeWorkflow, authorizeWorkflowAction } from "../utils/workflowPermissions.js";
 import { isInstructor } from "../middleware/requireInstructor.js";
@@ -268,7 +269,8 @@ router.get("/actionTemplate/workflow/:workflowId", async (req, res) => {
     );
 
     const usedCodes = ["COURSE_SECTION", "NUMBER_STUDENTS", "COURSE_SEMESTER", "COURSE_DAYS", 
-        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", "START_COURSE"].filter(
+        "COURSE_SYLLABUS", "COURSE_START_DATE", "CHECKMARK_PUBLISH_SITE", "COURSE_HOLIDAYS", 
+        "START_COURSE", ...Object.values(actionCodeForEvent)].filter(
         code => findActionsWithContextsByCode(actionsWithContexts, code).length > 0
     );
 

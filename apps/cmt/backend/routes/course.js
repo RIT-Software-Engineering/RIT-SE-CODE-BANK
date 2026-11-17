@@ -10,8 +10,8 @@ import { ownedSection } from '../utils/sectionContent.js';
 import { refreshSectionSync } from '../utils/sectionSync.js';
 import requireInstructor from '../middleware/requireInstructor.js';
 import { accessError, authorizeActionState, authorizeSection, instructorSectionFilter, resolveSectionIdentity, sectionAccess } from '../utils/sectionPermissions.js';
-import { scheduleHolidayReminders } from '../utils/notifier.js'
-import { findStartChild, isStarted } from '../utils/courseExecution.js'
+import { notifyOfCourseStart, scheduleHolidayReminders } from '../utils/notifier.js'
+import { findChildByCode, isStarted } from '../utils/courseExecution.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -631,7 +631,7 @@ router.put('/:id/start', async (req, res) =>{
     
     if (isStarted(state)) return res.json({execState: execStateType})
         
-    const startChild = findStartChild(state)
+    const startChild = findChildByCode(state, 'START_COURSE')
 
     if (!startChild) throw new CMTError({ userFacingMessage: 'Start course action not found.' })
     await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId: startChild.id, stateType: 'completed' })
@@ -639,8 +639,14 @@ router.put('/:id/start', async (req, res) =>{
     const updatedState = await workflowsFetch('GET', `/states/workflow/${course.execWorkflowStateId}`)
     res.json({
         execState: updatedState.baseActionState.stateType
-   })
+    })
     await scheduleHolidayReminders(course)
+
+    try{
+        await notifyOfCourseStart(req.user, course);
+    } catch(error){
+        console.error('Failed to send welcome message:', error.message);
+    }
 })
 
 /**

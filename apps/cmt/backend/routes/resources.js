@@ -5,6 +5,7 @@ import fs from 'fs'
 import { fileURLToPath } from 'url'
 import { v4 as uuidv4 } from 'uuid'
 import { CMTError, workflowsFetch } from '@se-code-bank/cmt-shared-utilities'
+import { hasStarted, notifyOfMaterialChange } from '../utils/notifier.js'
 import { authorizeActionState, authorizeSection } from '../utils/sectionPermissions.js'
 
 const router = express.Router()
@@ -181,7 +182,7 @@ router.post('/syllabus/:courseId', courseGuard, async (req, _res, next) => {
         
         if (existingSyllabus.length > 0) {
             resource = await req.prisma.resource.updateMany({
-                where: {isSyllabus: true, courseId: course.id},
+                where: {isSyllabus: true, courseId: parseInt(courseId)},
                 data: {
                     filename: req.file.originalname,
                     mimeType: req.file.mimetype,
@@ -212,6 +213,13 @@ router.post('/syllabus/:courseId', courseGuard, async (req, _res, next) => {
         const { asid: actionStateId } = req.query
         if (actionStateId) await workflowsFetch('POST', `/states/handleSubmit`, { actionStateId, stateType: 'completed' })
         
+        if (existingSyllabus.length > 0 && course && await hasStarted(course)){
+            try{
+                await notifyOfMaterialChange(req.user, course, 'updated', {name: 'Syllabus', isSyllabus: true})
+            } catch(error){
+                console.error('Failed to send out syllabus change notification:', error)
+            }
+        }
         res.status(200).json(resource)
     } catch (error) {
         res.status(500).json({error})
