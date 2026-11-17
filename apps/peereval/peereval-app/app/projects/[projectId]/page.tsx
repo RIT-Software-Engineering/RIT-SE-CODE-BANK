@@ -1,28 +1,36 @@
 
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+
 import BackArrow from "@/components/BackArrow";
 import { useAuth } from "@/context/AuthContext";
+
 import {
     getAssessmentsByProject,
     getReceivedAssessmentResponses,
 } from "@/services/assessment";
+
 import {
     getProjectByID,
     getProjectsPeers,
 } from "@/services/project";
-import { Assessment } from "@/types/assessment";
-import { Project } from "@/types/project";
-import { UserProfile } from "@/types/userProfile";
-import { Drawer } from "@mui/material";
-import Link from "next/link";
-import React, { useEffect, useState } from "react";
+
+import type { Assessment } from "@/types/assessment";
+import type { Project } from "@/types/project";
+import type { UserProfile } from "@rit/peereval-components";
+
 import {
-    Card,
-    CardContent,
-    Typography,
+    AssessmentSection,
+    ProjectPeerList,
+} from "@rit/peereval-components";
+
+import {
     Button,
-    Stack,
+    Drawer,
+    Typography,
 } from "@mui/material";
 
 // Helper to split assessments by date.
@@ -45,65 +53,9 @@ const splitAssessments = (assessments: Assessment[]) => {
     };
 };
 
-// Assessment section and navigation.
-const Section: React.FC<{
-    projectId: string;
-    title: string;
-    assessments: Assessment[];
-    received?: boolean;
-}> = ({ projectId, title, assessments, received = false }) => (
-    <section className="mb-8">
-        <Typography variant="h6" component="h2" gutterBottom>
-            {title}
-        </Typography>
-
-        <Stack spacing={2}>
-            {assessments.length === 0 && (
-                <Typography color="textPrimary">
-                    No assessments.
-                </Typography>
-            )}
-
-            {assessments.map((assessment) => (
-                <Link
-                    href={`/projects/${projectId}/assessments/${assessment.id}${
-                        received ? "/received" : ""
-                    }`}
-                    key={assessment.id}
-                    style={{ textDecoration: "none" }}
-                >
-                    <Card variant="outlined">
-                        <CardContent>
-                            <Typography
-                                variant="subtitle1"
-                                color="textPrimary"
-                                fontWeight={500}
-                            >
-                                {assessment.name}
-                            </Typography>
-
-                            <Typography
-                                variant="caption"
-                                color="textPrimary"
-                            >
-                                {new Date(
-                                    assessment.startDate
-                                ).toLocaleDateString()}{" "}
-                                &ndash;{" "}
-                                {new Date(
-                                    assessment.dueDate
-                                ).toLocaleDateString()}
-                            </Typography>
-                        </CardContent>
-                    </Card>
-                </Link>
-            ))}
-        </Stack>
-    </section>
-);
-
-// Sidebar showing the project's peers.
-const ProjectPeersList: React.FC<{ projectId: string }> = ({
+// Fetches project peers using PeerEval's project service
+// and delegates their presentation to the shared component.
+const ProjectPeersSidebar: React.FC<{ projectId: string }> = ({
     projectId,
 }) => {
     const [peers, setPeers] = useState<UserProfile[]>([]);
@@ -141,43 +93,14 @@ const ProjectPeersList: React.FC<{ projectId: string }> = ({
         };
     }, [projectId]);
 
-    if (loading) {
-        return (
-            <div className="text-sm text-gray-500">
-                Loading...
-            </div>
-        );
-    }
-
-    if (peers.length === 0) {
-        return (
-            <div className="text-sm text-gray-500">
-                No peers found.
-            </div>
-        );
-    }
-
     return (
-        <Stack spacing={1} className="mt-2">
-            {[...peers]
-                .sort((a, b) => a.name.localeCompare(b.name))
-                .map((peer) => (
-                    <Stack
-                        key={peer.id}
-                        direction="row"
-                        spacing={1}
-                        alignItems="center"
-                    >
-                        <Typography variant="body1" color="textPrimary">
-                            {peer.name}
-                        </Typography>
-
-                        <Typography variant="body2" color="textPrimary">
-                            ({peer.email})
-                        </Typography>
-                    </Stack>
-                ))}
-        </Stack>
+        <ProjectPeerList
+            peers={peers}
+            loading={loading}
+            variant="compact"
+            showTitle={false}
+            emptyMessage="No peers found."
+        />
     );
 };
 
@@ -186,8 +109,20 @@ interface ProjectViewProps {
 }
 
 const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
+    const router = useRouter();
     const { currentUser } = useAuth();
     const { projectId } = React.use(params);
+
+    const handleAssessmentSelect = (
+        assessmentId: string,
+        received = false
+    ) => {
+        router.push(
+            `/projects/${projectId}/assessments/${assessmentId}${
+                received ? "/received" : ""
+            }`
+        );
+    };
 
     const [assessments, setAssessments] = useState<Assessment[]>([]);
     const [receivedAssessments, setReceivedAssessments] = useState<
@@ -328,31 +263,32 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
             <div className="max-w-3xl mx-auto py-8 px-4">
                 <BackArrow />
 
-                <Section
-                    projectId={projectId}
+                <AssessmentSection
                     title="Past Due Assessments"
                     assessments={pastDue}
+                    onAssessmentSelect={handleAssessmentSelect}
                 />
 
-                <Section
-                    projectId={projectId}
+                <AssessmentSection
                     title="To Do Assessments"
                     assessments={toDo}
+                    onAssessmentSelect={handleAssessmentSelect}
                 />
 
-                <Section
-                    projectId={projectId}
+                <AssessmentSection
                     title="Upcoming Assessments"
                     assessments={upcoming}
+                    onAssessmentSelect={handleAssessmentSelect}
                 />
 
                 <hr className="mb-4" />
 
-                <Section
-                    projectId={projectId}
+                <AssessmentSection
                     title="Your Received Feedback"
                     assessments={receivedAssessments}
-                    received
+                    onAssessmentSelect={(assessmentId) =>
+                        handleAssessmentSelect(assessmentId, true)
+                    }
                 />
             </div>
 
@@ -366,7 +302,7 @@ const ProjectView: React.FC<ProjectViewProps> = ({ params }) => {
                         Your Peers
                     </Typography>
 
-                    <ProjectPeersList projectId={projectId} />
+                    <ProjectPeersSidebar projectId={projectId} />
 
                     <Button
                         variant="contained"

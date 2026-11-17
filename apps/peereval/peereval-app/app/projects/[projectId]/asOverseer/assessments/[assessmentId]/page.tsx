@@ -9,27 +9,27 @@ import {
     getAssessmentResponses,
     releaseAssessmentResponse,
 } from "@/services/assessment";
-import { UserProfile } from "@/types/userProfile";
-import { Assessment, Inquiry, InquiryType } from "@/types/assessment";
+
+import {
+    InquiryResponseField,
+    type UserProfile,
+    type Assessment,
+    type Inquiry,
+} from "@rit/peereval-components";
+
 import React, { useEffect, useState } from "react";
 import BackArrow from "@/components/BackArrow";
 import { Button, MenuItem, Select } from "@mui/material";
+import { useParams } from "next/navigation";
 
 // --- Main Component ---
-
-interface FeedbackFormProps {
-    params: Promise<{
-        projectId: string;
-        assessmentId: string;
-    }>;
-}
 
 type ResponseStatus = {
     submittedAt: string | null;
     releasedAt: string | null;
 };
 
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
+const FeedbackForm: React.FC = () => {
     const [assessmentMetadata, setAssessmentMetadata] =
         useState<Assessment | null>(null);
 
@@ -56,7 +56,10 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     const [loadError, setLoadError] = useState("");
 
     const { currentUser } = useAuth();
-    const { projectId, assessmentId } = React.use(params);
+    const { projectId, assessmentId } = useParams<{
+        projectId: string;
+        assessmentId: string;
+    }>();
 
     // Load assessment details, peers, and responses.
     useEffect(() => {
@@ -88,6 +91,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 }
 
                 const firstResponder = peers.responders[0];
+
                 const availableReceivers = peers.receivers.filter(
                     (peer) => peer.id !== firstResponder.id
                 );
@@ -142,6 +146,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 if (cancelled) return;
 
                 console.error("Failed to load assessment:", error);
+
                 setLoadError(
                     error instanceof Error
                         ? error.message
@@ -260,15 +265,15 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         }
     };
 
-    const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
-
     if (loadError) {
         return (
             <div className="max-w-xl mx-auto p-4 space-y-4">
                 <BackArrow />
+
                 <p role="alert" className="text-red-600">
                     {loadError}
                 </p>
+
                 <Button
                     variant="outlined"
                     onClick={handleBack}
@@ -287,6 +292,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         return (
             <div className="max-w-xl mx-auto p-4 space-y-4">
                 <BackArrow />
+
                 <p>
                     No eligible responder and recipient pair is available
                     for this assessment.
@@ -305,7 +311,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             >
                 <BackArrow />
 
-                <div className="mb-6 flex justify-center items-baseline space-x-2 h-16">
+                <div className="mb-6 flex justify-center items-baselinespace-x-2 h-16">
                     {/* Responder dropdown */}
                     <Select
                         value={activePair[0].id}
@@ -384,176 +390,17 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                     </span>
                 </p>
 
-                {/* Read-only response review */}
-                {inquiries.map((question) => {
-                    switch (question.type) {
-                        case FREE_RESPONSE:
-                            return (
-                                <div
-                                    key={question.id}
-                                    className="space-y-2"
-                                >
-                                    <label className="block font-semibold">
-                                        {question.question}
-                                    </label>
-
-                                    <textarea
-                                        className="w-full border rounded p-2"
-                                        value={
-                                            responses[getActivePairId()]?.[
-                                                question.id
-                                            ] || ""
-                                        }
-                                        rows={4}
-                                        disabled
-                                    />
-                                </div>
-                            );
-
-                        case RATING:
-                            return (
-                                <div
-                                    key={question.id}
-                                    className="space-y-2"
-                                >
-                                    <label className="block font-semibold">
-                                        {question.question}
-                                    </label>
-
-                                    <div className="flex items-center space-x-2">
-                                        {question.labels && (
-                                            <span>
-                                                {
-                                                    question.labels.split(";")[0]
-                                                }
-                                            </span>
-                                        )}
-
-                                        {[...Array(question.scale)].map(
-                                            (_, index) => (
-                                                <label
-                                                    key={index}
-                                                    className="flex flex-col items-center"
-                                                >
-                                                    <input
-                                                        type="radio"
-                                                        name={`${question.id}-${getActivePairId()}`}
-                                                        value={index + 1}
-                                                        checked={
-                                                            responses[
-                                                                getActivePairId()
-                                                            ]?.[question.id] ===
-                                                            `${index + 1}`
-                                                        }
-                                                        disabled
-                                                    />
-                                                    <span>{index + 1}</span>
-                                                </label>
-                                            )
-                                        )}
-
-                                        {question.labels && (
-                                            <span>
-                                                {
-                                                    question.labels.split(";")[1]
-                                                }
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-
-                        case RUBRIC:
-                            return (
-                                <div
-                                    key={question.id}
-                                    className="space-y-2"
-                                >
-                                    <label className="block font-semibold">
-                                        {question.question}
-                                    </label>
-
-                                    <table className="w-full border">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                {question.options
-                                                    .split(";")
-                                                    .map((option, colIdx) => (
-                                                        <th
-                                                            key={colIdx}
-                                                            className="px-2 py-1 border"
-                                                        >
-                                                            {option}
-                                                        </th>
-                                                    ))}
-                                            </tr>
-                                        </thead>
-
-                                        <tbody>
-                                            {question.rows.map(
-                                                (row, rowIdx) => {
-                                                    const savedAnswer =
-                                                        responses[
-                                                            getActivePairId()
-                                                        ]?.[question.id];
-
-                                                    const selectedValues:
-                                                        number[] = savedAnswer
-                                                        ? JSON.parse(savedAnswer)
-                                                        : Array(
-                                                              question.rows
-                                                                  .length
-                                                          ).fill(-1);
-
-                                                    return (
-                                                        <tr key={rowIdx}>
-                                                            <td className="border px-2 py-1">
-                                                                {row.label}
-                                                            </td>
-
-                                                            {question.options
-                                                                .split(";")
-                                                                .map(
-                                                                    (
-                                                                        _,
-                                                                        colIdx
-                                                                    ) => (
-                                                                        <td
-                                                                            key={colIdx}
-                                                                            className="border text-center"
-                                                                        >
-                                                                            <input
-                                                                                type="radio"
-                                                                                name={`${question.id}-row-${rowIdx}-${getActivePairId()}`}
-                                                                                checked={
-                                                                                    selectedValues[
-                                                                                        rowIdx
-                                                                                    ] ===
-                                                                                    colIdx
-                                                                                }
-                                                                                disabled
-                                                                            />
-                                                                        </td>
-                                                                    )
-                                                                )}
-                                                        </tr>
-                                                    );
-                                                }
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            );
-
-                        default:
-                            return (
-                                <p key={question.id}>
-                                    There shouldn't be a question here.
-                                </p>
-                            );
-                    }
-                })}
+                {/* Reusable read-only inquiry components */}
+                {inquiries.map((inquiry) => (
+                    <InquiryResponseField
+                        key={inquiry.id}
+                        inquiry={inquiry}
+                        value={
+                            responses[getActivePairId()]?.[inquiry.id] ?? ""
+                        }
+                        editable={false}
+                    />
+                ))}
 
                 {/* Submission and release status */}
                 <div className="space-y-3 border-t pt-4">
@@ -565,7 +412,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         {!activeStatus?.submittedAt
                             ? "Draft — this feedback has not been submitted."
                             : activeStatus.releasedAt
-                              ? "Released — the recipient can view this feedback."
+                              ? "Released — the recipient can view thisfeedback."
                               : "Awaiting review — submitted and ready for approval."}
                     </p>
 

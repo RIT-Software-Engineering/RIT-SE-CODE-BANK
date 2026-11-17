@@ -1,0 +1,8 @@
+{
+  "name": "rit-se-code-bank",
+  "private": true,
+  "workspaces": [
+    "apps/peereval/peereval-app",
+    "packages/peereval-components"
+  ]
+}

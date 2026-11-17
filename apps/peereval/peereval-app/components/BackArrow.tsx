@@ -1,18 +1,14 @@
-import Link from "next/link";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import Button from "@mui/material/Button";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { BackButton } from "@rit/peereval-components";
 
 export default function BackArrow() {
+    const router = useRouter();
+
     return (
-        <Link href="/dashboard" passHref legacyBehavior>
-            <Button
-                component="a"
-                startIcon={<ArrowBackIcon />}
-                sx={{ mb: 2, textTransform: "none" }}
-                aria-label="Back"
-            >
-                Back
-            </Button>
-        </Link>
+        <BackButton
+            onClick={() => router.push("/dashboard")}
+        />
     );
 }

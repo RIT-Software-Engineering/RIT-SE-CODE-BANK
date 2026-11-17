@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -8,68 +9,85 @@ import {
     getReceivedAssessmentResponses,
 } from "@/services/assessment";
 import { getProjectsPeers as getProjectPeers } from "@/services/project";
-import { UserProfile } from "@/types/userProfile";
-import { Assessment, Inquiry, InquiryType } from "@/types/assessment";
+
+import {
+    InquiryResponseField,
+    type UserProfile,
+    type Assessment,
+    type Inquiry,
+} from "@rit/peereval-components";
+
 import React, { useEffect, useState } from "react";
 import BackArrow from "@/components/BackArrow";
 import { Tabs, Tab, Button } from "@mui/material";
+import { useParams } from "next/navigation";
 
 // --- Main Component ---
-interface FeedbackFormProps {
-    params: {
-        projectId: string;
-        assessmentId: string;
-    };
-}
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
+
+const FeedbackForm: React.FC = () => {
     const [assessmentMetadata, setAssessmentMetadata] =
         useState<Assessment | null>(null);
+
     const [activePeer, setActivePeer] = useState<UserProfile | null>(null);
+
     const [activeTab, setActiveTab] = useState<number>(0);
+
     const [responses, setResponses] = useState<
         Record<string, Record<string, string>>
     >({});
+
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
     const [peers, setPeers] = useState<UserProfile[]>([]);
+
     const { currentUser } = useAuth();
 
-    const { projectId, assessmentId } = params;
+    const { projectId, assessmentId } = useParams<{
+        projectId: string;
+        assessmentId: string;
+    }>();
 
+    // Load assessment information, inquiries, and responders.
     useEffect(() => {
         if (!currentUser) return;
 
         (async () => {
-            // Get assessment metadata
+            // Get assessment metadata.
             const a = await getAssessmentById(assessmentId);
             setAssessmentMetadata(a);
 
-            // Get assessment inquiries
+            // Get assessment inquiries.
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
 
-            // Get the responders
+            // Get the responders.
             const ps = await getAssessmentPeers(assessmentId);
+
+            // Exclude the current user and anonymize peer names.
             const rs = ps.responders
-                .filter((r) => r.id != currentUser.id)
-                .map((u, i) => ({ ...u, name: `P${i + 1}` })); // For anonymity
+                .filter((r) => r.id !== currentUser.id)
+                .map((u, i) => ({
+                    ...u,
+                    name: `P${i + 1}`,
+                }));
 
             setPeers(rs);
             setActivePeer(rs[0]);
         })();
     }, [currentUser]);
 
+    // Load received feedback for the selected peer.
     useEffect(() => {
         if (!currentUser || !activePeer) return;
 
         (async () => {
-            // Get assessment responses
             const rs = await getReceivedAssessmentResponses(
                 assessmentId,
                 currentUser.id,
                 currentUser.id
             );
 
-            // We're gonna do all peers at the same time
+            // Retrieve all peers' responses for this recipient.
             setResponses(
                 rs.reduce(
                     (acc1, r) => ({
@@ -88,6 +106,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         })();
     }, [activePeer]);
 
+    // Switch between anonymous peer tabs.
     const handleSwitchTab = (idx: number) => {
         setActiveTab(idx);
         setActivePeer(peers[idx]);
@@ -96,8 +115,6 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
     const handleBack = () => {
         window.history.back();
     };
-
-    const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
 
     if (!activePeer && !assessmentMetadata) {
         return <p>Loading...</p>;
@@ -115,6 +132,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         <>
             <form className="max-w-xl mx-auto p-4 space-y-8">
                 <BackArrow />
+
+                {/* Anonymous peer selection tabs. */}
                 <div className="flex justify-center mb-6">
                     <div>
                         <Tabs
@@ -132,147 +151,26 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         </Tabs>
                     </div>
                 </div>
+
+                {/* Assessment title and anonymous peer. */}
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
-                    <span className="font-semibold">{activePeer.name}</span>
+                    <span className="font-semibold">
+                        {activePeer.name}
+                    </span>
                 </p>
-                {inquiries.map((q) => {
-                    switch (q.type) {
-                        case FREE_RESPONSE:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <textarea
-                                        className="w-full border rounded p-2"
-                                        value={
-                                            responses[activePeer.id]?.[q.id] ||
-                                            ""
-                                        }
-                                        rows={4}
-                                        disabled
-                                    />
-                                </div>
-                            );
-                        case RATING:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <div className="flex items-center space-x-2">
-                                        {q.labels && (
-                                            <span>
-                                                {q.labels.split(";")[0]}
-                                            </span>
-                                        )}
-                                        {[...Array(q.scale)].map((_, i) => (
-                                            <label
-                                                key={i}
-                                                className="flex flex-col items-center"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`${q.id}-${activePeer}`}
-                                                    value={i + 1}
-                                                    checked={
-                                                        responses[
-                                                            activePeer.id
-                                                        ]?.[q.id] == `${i + 1}`
-                                                    }
-                                                    disabled
-                                                />
-                                                <span>{i + 1}</span>
-                                            </label>
-                                        ))}
-                                        {q.labels && (
-                                            <span>
-                                                {q.labels.split(";")[1]}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        case RUBRIC:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <table className="w-full border">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                {q.options
-                                                    .split(";")
-                                                    .map((opt, colIdx) => (
-                                                        <th
-                                                            key={colIdx}
-                                                            className="px-2 py-1 border"
-                                                        >
-                                                            {opt}
-                                                        </th>
-                                                    ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {q.rows.map((row, rowIdx) => (
-                                                <tr key={rowIdx}>
-                                                    <td className="border px-2 py-1">
-                                                        {row.label}
-                                                    </td>
-                                                    {q.options
-                                                        .split(";")
-                                                        .map((_, colIdx) => (
-                                                            <td
-                                                                key={colIdx}
-                                                                className="border text-center"
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`${q.id}-row-${rowIdx}-${activePeer}`}
-                                                                    checked={
-                                                                        (!responses[
-                                                                            activePeer
-                                                                                .id
-                                                                        ]?.[
-                                                                            q.id
-                                                                        ]
-                                                                            ? Array(
-                                                                                  q
-                                                                                      .rows
-                                                                                      .length
-                                                                              ).fill(
-                                                                                  -1
-                                                                              )
-                                                                            : (JSON.parse(
-                                                                                  responses[
-                                                                                      activePeer
-                                                                                          .id
-                                                                                  ][
-                                                                                      q
-                                                                                          .id
-                                                                                  ]
-                                                                              ) as number[]))[
-                                                                            rowIdx
-                                                                        ] ===
-                                                                        colIdx
-                                                                    }
-                                                                    disabled
-                                                                />
-                                                            </td>
-                                                        ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            );
-                        default:
-                            return <p>There shouldn't be a question here.</p>;
-                    }
-                })}
+
+                {/* Reusable read-only inquiry components. */}
+                {inquiries.map((inquiry) => (
+                    <InquiryResponseField
+                        key={inquiry.id}
+                        inquiry={inquiry}
+                        value={
+                            responses[activePeer.id]?.[inquiry.id] ?? ""
+                        }
+                        editable={false}
+                    />
+                ))}
 
                 <Button
                     type="submit"

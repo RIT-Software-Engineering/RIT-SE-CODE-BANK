@@ -1,475 +1,38 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { FeedbackForm, Inquiry, InquiryType } from "@/types/assessment";
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+
+import {
+    InquiryResponseField,
+    CreateAssessmentModal,
+    PeerSelectModal,
+    InquiryType,
+    ReuseAssessmentModal,
+} from "@rit/peereval-components";
+
+import type {
+    FeedbackForm,
+    UserProfile,
+    Inquiry,
+} from "@rit/peereval-components";
+
 import { createForm, getAllForms } from "@/services/form";
+
 import {
     assignAssessmentToProject,
     getProjectsPeers,
 } from "@/services/project";
-import { UserProfile } from "@/types/userProfile";
-import CreateAssessmentModal from "./CreateAssessmentModal";
+
 import {
-    Modal,
     Box,
     Button,
     Typography,
-    Accordion,
-    AccordionSummary,
-    AccordionDetails,
 } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
 import BackArrow from "@/components/BackArrow";
 
-type ReuseAssessmentModalProps = {
-    assessments: FeedbackForm[];
-    isOpen: boolean;
-    onClose: () => void;
-    onFormSelect: (form: FeedbackForm) => void;
-};
-
-function QuestionDisplay({ inquiry }: { inquiry: Inquiry }) {
-    switch (inquiry.type) {
-        case InquiryType.FREE_RESPONSE:
-            return (
-                <div className="mb-4">
-                    <div className="mb-1">{inquiry.question}</div>
-                    <textarea
-                        className="w-full border rounded p-2"
-                        disabled
-                        placeholder="Response..."
-                    />
-                </div>
-            );
-        case InquiryType.RATING:
-            return (
-                <div className="mb-4">
-                    <div className="mb-1">{inquiry.question}</div>
-                    <div>
-                        {inquiry.labels && (
-                            <>
-                                <span></span>
-                                <span>
-                                    Scale: {inquiry.scale}
-                                    <br />
-                                    Labels: {
-                                        inquiry.labels.split(";")[0]
-                                    } - {inquiry.labels.split(";")[1]}
-                                </span>
-                            </>
-                        )}
-                        <input
-                            type="range"
-                            min={0}
-                            max={1}
-                            disabled
-                            className="w-full"
-                        />
-                    </div>
-                </div>
-            );
-        case InquiryType.RUBRIC:
-            return (
-                <div className="mb-4">
-                    <div className="mb-1">{inquiry.question}</div>
-                    <table className="w-full border">
-                        <thead>
-                            <tr>
-                                <th className="border px-2 py-1 text-left">
-                                    Criteria
-                                </th>
-                                <th className="border px-2 py-1 text-left">
-                                    Description
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {inquiry.rows.map((row, idx) => (
-                                <tr key={idx}>
-                                    <td className="border px-2 py-1">
-                                        {row.label}
-                                    </td>
-                                    <td className="border px-2 py-1">
-                                        {inquiry.options}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            );
-        default:
-            return null;
-    }
-}
-
-function ReuseAssessmentModal({
-    assessments,
-    isOpen,
-    onClose,
-    onFormSelect,
-}: ReuseAssessmentModalProps) {
-    const [openIdx, setOpenIdx] = useState<number[]>([]);
-
-    if (!isOpen) return null;
-
-    return (
-        <div>
-            <Modal open={isOpen} onClose={onClose}>
-                <Box
-                    sx={{
-                        position: "absolute",
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                        bgcolor: "background.paper",
-                        borderRadius: 2,
-                        boxShadow: 24,
-                        p: 4,
-                        width: "100%",
-                        maxWidth: 600,
-                        maxHeight: "80vh",
-                        overflowY: "auto",
-                    }}
-                >
-                    <Button
-                        onClick={onClose}
-                        sx={{
-                            position: "absolute",
-                            top: 16,
-                            right: 16,
-                            minWidth: 0,
-                            color: "grey.600",
-                            fontSize: 24,
-                        }}
-                    >
-                        ×
-                    </Button>
-                    <Typography variant="h5" fontWeight="bold" mb={3}>
-                        Assessments
-                    </Typography>
-                    <div>
-                        {assessments.map((form, idx) => (
-                            <Accordion
-                                key={form.id}
-                                expanded={openIdx.includes(idx)}
-                                onChange={() =>
-                                    setOpenIdx(
-                                        openIdx.includes(idx)
-                                            ? openIdx.filter((i) => i !== idx)
-                                            : [...openIdx, idx]
-                                    )
-                                }
-                                sx={{ mb: 2 }}
-                            >
-                                <AccordionSummary
-                                    expandIcon={<ExpandMoreIcon />}
-                                >
-                                    <Typography fontWeight="bold">
-                                        {form.name}
-                                    </Typography>
-                                </AccordionSummary>
-                                <AccordionDetails>
-                                    {form.inquiries.length === 0 && (
-                                        <Typography
-                                            color="text.secondary"
-                                            fontStyle="italic"
-                                        >
-                                            No questions.
-                                        </Typography>
-                                    )}
-                                    {form.inquiries.map((q, qIdx) => (
-                                        <QuestionDisplay
-                                            key={qIdx}
-                                            inquiry={q}
-                                        />
-                                    ))}
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        fullWidth
-                                        sx={{ mt: 2 }}
-                                        onClick={() => onFormSelect(form)}
-                                    >
-                                        Select This Form
-                                    </Button>
-                                </AccordionDetails>
-                            </Accordion>
-                        ))}
-                    </div>
-                </Box>
-            </Modal>
-        </div>
-    );
-}
-
-type PeerSelectModalProps = {
-    isOpen: boolean;
-    onClose: () => void;
-    peers: UserProfile[]; // list of peer emails or names
-    selected: UserProfile[];
-    setSelected: (peers: UserProfile[]) => void;
-    splitPeers: boolean;
-    setSplitPeers: (split: boolean) => void;
-    responders: UserProfile[];
-    setResponders: (peers: UserProfile[]) => void;
-    receivers: UserProfile[];
-    setReceivers: (peers: UserProfile[]) => void;
-};
-
-export function PeerSelectModal({
-    isOpen,
-    onClose,
-    peers,
-    selected,
-    setSelected,
-    splitPeers,
-    setSplitPeers,
-    responders,
-    setResponders,
-    receivers,
-    setReceivers,
-}: PeerSelectModalProps) {
-    if (!isOpen) return null;
-
-    // Helper functions for select/deselect all
-    const handleSelectAll = () => {
-        if (splitPeers) {
-            setResponders(peers);
-            setReceivers(peers);
-        } else {
-            setSelected(peers);
-        }
-    };
-    const handleDeselectAll = () => {
-        if (splitPeers) {
-            setResponders([]);
-            setReceivers([]);
-        } else {
-            setSelected([]);
-        }
-    };
-
-    // Toggle peer selection
-    const togglePeer = (
-        peer: UserProfile,
-        group: "all" | "responders" | "receivers"
-    ) => {
-        if (splitPeers) {
-            if (group === "responders") {
-                setResponders(
-                    responders.includes(peer)
-                        ? responders.filter((p) => p !== peer)
-                        : [...responders, peer]
-                );
-            } else if (group === "receivers") {
-                setReceivers(
-                    receivers.includes(peer)
-                        ? receivers.filter((p) => p !== peer)
-                        : [...receivers, peer]
-                );
-            }
-        } else {
-            setSelected(
-                selected.includes(peer)
-                    ? selected.filter((p) => p !== peer)
-                    : [...selected, peer]
-            );
-        }
-    };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm">
-            <div className="rounded-lg shadow-lg p-6 w-full max-w-lg relative bg-white dark:bg-zinc-900">
-                <Button
-                    onClick={onClose}
-                    sx={{
-                        position: "absolute",
-                        top: 16,
-                        right: 24,
-                        minWidth: 0,
-                        color: "grey.600",
-                        fontSize: 24,
-                    }}
-                >
-                    ×
-                </Button>
-                <Typography variant="h5" fontWeight="bold" mb={3}>
-                    Select Peers
-                </Typography>
-                <Box mb={4} display="flex" alignItems="center" gap={2}>
-                    <Box display="flex" alignItems="center">
-                        <input
-                            type="checkbox"
-                            checked={splitPeers}
-                            onChange={(e) => setSplitPeers(e.target.checked)}
-                            style={{ marginRight: 8 }}
-                            id="split-peers-checkbox"
-                        />
-                        <label htmlFor="split-peers-checkbox">
-                            Split into responders and receivers
-                        </label>
-                    </Box>
-                </Box>
-                <Box mb={4} display="flex" gap={2}>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleSelectAll}
-                        type="button"
-                    >
-                        Select All
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={handleDeselectAll}
-                        type="button"
-                    >
-                        Deselect All
-                    </Button>
-                </Box>
-                {splitPeers ? (
-                    <Box display="flex" gap={6}>
-                        <Box flex={1}>
-                            <Typography
-                                variant="subtitle1"
-                                fontWeight="bold"
-                                mb={2}
-                            >
-                                Responders
-                            </Typography>
-                            <Box display="flex" flexWrap="wrap" gap={2}>
-                                {peers.map((peer) => (
-                                    <Button
-                                        key={peer.id}
-                                        variant={
-                                            responders.includes(peer)
-                                                ? "contained"
-                                                : "outlined"
-                                        }
-                                        color={
-                                            responders.includes(peer)
-                                                ? "primary"
-                                                : "inherit"
-                                        }
-                                        onClick={() =>
-                                            togglePeer(peer, "responders")
-                                        }
-                                        sx={{
-                                            borderRadius: 2,
-                                            minWidth: 0,
-                                            px: 2,
-                                            py: 1,
-                                            textTransform: "none",
-                                        }}
-                                    >
-                                        {peer.name}
-                                    </Button>
-                                ))}
-                            </Box>
-                        </Box>
-                        <Box flex={1}>
-                            <Typography
-                                variant="subtitle1"
-                                fontWeight="bold"
-                                mb={2}
-                            >
-                                Receivers
-                            </Typography>
-                            <Box display="flex" flexWrap="wrap" gap={2}>
-                                {peers.map((peer) => (
-                                    <Button
-                                        key={peer.id}
-                                        variant={
-                                            receivers.includes(peer)
-                                                ? "contained"
-                                                : "outlined"
-                                        }
-                                        color={
-                                            receivers.includes(peer)
-                                                ? "primary"
-                                                : "inherit"
-                                        }
-                                        onClick={() =>
-                                            togglePeer(peer, "receivers")
-                                        }
-                                        sx={{
-                                            borderRadius: 2,
-                                            minWidth: 0,
-                                            px: 2,
-                                            py: 1,
-                                            textTransform: "none",
-                                        }}
-                                    >
-                                        {peer.name}
-                                    </Button>
-                                ))}
-                            </Box>
-                        </Box>
-                    </Box>
-                ) : (
-                    <Box>
-                        <Typography
-                            variant="subtitle1"
-                            fontWeight="bold"
-                            mb={2}
-                        >
-                            Peers
-                        </Typography>
-                        <Box display="flex" flexWrap="wrap" gap={2}>
-                            {peers.map((peer) => (
-                                <Button
-                                    key={peer.id}
-                                    variant={
-                                        selected.includes(peer)
-                                            ? "contained"
-                                            : "outlined"
-                                    }
-                                    color={
-                                        selected.includes(peer)
-                                            ? "primary"
-                                            : "inherit"
-                                    }
-                                    onClick={() => togglePeer(peer, "all")}
-                                    sx={{
-                                        borderRadius: 2,
-                                        minWidth: 0,
-                                        px: 2,
-                                        py: 1,
-                                        textTransform: "none",
-                                    }}
-                                >
-                                    {peer.name}
-                                </Button>
-                            ))}
-                        </Box>
-                    </Box>
-                )}
-                <Box mt={6} display="flex" justifyContent="flex-end">
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={onClose}
-                        type="button"
-                    >
-                        Done
-                    </Button>
-                </Box>
-            </div>
-        </div>
-    );
-}
-
-type AssignAssessmentPageProps = {
-    params: { projectId: string };
-};
-
-export default function AssignAssessmentPage({
-    params,
-}: AssignAssessmentPageProps) {
+export default function AssignAssessmentPage() {
     const router = useRouter();
     const [isReuseModalOpen, setIsReuseModalOpen] = useState(false);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -495,7 +58,7 @@ export default function AssignAssessmentPage({
     const [isPeerModalOpen, setIsPeerModalOpen] = useState(false);
     const [error, setError] = useState<string>("");
 
-    const { projectId } = params;
+    const { projectId } = useParams<{ projectId: string }>();
 
     useEffect(() => {
         (async () => {
@@ -670,8 +233,13 @@ export default function AssignAssessmentPage({
                                         No questions.
                                     </Typography>
                                 )}
-                                {selectedForm.inquiries.map((q, idx) => (
-                                    <QuestionDisplay key={idx} inquiry={q} />
+                                {selectedForm.inquiries.map((q) => (
+                                    <InquiryResponseField
+                                        key={q.id}
+                                        inquiry={q}
+                                        value=""
+                                        editable={false}
+                                    />
                                 ))}
                             </>
                         ) : (

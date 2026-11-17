@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
@@ -8,14 +9,16 @@ import {
     getAssessmentPeers,
     sendAssessmentResponses,
 } from "@/services/assessment";
-import { UserProfile } from "@/types/userProfile";
+
 import {
-    Assessment,
-    Inquiry,
-    InquiryType,
-    RubricInquiry,
-} from "@/types/assessment";
+    InquiryResponseField,
+    type Assessment,
+    type Inquiry,
+    type UserProfile,
+} from "@rit/peereval-components";
+
 import React, { useEffect, useState } from "react";
+
 import {
     Button,
     IconButton,
@@ -24,118 +27,107 @@ import {
     Tab,
     Tabs,
 } from "@mui/material";
+
 import CloseIcon from "@mui/icons-material/Close";
 import BackArrow from "@/components/BackArrow";
+import { useParams } from "next/navigation";
 
 // --- Main Component ---
-interface FeedbackFormProps {
-    params: {
-        projectId: string;
-        assessmentId: string;
-    };
-}
-const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
+
+const FeedbackForm: React.FC = () => {
     const [editable, setEditable] = useState(false);
+
     const [assessmentMetadata, setAssessmentMetadata] =
         useState<Assessment | null>(null);
+
     const [activePeer, setActivePeer] = useState<UserProfile | null>(null);
+
     const [activeTab, setActiveTab] = useState<number>(0);
+
     const [responses, setResponses] = useState<Record<string, string>>({});
+
     const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
     const [peersToEval, setPeersToEval] = useState<UserProfile[]>([]);
+
     const [showSnack, setShowSnack] = useState(false);
+
     const { currentUser } = useAuth();
 
-    const { projectId, assessmentId } = params;
+    const { projectId, assessmentId } = useParams<{
+        projectId: string;
+        assessmentId: string;
+    }>();
 
+    // Load assessment information, inquiries, and available peers.
     useEffect(() => {
         if (!currentUser) return;
 
         (async () => {
-            // Get assessment metadata
+            // Get assessment metadata.
             const a = await getAssessmentById(assessmentId);
             setAssessmentMetadata(a);
 
-            // See if the peer should be able to edit the form
+            // Determine whether the assessment is currently editable.
             setEditable(new Date() >= new Date(a.startDate));
 
-            // Get assessment inquiries
+            // Get assessment inquiries.
             const inqs = await getAssessmentInquiriesById(assessmentId);
             setInquiries(inqs);
 
-            // Get the receivers
+            // Get the receivers.
             const ps = await getAssessmentPeers(assessmentId);
-            const rs = ps.receivers.filter((r) => r.id != currentUser.id);
+            const rs = ps.receivers.filter(
+                (r) => r.id !== currentUser.id
+            );
+
             setPeersToEval(rs);
             setActivePeer(rs[0]);
         })();
     }, [currentUser]);
 
+    // Load saved responses for the currently selected peer.
     useEffect(() => {
         if (!currentUser || !activePeer) return;
 
         (async () => {
-            // Get assessment responses
             const rs = await getAssessmentPeerResponses(
                 assessmentId,
                 currentUser.id
             );
 
-            // We only do one peer at a time
-            // Get current peer under review, set the responses
-            const peerRs = rs.find((r) => r.respondeeId == activePeer.id);
+            // Only display responses for the currently selected peer.
+            const peerRs = rs.find(
+                (r) => r.respondeeId === activePeer.id
+            );
 
             if (!peerRs) {
                 setResponses({});
-            } else
+            } else {
                 setResponses(
                     peerRs.responses.reduce((acc, r) => {
                         acc[r.inquiryId] = r.answer;
                         return acc;
                     }, {} as Record<string, string>)
                 );
+            }
         })();
     }, [activePeer]);
 
+    // Save the current responses before switching peers.
     const handleSwitchTab = (idx: number) => {
         void submitForm().catch((err) => {
-            console.error("Failed to save assessment responses:", err);
+            console.error(
+                "Failed to save assessment responses:",
+                err
+            );
         });
 
         setActiveTab(idx);
         setActivePeer(peersToEval[idx]);
     };
 
-    const handleFreeResponse = (qid: string, answer: string) => {
-        setResponses((prev) => ({
-            ...prev,
-            [qid]: answer,
-        }));
-    };
-
-    const handleRating = (qid: string, answer: number) => {
-        setResponses((prev) => ({
-            ...prev,
-            [qid]: `${answer}`,
-        }));
-    };
-
-    const handleRubric = (qid: string, rowIdx: number, colIdx: number) => {
-        setResponses((prev) => {
-            const prevAns: number[] = prev[qid]
-                ? JSON.parse(prev[qid])
-                : Array(
-                      (inquiries.find((inq) => inq.id == qid) as RubricInquiry)
-                          .rows.length
-                  ).fill(-1);
-            prevAns[rowIdx] = colIdx;
-            return {
-                ...prev,
-                [qid]: JSON.stringify(prevAns),
-            };
-        });
-    };
-
+    // Handle final assessment submission.
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -143,10 +135,14 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
             await submitForm(true);
             setShowSnack(true);
         } catch (err) {
-            console.error("Failed to save assessment responses:", err);
+            console.error(
+                "Failed to save assessment responses:",
+                err
+            );
         }
     };
 
+    // Submit or save responses for the active peer.
     const submitForm = (submitted = false) => {
         return sendAssessmentResponses(
             assessmentId,
@@ -157,13 +153,19 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         );
     };
 
+    // Save responses before returning to the previous page.
     const handleBack = () => {
         void submitForm().catch((err) => {
-            console.error("Failed to save assessment responses:", err);
+            console.error(
+                "Failed to save assessment responses:",
+                err
+            );
         });
+
         window.history.back();
     };
 
+    // Handle closing the submission notification.
     const handleClose = (
         event: React.SyntheticEvent | Event,
         reason?: SnackbarCloseReason
@@ -186,16 +188,17 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
         </IconButton>
     );
 
-    const { FREE_RESPONSE, RUBRIC, RATING } = InquiryType;
-
+    // Loading state.
     if (!activePeer && !assessmentMetadata) {
         return <p>Loading...</p>;
     }
 
+    // Assessment loading error fallback.
     if (!assessmentMetadata) {
         return <p>Man something happened idk</p>;
     }
 
+    // No available peers to evaluate.
     if (!activePeer) {
         return <p>You are alone in this project :(</p>;
     }
@@ -207,6 +210,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                 className="max-w-xl mx-auto p-4 space-y-8"
             >
                 <BackArrow />
+
+                {/* Peer selection tabs. */}
                 <div className="flex justify-center mb-6">
                     <div>
                         <Tabs
@@ -224,158 +229,32 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         </Tabs>
                     </div>
                 </div>
+
+                {/* Assessment title and selected peer. */}
                 <p className="text-xl">
                     {assessmentMetadata.name} —{" "}
-                    <span className="font-semibold">{activePeer.name}</span>
+                    <span className="font-semibold">
+                        {activePeer.name}
+                    </span>
                 </p>
-                {inquiries.map((q) => {
-                    switch (q.type) {
-                        case FREE_RESPONSE:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <textarea
-                                        className="w-full border rounded p-2"
-                                        value={responses[q.id] || ""}
-                                        onChange={(e) =>
-                                            handleFreeResponse(
-                                                q.id,
-                                                e.target.value
-                                            )
-                                        }
-                                        rows={4}
-                                        disabled={!editable}
-                                    />
-                                </div>
-                            );
-                        case RATING:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <div className="flex items-center space-x-2">
-                                        {q.labels && (
-                                            <span>
-                                                {q.labels.split(";")[0]}
-                                            </span>
-                                        )}
-                                        {[...Array(q.scale)].map((_, i) => (
-                                            <label
-                                                key={i}
-                                                className="flex flex-col items-center"
-                                            >
-                                                <input
-                                                    type="radio"
-                                                    name={`${q.id}-${activePeer}`}
-                                                    value={i + 1}
-                                                    checked={
-                                                        responses[q.id] ==
-                                                        `${i + 1}`
-                                                    }
-                                                    onChange={() =>
-                                                        handleRating(
-                                                            q.id,
-                                                            i + 1
-                                                        )
-                                                    }
-                                                    disabled={!editable}
-                                                />
-                                                <span>{i + 1}</span>
-                                            </label>
-                                        ))}
-                                        {q.labels && (
-                                            <span>
-                                                {q.labels.split(";")[1]}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        case RUBRIC:
-                            return (
-                                <div key={q.id} className="space-y-2">
-                                    <label className="block font-semibold">
-                                        {q.question}
-                                    </label>
-                                    <table className="w-full border">
-                                        <thead>
-                                            <tr>
-                                                <th></th>
-                                                {q.options
-                                                    .split(";")
-                                                    .map((opt, colIdx) => (
-                                                        <th
-                                                            key={colIdx}
-                                                            className="px-2 py-1 border"
-                                                        >
-                                                            {opt}
-                                                        </th>
-                                                    ))}
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {q.rows.map((row, rowIdx) => (
-                                                <tr key={rowIdx}>
-                                                    <td className="border px-2 py-1">
-                                                        {row.label}
-                                                    </td>
-                                                    {q.options
-                                                        .split(";")
-                                                        .map((_, colIdx) => (
-                                                            <td
-                                                                key={colIdx}
-                                                                className="border text-center"
-                                                            >
-                                                                <input
-                                                                    type="radio"
-                                                                    name={`${q.id}-row-${rowIdx}-${activePeer}`}
-                                                                    checked={
-                                                                        (!responses[
-                                                                            q.id
-                                                                        ]
-                                                                            ? Array(
-                                                                                  q
-                                                                                      .rows
-                                                                                      .length
-                                                                              ).fill(
-                                                                                  -1
-                                                                              )
-                                                                            : (JSON.parse(
-                                                                                  responses[
-                                                                                      q
-                                                                                          .id
-                                                                                  ]
-                                                                              ) as number[]))[
-                                                                            rowIdx
-                                                                        ] ===
-                                                                        colIdx
-                                                                    }
-                                                                    onChange={() =>
-                                                                        handleRubric(
-                                                                            q.id,
-                                                                            rowIdx,
-                                                                            colIdx
-                                                                        )
-                                                                    }
-                                                                    disabled={
-                                                                        !editable
-                                                                    }
-                                                                />
-                                                            </td>
-                                                        ))}
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            );
-                        default:
-                            return <p>There shouldn't be a question here.</p>;
-                    }
-                })}
+
+                {/* Reusable inquiry components. */}
+                {inquiries.map((inquiry) => (
+                    <InquiryResponseField
+                        key={inquiry.id}
+                        inquiry={inquiry}
+                        value={responses[inquiry.id] ?? ""}
+                        onChange={(value) =>
+                            setResponses((prev) => ({
+                                ...prev,
+                                [inquiry.id]: value,
+                            }))
+                        }
+                        editable={editable}
+                    />
+                ))}
+
+                {/* Submission controls. */}
                 {editable ? (
                     <>
                         <Button
@@ -387,6 +266,7 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         >
                             Submit
                         </Button>
+
                         <Snackbar
                             open={showSnack}
                             autoHideDuration={6000}
@@ -404,7 +284,8 @@ const FeedbackForm: React.FC<FeedbackFormProps> = ({ params }) => {
                         disabled
                         className="w-full bg-gray-400 text-white py-2 rounded font-semibold"
                     >
-                        {new Date() < new Date(assessmentMetadata.startDate)
+                        {new Date() <
+                        new Date(assessmentMetadata.startDate)
                             ? "Starts " +
                               new Date(
                                   assessmentMetadata.startDate

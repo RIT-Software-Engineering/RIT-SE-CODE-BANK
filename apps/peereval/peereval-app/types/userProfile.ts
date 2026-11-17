@@ -1,5 +1,1 @@
-export interface UserProfile {
-    id: string;
-    name: string;
-    email: string;
-}
+export type { UserProfile } from "@rit/peereval-components";
