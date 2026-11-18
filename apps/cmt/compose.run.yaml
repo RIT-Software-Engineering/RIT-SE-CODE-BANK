@@ -36,5 +36,47 @@ services:
       - backend
     restart: unless-stopped
 
+  notifications-mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_ROOT_PASSWORD: ${NOTIFICATION_DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: notification_service
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - notifications_data:/var/lib/mysql
+    restart: unless-stopped
+
+  smtp4dev:
+    image: rnwood/smtp4dev
+    ports:
+      - "127.0.0.1:${SMTP4DEV_UI_PORT:-3005}:80"
+    volumes:
+      - smtp4dev_data:/smtp4dev
+    restart: unless-stopped
+
+  notifications:
+    image: notifications:${TAG:-latest}
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      DATABASE_URL: mysql://root:${NOTIFICATION_DB_ROOT_PASSWORD}@notifications-mariadb:3306/notification_service
+      SMTP_HOST: smtp4dev
+      SMTP_PORT: 25
+      SMTP_FROM: se_svc_apps@rit.edu
+    command: sh -c "npx prisma migrate deploy && npm start"
+    depends_on:
+      notifications-mariadb:
+        condition: service_healthy
+      smtp4dev:
+        condition: service_started
+    restart: unless-stopped
+
 volumes:
   mariadb_data:
+  notifications_data:
+  smtp4dev_data:
