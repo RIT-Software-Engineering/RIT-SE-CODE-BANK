@@ -44,7 +44,7 @@ async function handleApiResponse(response) {
       })
     );
 
-    window.location.href = "/Error";
+    window.location.href = "/ta-portal/Error";
     // Throw the concise name (if present) or the message to keep console errors readable
     throw new Error(conciseName || errorMessage);
   }
@@ -946,7 +946,7 @@ export async function getResumeById(resumeId) {
       })
     );
 
-    window.location.href = "/Error";
+    window.location.href = "/ta-portal/Error";
     // Throw the concise name (if present) or the message to keep console errors readable
     throw new Error(conciseName || errorMessage);
   }
@@ -996,7 +996,7 @@ export async function getCoverLetterById(coverLetterId) {
       })
     );
 
-    window.location.href = "/Error";
+    window.location.href = "/ta-portal/Error";
     // Throw the concise name (if present) or the message to keep console errors readable
     throw new Error(conciseName || errorMessage);
   }

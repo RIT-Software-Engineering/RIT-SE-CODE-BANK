@@ -191,8 +191,9 @@ export default function AdminUsersPage() {
         }, {});
         const employeeGroups = [
           { key: 'Active', title: 'Active', users: groupedByStatus['ACTIVE'] || [] },
-          { key: 'Unknown', title: 'Unknown', users: groupedByStatus['UNKNOWN'] || [] },
           { key: 'Inactive', title: 'Inactive', users: groupedByStatus['INACTIVE'] || [] },
+          { key: 'Terminated', title: 'Terminated', users: groupedByStatus['TERMINATED'] || [] },
+          { key: 'Unknown', title: 'Unknown', users: groupedByStatus['UNKNOWN'] || [] },
         ];
 
         return (
