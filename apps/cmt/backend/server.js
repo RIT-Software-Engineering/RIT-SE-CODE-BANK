@@ -20,6 +20,7 @@ import { isInstructor } from './middleware/requireInstructor.js';
 import { isStudentUser, studentForUser } from './utils/students.js';
 import holidayRoutes from './routes/holidays.js'; // add holiday route
 import notificationRoutes from "./routes/notifications.js"
+import noteRoutes from "./routes/notes.js"
 
 import path from "path";
 import { fileURLToPath } from "url";
@@ -211,6 +212,7 @@ app.use("/api/cmt/session", requireTeachingInstructor, sessionRoutes);
 app.use("/api/cmt/resources", resourceRoutes);
 app.use("/api/cmt/holidays", holidayRoutes);
 app.use("/api/cmt/notifications", notificationRoutes);
+app.use("/api/cmt/notes", noteRoutes);
 
 /* ------------------------------------------------------------------
    ERROR / 404 HANDLERS

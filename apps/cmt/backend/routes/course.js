@@ -12,6 +12,7 @@ import requireInstructor from '../middleware/requireInstructor.js';
 import { accessError, authorizeActionState, authorizeSection, instructorSectionFilter, resolveSectionIdentity, sectionAccess } from '../utils/sectionPermissions.js';
 import { notifyOfCourseStart, scheduleHolidayReminders } from '../utils/notifier.js'
 import { findChildByCode, isStarted } from '../utils/courseExecution.js'
+import { isNoteAction } from '../utils/notes.js'
 
 /**
  * @import { WorkflowsAction } from '@se-code-bank/workflows-ecosystem'
@@ -106,7 +107,7 @@ router.get('/:id', authorizeSection(prisma, "editMaterials", "id"), async (req, 
         ])
         execState = execWorkflowState.baseActionState.stateType
         started = isStarted(execWorkflowState)
-        execActionsWithContexts = execActions.map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
+        execActionsWithContexts = execActions.filter(action => !isNoteAction(action)).map(action => CMTActionToActionWithContexts(action, execWorkflowState, course.id, req.user.uid))
     }
     const actionsWithContexts = actions.map(action => CMTActionToActionWithContexts(action, workflowState, course.id, req.user.uid)) 
 
