@@ -23,6 +23,8 @@ import { TemplateOverview } from "./pages/template/TemplateOverview.jsx";
 import { TemplateDashboard } from "./pages/template/TemplateDashboard.jsx";
 import { serializeError } from "@se-code-bank/cmt-shared-utilities";
 import SettingsPage from "./pages/SettingsPage.jsx";
+import ShibbLoginPage from "./pages/ShibbLoginPage.jsx";
+import LoginWrapper from "./utils/LoginWrapper.js";
 
 /* ------------------------------------------------------------------
    Suppress noisy ResizeObserver errors in development
@@ -48,7 +50,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
       <Routes>
         {/* Public route: login page */}
-        <Route path="/login" element={<DevLoginPage />} />
+        <Route path="/login" element={<LoginWrapper loginMode={process.env.NODE_ENV === "development" ? "development" : "shibb"}/>} />
 
         {/* Protected routes */}
         <Route
