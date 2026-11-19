@@ -12,3 +12,9 @@ services:
       context: ../..
       dockerfile: apps/cmt/backend/Dockerfile
     image: backend:${TAG:-latest}
+    
+  notifications:
+    build:
+      context: ../..
+      dockerfile: apps/cmt/notifications.Dockerfile
+    image: notifications:${TAG:-latest}
