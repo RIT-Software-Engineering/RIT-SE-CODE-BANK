@@ -111,7 +111,7 @@ export async function resetPassword(username, newPassword) {
 
 export async function checkUserAvailability(fields){
   try{
-    const response = await fetch("/user-availability", {
+    const response = await fetch("${BASE_API_URL}${DATABASE_API_EXTENSION}/user-availability", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
