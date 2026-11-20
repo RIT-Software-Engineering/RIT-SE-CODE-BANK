@@ -50,7 +50,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <AuthProvider>
       <Routes>
         {/* Public route: login page */}
-        <Route path="/login" element={<LoginWrapper loginMode={process.env.NODE_ENV === "development" ? "development" : "shibb"}/>} />
+        <Route path="/login" element={<LoginWrapper/>} />
 
         {/* Protected routes */}
         <Route

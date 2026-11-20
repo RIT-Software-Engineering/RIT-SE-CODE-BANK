@@ -19,7 +19,7 @@ export default function RequireAuth({ children, roles, teachingInstructor = fals
     </div></Container>;
   }
   if (status === "anonymous") {
-    return <LoginWrapper loginMode="" />;
+    return <LoginWrapper/>;
   }
   if (status === "error" || status === "forbidden" || !homeForUser(user)) {
     return <Container className="py-5"><Alert variant={status === "error" ? "danger" : "warning"}>
