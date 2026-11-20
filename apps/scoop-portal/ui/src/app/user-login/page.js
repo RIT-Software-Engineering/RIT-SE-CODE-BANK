@@ -91,7 +91,7 @@ export default function AuthPage() {
       // "https://apps.se.rit.edu/scoop-portal/dashboard"
       // "https://apps.se.rit.edu/auth/me"
       // `${process.env.NEXT_PUBLIC_API_URL}/dashboard` 
-      "http://localhost:3020/scoop-portal/dashboard"
+      "http://apps-staging.se.rit.edu/scoop-portal/dashboard"
     )}`;
   };
 
