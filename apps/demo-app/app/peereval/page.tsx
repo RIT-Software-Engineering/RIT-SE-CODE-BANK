@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * PeerEval Component Showcase
+ * 
+ * Demonstrates the reusable components exported by
+ * @rit/peereval-components.
+ * 
+ * Uses local sample date and React state to demonstrate component
+ * functionality without requiring the PeerEval backend, database,
+ * authentication system, or notificiation service.
+ * 
+ * Organized into project, assessment, peer management. and 
+ * navigation/layout component categories.
+ */
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 

@@ -1,6 +1,17 @@
-
 "use client";
 
+/**
+ * InquiryResponseField
+ * 
+ * A reusable component for displaying and responding to assessment
+ * inquiries.
+ * 
+ * Supports Free Response, Rating, and Rubric inquiry types.
+ * Can operate in editable or read-only mode depending on its props.
+ * 
+ * Receives the current response value and reports changes through 
+ * onChange. Response storage and submission are handled by the parent.
+ */
 import { useId } from "react";
 import {
     InquiryType,

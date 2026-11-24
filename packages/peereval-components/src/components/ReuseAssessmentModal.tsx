@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * ReusableAssessmentModal
+ * 
+ * A reusable modal for browsing and selecting previously created
+ * feedback forms.
+ * 
+ * Displays available assessment in expandable sections and previews
+ * their inquires using InquiryResponseField.
+ * 
+ * Returns the selected feedback form through the onFormSelect callback.
+ * Loading forms and handling the selection are responsibilities
+ * of the parent application.
+ */
 import { useState } from "react";
 
 import {

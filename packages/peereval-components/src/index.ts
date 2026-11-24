@@ -1,3 +1,16 @@
+/**
+ * PeerEval Components - Public API
+ * 
+ * Central export file for the reusable PeerEval component package.
+ * 
+ * Exposes shared React compoents, TypeScript types, and enums so 
+ * consuming applications can import functionality directly from
+ * @rit/peereval-components.
+ * 
+ * Internal implementation files should generally be imported through
+ * this entry point rather than accessed individually by consuming apps.
+ */
+
 // Assessment types
 export { InquiryType } from "./types/assessment";
 

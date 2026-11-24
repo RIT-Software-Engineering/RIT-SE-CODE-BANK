@@ -1,3 +1,14 @@
+/**
+ * Component Showcase Homepage
+ * 
+ * Entry point for the RIT shared component demonstration application.
+ * 
+ * Provides access to the existing TeamBuilder component showcase
+ * and the PeerEval component showcase.
+ * 
+ * Each application's components are demonstrated independently 
+ * through their respective showcase pages.
+ */
 import  DemoPage  from "./implementation/page";
 import Link from "next/link";
 

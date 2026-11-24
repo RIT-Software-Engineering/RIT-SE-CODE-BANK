@@ -1,5 +1,14 @@
 "use client";
 
+/**
+ * BackButton
+ * 
+ * A reusable navigation button with a back arrow icon.
+ * 
+ * Receives an onClick callback rather than defining a destination.
+ * This allows different applications to control navigation while
+ * reusing the same button presentation.
+ */
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Button from "@mui/material/Button";
 

@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * AssessmentSection
+ * 
+ * Displays a titled section containing a collection of assessments.
+ * 
+ * Each assessment displays its name and start/due dates. The component
+ * supports an empty-state message and uses a callback when an assessment
+ * is selected.
+ * 
+ * Application-specific navigation is handled by the parent component.
+ */
 import {
     Card,
     CardActionArea,

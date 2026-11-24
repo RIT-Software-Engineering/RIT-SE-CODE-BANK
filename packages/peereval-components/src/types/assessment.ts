@@ -1,3 +1,15 @@
+/**
+ * Shared Assessment Types
+ * 
+ * Defines the TypeScript data structure used by PeerEval's reusable
+ * assessment components.
+ * 
+ * Includes assessment definitions, feedback forms, inquiry types,
+ * rubric configuration, and peer assessment response structures.
+ * 
+ * These types allow applications to consume the components using
+ * consistent data structures without importing PeerEval's backend.
+ */
 export type Assessment = {
     id: string;
     projectId: string;
@@ -19,6 +31,7 @@ export type BaseInquiry = {
     question: string;
 };
 
+// Identifies the supported types of feedback questions.
 export enum InquiryType {
     FREE_RESPONSE = "FREE_RESPONSE",
     RATING = "RATING",

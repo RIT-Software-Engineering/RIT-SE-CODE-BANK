@@ -1,5 +1,19 @@
 "use client";
 
+/**
+ * PeerSelectModal
+ * 
+ * A reusable modal for selecting project peers.
+ * 
+ * Supports selecting peers as a single group or splitting selections
+ * into separate responder and receiver groups.
+ * 
+ * Includes Select All, Deselect All, individual peer selection,
+ * and Done controls.
+ * 
+ * Selection state is controlled by the parent through props and 
+ * callback functions.
+ */
 import {
     Box,
     Button,

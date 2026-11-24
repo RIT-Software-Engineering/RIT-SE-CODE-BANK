@@ -1,6 +1,17 @@
-
 "use client";
 
+/**
+ * CreateAssessmentModal
+ * 
+ * A reusable modal for creating an assessment and configuring its
+ * feedback questions.
+ * 
+ * Supports Free Response, Rating, and Rubric inquiry types, including
+ * their associated configuration fields and validation.
+ * 
+ * Returns the assessment title and configured inquiries through the
+ * onCreate callback. Backend persistence is handled by the parent.
+ */
 import React, { useState } from "react";
 
 import {

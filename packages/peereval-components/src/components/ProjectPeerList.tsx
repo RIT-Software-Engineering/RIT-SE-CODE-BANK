@@ -1,6 +1,20 @@
-
 "use client";
 
+/**
+ * ProjectPeerList
+ * 
+ * A reusable component for displaying project members.
+ * 
+ * Supports two display modes:
+ * - Management: Displays peers with optional removal and addition actions.
+ * - Compact: Displays a read-only peer list suitable for sidebars.
+ * 
+ * Supports loading and empty states.
+ * 
+ * Receives peer data and action callbacks through props. The parent
+ * application remains responsible for backend operations and 
+ * membership management.
+ */
 import { Close } from "@mui/icons-material";
 
 import {

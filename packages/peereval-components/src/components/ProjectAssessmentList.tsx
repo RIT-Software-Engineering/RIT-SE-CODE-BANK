@@ -1,5 +1,18 @@
 "use client";
 
+/**
+ * ProjectAssessmentList
+ * 
+ * Displays a collection of project assessments along with an
+ * Assign New Assessment action.
+ * 
+ * Sorts assessments by their start dates and displays their names
+ * and date ranges.
+ * 
+ * Provides callbacks for selecting an assessment or initiating
+ * a new assessment assignment. Application-specific navigation
+ * is handled by their parent.
+ */
 import {
     Button,
     Card,

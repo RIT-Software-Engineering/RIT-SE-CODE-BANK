@@ -1,5 +1,16 @@
 "use client";
 
+/**
+ * AddPeerDialog
+ * 
+ * A reusable dialog for adding a peer to a project.
+ * 
+ * Displays an email input, validation errors, and Add/Cancel actions.
+ * The parent component controls the input value and handles peer creation
+ * through the supplied callbacks.
+ * 
+ * This component does not communicate directly with the backend.
+ */
 import {
     Alert,
     Button,

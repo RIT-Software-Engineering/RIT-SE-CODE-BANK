@@ -1,5 +1,15 @@
 "use client";
 
+/**
+ * ProjectCard
+ * 
+ * A reusable clicking card for displaying project information.
+ * 
+ * Displays a project name and description while allowing the parent
+ * application to define the action performed when the card is clicked.
+ * 
+ * Does not depend on any particular application's routing structure.
+ */
 import {
     Card,
     CardActionArea,
