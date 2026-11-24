@@ -5,6 +5,11 @@ services:
     build:
       context: ../..
       dockerfile: apps/cmt/frontend/Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
+        REACT_APP_AUTH_BASE: ${REACT_APP_AUTH_BASE}
+        REACT_APP_BASE_URL: ${REACT_APP_BASE_URL}
+        REACT_APP_LOGIN_MODE: ${REACT_APP_LOGIN_MODE}
     image: frontend:${TAG:-latest}
 
   backend:
