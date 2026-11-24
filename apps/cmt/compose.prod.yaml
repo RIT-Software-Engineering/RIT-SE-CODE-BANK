@@ -1,0 +1,12 @@
+name: cmt
+
+services:
+  notifications:
+    networks:
+      - default
+      - mailnet
+
+networks:
+  mailnet:
+    external: true
+    name: notification-service_mailnet
