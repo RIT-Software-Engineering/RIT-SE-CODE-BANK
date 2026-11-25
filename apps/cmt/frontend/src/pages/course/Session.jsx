@@ -12,7 +12,7 @@ import { SectionApplyScope, useSectionSync } from "./CourseSections";
 import { useSearchParams } from "react-router-dom";
 import { HOLIDAYS_CHANGED, useHolidays } from "../../components/workflows/holidays";
 import { NotifyMessage, toNotifyResult } from "../../components/NotifyMessage";
-import { emptyNotifyBody, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
+import { emptyNotifyBody, isNotifyReady, NotifyOptions, toNotifyBody } from "../../components/NotifyOptions";
 import { notifyListChanged } from "../../components/PendingNotification";
 
 /**
@@ -151,211 +151,211 @@ export function Session({sessionCount, setSessionCount, sessions, setSessions, s
                 setSessionToCancel(null);
                 void refreshSync();
             })
-            .catch(createErrorHandler("Failed to update session cancellation.", setError));
     }, [sessions, setSessions, refreshSync]);
-
-    if (error) return <CMTDangerAlert error={error} />
 
     const conflicts = sessionConflicts(sessions, sessionBlocks, sessionData, holidays);
 
     return (
-        <Accordion activeKey={activeSession} onSelect={setActiveSession}>
-        <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
-        isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
-        blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}
-        showNotify={started} onNotifyResult={setNotifyResult}/>
-        <SessionEditModal showNotify={started} onNotifyResult={setNotifyResult} sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId}
-        isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
-        setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
-        <DeleteModal showNotify={started} onNotifyResult={setNotifyResult} deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
-        materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
-        <NotifyMessage notifyResult={notifyResult} onClose={() => setNotifyResult(null)} />
-        <CancelSessionModal
-            showNotify={started}
-            session={sessionToCancel}
-            onClose={() => setSessionToCancel(null)}
-            onConfirm={(notificationOption) => {
-                return setCanceled(sessionToCancel, true, notificationOption);
-            }}
-        />
-        {conflicts.map(conflict => (
-            <Alert variant="warning" key={conflict.session.id}>
-                {conflict.reason === "canceled" 
-                    ? `Session ${conflict.session.sessionNum} is canceled and has content! `
-                    : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
-                }
-                Move the content to another available session.
-            </Alert>
-        ))}
-        {
-            Array.from({ length: sessionCount }, (_, i) => {
-                const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
-                let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
-                const currentSession = sessions.find(session => session.sessionNum === i+1);
-                const holiday = holidayOnDate(currentSession?.date, holidays);
+        <>
+            <CMTDangerAlert error={error} dismissible onClose={() => setError(null)} />
+            <Accordion activeKey={activeSession} onSelect={setActiveSession}>
+                <SessionModal sessionNum={sessionNum} sessionData={sessionData} setSessionData={setSessionData} 
+                isOpen={isOpen} setIsOpen={setIsOpen} sessions={sessions} 
+                blocks={sessionBlocks} courseId={courseId} defaultMaterialType={defaultMaterialType} setDefaultMaterialType={setDefaultMaterialType}
+                showNotify={started} onNotifyResult={setNotifyResult}/>
+                <SessionEditModal showNotify={started} onNotifyResult={setNotifyResult} sessionData={sessionData} setSessionData={setSessionData} materialId={curMaterialId}
+                isEditOpen={isEditOpen} setIsEditOpen={setIsEditOpen} courseId={courseId} 
+                setDeleteOpen={setIsDeleteOpen} setMaterialId={setCurMaterialId} sessionCount={sessionCount} sessions={sessions} blocks={sessionBlocks}/>
+                <DeleteModal showNotify={started} onNotifyResult={setNotifyResult} deleteOpen={isDeleteOpen} setDeleteOpen={setIsDeleteOpen} sessionData={sessionData} setSessionData={setSessionData} setMaterialId={setCurMaterialId}
+                materialId={curMaterialId} setEditModalOpen={setIsEditOpen} courseId={courseId} sessionNum={sessionNum}/>
+                <NotifyMessage notifyResult={notifyResult} onClose={() => setNotifyResult(null)} />
+                <CancelSessionModal
+                    showNotify={started}
+                    session={sessionToCancel}
+                    onClose={() => setSessionToCancel(null)}
+                    onConfirm={(notificationOption) => {
+                        return setCanceled(sessionToCancel, true, notificationOption);
+                    }}
+                />
+                {conflicts.map(conflict => (
+                    <Alert variant="warning" key={conflict.session.id}>
+                        {conflict.reason === "canceled" 
+                            ? `Session ${conflict.session.sessionNum} is canceled and has content! `
+                            : `Session ${conflict.session.sessionNum} falls on ${conflict.holiday.name}! `
+                        }
+                        Move the content to another available session.
+                    </Alert>
+                ))}
+                {
+                    Array.from({ length: sessionCount }, (_, i) => {
+                        const sessionAction = sessionActions?.find(sessionAction => sessionAction.processedAction.parsedMetadata.code === `SESSION_${i}`)
+                        let numMaterials = sessionData.filter(material => material.sessionNum === i).length;
+                        const currentSession = sessions.find(session => session.sessionNum === i+1);
+                        const holiday = holidayOnDate(currentSession?.date, holidays);
 
-                return (
-                    <Accordion.Item eventKey={`${i}`} key={i} onClick={()=>setSessionNum(i)}>
-                        <Accordion.Header>
-                            <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
-                                {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
-                                Currently the one type that's tracked are the additional sessions. */}
-                                {currentSession?.canceled ? (
-                                    <Button
-                                        size="sm"
-                                        variant="danger"
-                                        disabled
-                                        style={{opacity: 1}}
-                                    >
-                                        Canceled
-                                    </Button>
-                                ) : sessionAction ? (
-                                    <CheckmarkAction
-                                        actionWithContexts={sessionAction}
-                                        refresh={updateWorkflow}
-                                        fetchToCallback={fetchToCallback}
-                                        renderers={sessionCheckmarkRenderers}
-                                        disabled={numMaterials===0}
+                        return (
+                            <Accordion.Item eventKey={`${i}`} key={i} onClick={()=>setSessionNum(i)}>
+                                <Accordion.Header>
+                                    <div className="flex items-center gap-2" id={`WORKFLOW_JUMPPOINT_SESSION_${i}`}>
+                                        {/* TODO: completion should be tracked for ALL actions in the DB in case a professor wants to create more sessions than required.
+                                        Currently the one type that's tracked are the additional sessions. */}
+                                        {currentSession?.canceled ? (
+                                            <Button
+                                                size="sm"
+                                                variant="danger"
+                                                disabled
+                                                style={{opacity: 1}}
+                                            >
+                                                Canceled
+                                            </Button>
+                                        ) : sessionAction ? (
+                                            <CheckmarkAction
+                                                actionWithContexts={sessionAction}
+                                                refresh={updateWorkflow}
+                                                fetchToCallback={fetchToCallback}
+                                                renderers={sessionCheckmarkRenderers}
+                                                disabled={numMaterials===0}
+                                            />
+                                        ) : <Button
+                                            size="sm"
+                                            variant={!sessionData.find(material => material.sessionNum === i) ? 
+                                                sessions.find(session => session.sessionNum === i)?.completed ? 'outline-secondary' : 'secondary' 
+                                                : sessions.find(session => session.sessionNum === i)?.completed ? 'outline-primary' : 'primary'}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                CMTJsonFetch("PUT", 
+                                                    `session/${sessions.find(session => session.sessionNum === i)?.id}`, 
+                                                    {completed: !sessions.find(session => session.sessionNum === i)?.completed}).then(() => {
+                                                    setSessions(sessions.map(session => {
+                                                        if (session.sessionNum === i){
+                                                            session.completed = !session.completed;
+                                                        } 
+                                                        return session;
+                                                    }));
+                                                    })
+                                            }}
+                                            disabled={!sessionData.find(material => material.sessionNum === i)}
+                                        >
+                                            {sessions.find(session => session.sessionNum === i)?.completed ? 'Mark as In-Progress' : 'Mark as Completed'}
+                                        </Button>}
+                                        <span className='text-2xl'>
+                                            Session {i+1} {' '}
+                                            <span className="text-xl text-gray-400">
+                                                ({numMaterials > 0 ? 
+                                                (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
+                                                : "No materials"})
+                                            </span>
+                                            {holiday && <Badge bg="warning" text="dark" className="ms-3 fs-6">Holiday: {holiday.name}</Badge>}
+                                        </span>
+                                    </div>
+                                </Accordion.Header>
+                                <Accordion.Body>
+                                    <SessionBlocks
+                                        showNotify={started}
+                                        session={currentSession}
+                                        sessions={sessions}
+                                        blocks={sessionBlocks}
+                                        materials={sessionData}
+                                        refresh={update}
+                                        setError={setError}
+                                        createOpen={blockSessionIdForCreate === currentSession?.id}
+                                        onCreateClose={() => setBlockSessionIdForCreate(null)}
+                                        onEditMaterial={materialId => {
+                                            setCurMaterialId(materialId);
+                                            setIsEditOpen(true);
+                                        }}
+                                        onNotifyResult={setNotifyResult}
                                     />
-                                ) : <Button
-                                    size="sm"
-                                    variant={!sessionData.find(material => material.sessionNum === i) ? 
-                                        sessions.find(session => session.sessionNum === i)?.completed ? 'outline-secondary' : 'secondary' 
-                                        : sessions.find(session => session.sessionNum === i)?.completed ? 'outline-primary' : 'primary'}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        CMTJsonFetch("PUT", 
-                                            `session/${sessions.find(session => session.sessionNum === i)?.id}`, 
-                                            {completed: !sessions.find(session => session.sessionNum === i)?.completed}).then(() => {
-                                            setSessions(sessions.map(session => {
-                                                if (session.sessionNum === i){
-                                                    session.completed = !session.completed;
-                                                } 
-                                                return session;
-                                            }));
-                                            })
-                                    }}
-                                    disabled={!sessionData.find(material => material.sessionNum === i)}
-                                >
-                                    {sessions.find(session => session.sessionNum === i)?.completed ? 'Mark as In-Progress' : 'Mark as Completed'}
-                                </Button>}
-                                <span className='text-2xl'>
-                                    Session {i+1} {' '}
-                                    <span className="text-xl text-gray-400">
-                                        ({numMaterials > 0 ? 
-                                        (numMaterials > 1 ? `${numMaterials} items` : `${numMaterials} item`) 
-                                        : "No materials"})
-                                    </span>
-                                    {holiday && <Badge bg="warning" text="dark" className="ms-3 fs-6">Holiday: {holiday.name}</Badge>}
-                                </span>
-                            </div>
-                        </Accordion.Header>
-                        <Accordion.Body>
-                            <SessionBlocks
-                                showNotify={started}
-                                session={currentSession}
-                                sessions={sessions}
-                                blocks={sessionBlocks}
-                                materials={sessionData}
-                                refresh={update}
-                                setError={setError}
-                                createOpen={blockSessionIdForCreate === currentSession?.id}
-                                onCreateClose={() => setBlockSessionIdForCreate(null)}
-                                onEditMaterial={materialId => {
-                                    setCurMaterialId(materialId);
-                                    setIsEditOpen(true);
-                                }}
-                                onNotifyResult={setNotifyResult}
-                            />
-                            { sessionData.find(data => data.sessionNum === i) ?
-                            <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
-                            setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType} blocks={sessionBlocks}/> :
-                            <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
-                            }
-                            { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
-                            <Card>
-                                <Card.Body className='group max-h-96 overflow-y-scroll'>
-                                    <Card.Title>
-                                        <div className='flex justify-between'>
-                                            <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
-                                            <div className='flex justify-end size-10 opacity-0 group-hover:!opacity-100 group-hover:text-white'>
-                                                <Button variant='outline-dark' onClick={(e) => {
-                                                setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
-                                                setIsEditOpen(true);
-                                                e.currentTarget.style.opacity = "100";
-                                                }}><Edit /></Button>
-                                                <Button className="ml-3" variant="outline-danger" onClick={(e) => {
-                                                setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
-                                                setIsDeleteOpen(true);
-                                                e.currentTarget.style.opacity = "100";
-                                                }}><Trash2 /></Button>
-                                            </div>
-                                        </div>
-                                    </Card.Title>
-                                    <Card.Text>
-                                        <ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body} />
-                                    </Card.Text>
-                                </Card.Body>
-                            </Card> : <></>
-                            }
-                            {
-                            sessionDate ? 
-                            <>
-                                {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the schedule.</Alert>}
-                                <Form className="flex max-w-[30%] gap-2 items-center"
-                                onSubmit={(e) => {
-                                    e.preventDefault();
-                                    console.log(sessionDate)
-                                    CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
-                                        const sessionsCopy = sessions.map(session => {
-                                            if (session.sessionNum === i+1) 
-                                                return {...session, date: sessionDate}
-                                            return session
-                                        });
-                                        setSessions(sessionsCopy);
-                                        setSessionDate('');
-                                    })
-                                }}>
-                                    <Form.Label>Date: </Form.Label>
-                                    <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
-                                    <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
-                                    <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
-                                </Form>
-                            </> :
-                            <div className="flex gap-3 items-center">
-                                <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
-                                <Button variant="outline-secondary" onClick={() => {
-                                    setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
-                                    loadHolidays()
-                                    }} size="sm">Edit</Button>
-                            </div>
-                            }
-                            <div className='flex justify-between pt-3'>
-                                <div className={`justify-start ${sessionData.find(data => data.sessionNum === i) ? 'visible' : 'invisible'}`}>
-                                    <Button variant='outline-danger' onClick={()=>setIsDeleteOpen(true)}>Delete All Material</Button>
-                                </div>
-                                <div className="justify-end">
-                                    <Button
-                                        className="mr-2"
-                                        variant="outline-primary"
-                                        onClick={() => setBlockSessionIdForCreate(currentSession?.id)}
-                                    >
-                                        Add block
-                                    </Button>
-                                    {currentSession?.canceled ?
-                                        <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false).catch(createErrorHandler("Failed to restore session.", setError))}>Restore session</Button> :
-                                        <Button className="mr-2" variant="outline-danger" onClick={() => setSessionToCancel(currentSession)}>Cancel session</Button>
+                                    { sessionData.find(data => data.sessionNum === i) ?
+                                    <SessionTable sessionData={sessionData} sessionNum={i} sessionDate={sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} setIsCreateOpen={setIsOpen} 
+                                    setIsEditOpen={setIsEditOpen} setMaterialId={setCurMaterialId} setDefaultMaterialType={setDefaultMaterialType} blocks={sessionBlocks}/> :
+                                    <div className='flex justify-center'><p className='text-xl'>Nothing here yet!</p></div>
                                     }
-                                    <Button onClick={() => setIsOpen(true)}>Add Material</Button>
-                                </div>
-                            </div>
-                        </Accordion.Body>
-                    </Accordion.Item>
-                )
-            })
-        }
-      </Accordion>
-  );
+                                    { sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes") ?
+                                    <Card>
+                                        <Card.Body className='group max-h-96 overflow-y-scroll'>
+                                            <Card.Title>
+                                                <div className='flex justify-between'>
+                                                    <div><ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").label} /></div>
+                                                    <div className='flex justify-end size-10 opacity-0 group-hover:!opacity-100 group-hover:text-white'>
+                                                        <Button variant='outline-dark' onClick={(e) => {
+                                                        setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                                        setIsEditOpen(true);
+                                                        e.currentTarget.style.opacity = "100";
+                                                        }}><Edit /></Button>
+                                                        <Button className="ml-3" variant="outline-danger" onClick={(e) => {
+                                                        setCurMaterialId(sessionData.find(material => material.type === "Personal Notes" && material.sessionNum === i).id);
+                                                        setIsDeleteOpen(true);
+                                                        e.currentTarget.style.opacity = "100";
+                                                        }}><Trash2 /></Button>
+                                                    </div>
+                                                </div>
+                                            </Card.Title>
+                                            <Card.Text>
+                                                <ReadOnlyEditor value={sessionData.find(data => data.sessionNum === i && data.type==="Personal Notes").body} />
+                                            </Card.Text>
+                                        </Card.Body>
+                                    </Card> : <></>
+                                    }
+                                    {
+                                    sessionDate ? 
+                                    <>
+                                        {isHoliday && <Alert variant="warning">Warning! You are trying to schedule a session on a holiday! Holidays are already rendered in the schedule.</Alert>}
+                                        <Form className="flex max-w-[30%] gap-2 items-center"
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            console.log(sessionDate)
+                                            CMTJsonFetch("PUT", `/session/${sessions.find(session => session.sessionNum === i+1)?.id}`, {date: sessionDate}).then(() => {
+                                                const sessionsCopy = sessions.map(session => {
+                                                    if (session.sessionNum === i+1) 
+                                                        return {...session, date: sessionDate}
+                                                    return session
+                                                });
+                                                setSessions(sessionsCopy);
+                                                setSessionDate('');
+                                            })
+                                        }}>
+                                            <Form.Label>Date: </Form.Label>
+                                            <Form.Control type="date" defaultValue={sessionDate} onChange={(e) => setSessionDate(e.target.value)}></Form.Control>
+                                            <Button variant="danger" onClick={() => setSessionDate('')}>Cancel</Button>
+                                            <Button disabled={isHoliday} type="submit" variant="success">Submit</Button>
+                                        </Form>
+                                    </> :
+                                    <div className="flex gap-3 items-center">
+                                        <p className="mb-0">Date: {sessions.find(session => session.sessionNum === i+1)?.date ?? "TBD"} </p>
+                                        <Button variant="outline-secondary" onClick={() => {
+                                            setSessionDate(sessions.find(session => session.sessionNum === i+1)?.date ?? new Date().toISOString().split('T')[0])
+                                            loadHolidays()
+                                            }} size="sm">Edit</Button>
+                                    </div>
+                                    }
+                                    <div className='flex justify-between pt-3'>
+                                        <div className={`justify-start ${sessionData.find(data => data.sessionNum === i) ? 'visible' : 'invisible'}`}>
+                                            <Button variant='outline-danger' onClick={()=>setIsDeleteOpen(true)}>Delete All Material</Button>
+                                        </div>
+                                        <div className="justify-end">
+                                            <Button
+                                                className="mr-2"
+                                                variant="outline-primary"
+                                                onClick={() => setBlockSessionIdForCreate(currentSession?.id)}
+                                            >
+                                                Add block
+                                            </Button>
+                                            {currentSession?.canceled ?
+                                                <Button className="mr-2" variant="outline-secondary" onClick={() => setCanceled(currentSession, false).catch(createErrorHandler("Failed to restore session.", setError))}>Restore session</Button> :
+                                                <Button className="mr-2" variant="outline-danger" onClick={() => setSessionToCancel(currentSession)}>Cancel session</Button>
+                                            }
+                                            <Button onClick={() => setIsOpen(true)}>Add Material</Button>
+                                        </div>
+                                    </div>
+                                </Accordion.Body>
+                            </Accordion.Item>
+                        )
+                    })
+                }
+            </Accordion>
+        </>
+    );
 }
 
 function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
@@ -397,7 +397,7 @@ function CancelSessionModal({session, onClose, onConfirm, showNotify}) {
             </Modal.Body>
             <Modal.Footer>
                 <Button variant="secondary" onClick={close} disabled={submitting}>Keep session</Button>
-                <Button variant="danger" onClick={confirmCancellation} disabled={submitting}>
+                <Button variant="danger" onClick={confirmCancellation} disabled={submitting || !isNotifyReady(notificationOption)}>
                     {submitting ? 'Canceling...' : 'Cancel session'}
                 </Button>
             </Modal.Footer>
