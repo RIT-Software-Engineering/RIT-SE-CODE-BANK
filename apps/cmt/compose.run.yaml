@@ -57,6 +57,8 @@ services:
       - "127.0.0.1:${SMTP4DEV_UI_PORT:-3005}:80"
     volumes:
       - smtp4dev_data:/smtp4dev
+    profiles:
+      - fake-mail
     restart: unless-stopped
 
   notifications:
@@ -65,8 +67,8 @@ services:
       PORT: 4000
       NODE_ENV: production
       DATABASE_URL: mysql://root:${NOTIFICATION_DB_ROOT_PASSWORD}@notifications-mariadb:3306/notification_service
-      SMTP_HOST: smtp4dev
-      SMTP_PORT: 25
+      SMTP_HOST: ${SMTP_HOST:-smtp4dev}
+      SMTP_PORT: ${SMTP_PORT:-25}
       SMTP_FROM: se_svc_apps@rit.edu
     command: sh -c "npx prisma migrate deploy && npm start"
     depends_on:
@@ -74,6 +76,7 @@ services:
         condition: service_healthy
       smtp4dev:
         condition: service_started
+        required: false
     restart: unless-stopped
 
 volumes:
