@@ -69,7 +69,7 @@ export function handleError(error, setError) {
 
 /**
  * Simple utility to make it easier to add a danger alert
- * @param {{ error: string }} props 
+ * @param {{ error: string | null } & import("react-bootstrap").AlertProps} props
  * @returns React Bootstrap Alert
  */
 export function CMTDangerAlert({ error, ...props }) {
